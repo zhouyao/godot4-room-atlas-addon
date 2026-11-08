@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://crvkbthobwvgt"]
+
+[ext_resource type="Script" uid="uid://b7eldc5ppkar3" path="res://example/room_view.gd" id="1_view"]
+[ext_resource type="Script" uid="uid://kf78gwywxudf" path="res://example/room_platform.gd" id="2_plat"]
+[ext_resource type="Script" uid="uid://dfu3vtgmmevxf" path="res://example/room_decor.gd" id="3_decor"]
+
+[node name="R8" type="Node2D" unique_id=927080384]
+script = ExtResource("1_view")
+room_id = &"r8"
+room_title = "R8 · 终点大厅"
+room_size = Vector2i(4000, 1080)
+
+[node name="P1" type="StaticBody2D" parent="." unique_id=740398842]
+position = Vector2(1200, 500)
+script = ExtResource("2_plat")
+size = Vector2(900, 32)
+color = Color(0.92, 0.76, 0.4, 1)
+
+[node name="P2" type="StaticBody2D" parent="." unique_id=1231040609]
+position = Vector2(360, 660)
+script = ExtResource("2_plat")
+size = Vector2(260, 26)
+color = Color(0.92, 0.76, 0.4, 1)
+
+[node name="P3" type="StaticBody2D" parent="." unique_id=1050376730]
+position = Vector2(660, 590)
+script = ExtResource("2_plat")
+size = Vector2(260, 26)
+color = Color(0.92, 0.76, 0.4, 1)
+
+[node name="P4" type="StaticBody2D" parent="." unique_id=1866165470]
+position = Vector2(2040, 660)
+script = ExtResource("2_plat")
+size = Vector2(260, 26)
+color = Color(0.92, 0.76, 0.4, 1)
+
+[node name="D1" type="Node2D" parent="." unique_id=915641757]
+position = Vector2(1200, 300)
+script = ExtResource("3_decor")
+kind = &"crystal"
+color = Color(1, 0.86, 0.5, 1)
+size = Vector2(100, 170)
+
+[node name="D2" type="Node2D" parent="." unique_id=1299838565]
+position = Vector2(120, 810)
+script = ExtResource("3_decor")
+kind = &"banner"
+color = Color(0.95, 0.7, 0.4, 1)
+size = Vector2(80, 170)

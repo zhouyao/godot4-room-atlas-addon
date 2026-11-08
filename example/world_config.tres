@@ -1,0 +1,77 @@
+[gd_resource type="Resource" script_class="RoomAtlasConfig" format=3 uid="uid://corryvd6gywef"]
+
+[ext_resource type="Script" uid="uid://ds72rfix80ob0" path="res://addons/room_atlas/runtime/room_atlas_config.gd" id="1_cfg"]
+[ext_resource type="Script" uid="uid://etbn3c7asj82" path="res://addons/room_atlas/runtime/room_placement.gd" id="2_plc"]
+[ext_resource type="Script" uid="uid://chvclralnoen" path="res://addons/room_atlas/runtime/streaming_settings.gd" id="3_str"]
+[ext_resource type="PackedScene" uid="uid://b4yottikb527e" path="res://example/rooms/r1.tscn" id="4_r1"]
+[ext_resource type="PackedScene" uid="uid://ceajhcs7m6qgi" path="res://example/rooms/r2.tscn" id="4_r2"]
+[ext_resource type="PackedScene" path="res://example/rooms/r3.tscn" id="4_r3"]
+[ext_resource type="PackedScene" path="res://example/rooms/r4.tscn" id="4_r4"]
+[ext_resource type="PackedScene" path="res://example/rooms/r5.tscn" id="4_r5"]
+[ext_resource type="PackedScene" path="res://example/rooms/r6.tscn" id="4_r6"]
+[ext_resource type="PackedScene" path="res://example/rooms/r7.tscn" id="4_r7"]
+[ext_resource type="PackedScene" uid="uid://crvkbthobwvgt" path="res://example/rooms/r8.tscn" id="9_24dkm"]
+
+[sub_resource type="Resource" id="Resource_r2"]
+script = ExtResource("2_plc")
+id = &"r2"
+scene = ExtResource("4_r2")
+cells = Rect2i(0, 0, 2400, 1080)
+tint = Color(0.16, 0.18, 0.27, 1)
+
+[sub_resource type="Resource" id="Resource_r3"]
+script = ExtResource("2_plc")
+id = &"r3"
+scene = ExtResource("4_r3")
+cells = Rect2i(4800, 0, 2400, 1080)
+tint = Color(0.25, 0.17, 0.15, 1)
+
+[sub_resource type="Resource" id="Resource_r4"]
+script = ExtResource("2_plc")
+id = &"r4"
+scene = ExtResource("4_r4")
+cells = Rect2i(7200, 0, 2400, 1080)
+tint = Color(0.15, 0.22, 0.25, 1)
+
+[sub_resource type="Resource" id="Resource_r5"]
+script = ExtResource("2_plc")
+id = &"r5"
+scene = ExtResource("4_r5")
+cells = Rect2i(9600, -1080, 2400, 2160)
+tint = Color(0.22, 0.18, 0.14, 1)
+
+[sub_resource type="Resource" id="Resource_r6"]
+script = ExtResource("2_plc")
+id = &"r6"
+scene = ExtResource("4_r6")
+cells = Rect2i(7200, -1080, 2400, 1080)
+tint = Color(0.18, 0.22, 0.3, 1)
+
+[sub_resource type="Resource" id="Resource_r7"]
+script = ExtResource("2_plc")
+id = &"r7"
+scene = ExtResource("4_r7")
+cells = Rect2i(4800, -1080, 2400, 1080)
+tint = Color(0.21, 0.17, 0.26, 1)
+
+[sub_resource type="Resource" id="Resource_gbfcp"]
+script = ExtResource("2_plc")
+id = &"r8"
+scene = ExtResource("9_24dkm")
+cells = Rect2i(800, -1080, 4000, 1080)
+tint = Color(0.2, 0.24, 0.3, 1)
+
+[sub_resource type="Resource" id="Resource_24dkm"]
+script = ExtResource("2_plc")
+id = &"r1"
+scene = ExtResource("4_r1")
+cells = Rect2i(2400, 0, 2400, 1080)
+tint = Color(0.2, 0.24, 0.3, 1)
+
+[sub_resource type="Resource" id="Resource_stream"]
+script = ExtResource("3_str")
+
+[resource]
+script = ExtResource("1_cfg")
+rooms = [SubResource("Resource_r2"), SubResource("Resource_r3"), SubResource("Resource_r4"), SubResource("Resource_r5"), SubResource("Resource_r6"), SubResource("Resource_r7"), SubResource("Resource_gbfcp"), SubResource("Resource_24dkm")]
+streaming = SubResource("Resource_stream")

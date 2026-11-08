@@ -1,0 +1,35 @@
+[gd_scene format=3 uid="uid://b4yottikb527e"]
+
+[ext_resource type="Script" uid="uid://b7eldc5ppkar3" path="res://example/room_view.gd" id="1_view"]
+[ext_resource type="Script" uid="uid://kf78gwywxudf" path="res://example/room_platform.gd" id="2_plat"]
+[ext_resource type="Script" uid="uid://dfu3vtgmmevxf" path="res://example/room_decor.gd" id="3_decor"]
+
+[node name="R1" type="Node2D" unique_id=649277928]
+script = ExtResource("1_view")
+room_title = "R1 · 起始平台"
+room_id = &"r1"
+
+[node name="P1" type="StaticBody2D" parent="." unique_id=781714013]
+position = Vector2(560, 700)
+script = ExtResource("2_plat")
+size = Vector2(620, 28)
+color = Color(0.45, 0.8, 0.62, 1)
+
+[node name="P2" type="StaticBody2D" parent="." unique_id=1807686990]
+position = Vector2(1520, 620)
+script = ExtResource("2_plat")
+size = Vector2(320, 28)
+color = Color(0.45, 0.8, 0.62, 1)
+
+[node name="D1" type="Node2D" parent="." unique_id=27210320]
+position = Vector2(300, 810)
+script = ExtResource("3_decor")
+color = Color(0.8, 0.74, 0.52, 1)
+size = Vector2(30, 190)
+
+[node name="D2" type="Node2D" parent="." unique_id=24380382]
+position = Vector2(2080, 660)
+script = ExtResource("3_decor")
+kind = &"banner"
+color = Color(0.4, 0.72, 0.9, 1)
+size = Vector2(64, 120)
