@@ -119,6 +119,24 @@ func _overlaps(target: RoomAtlasPlacement) -> bool:
 	return false
 
 
+## 一次算出所有重叠房间的 id。按 x 排序后扫描，后一个左边界越过当前右边界
+## 即可 break；绘制时不再对每个房间重复全表判断。
+static func _overlap_ids(placements: Array) -> Dictionary:
+	var sorted := placements.duplicate()
+	sorted.sort_custom(func(a, b): return a.cells.position.x < b.cells.position.x)
+	var out := {}
+	for i in range(sorted.size()):
+		var a: RoomAtlasPlacement = sorted[i]
+		for j in range(i + 1, sorted.size()):
+			var b: RoomAtlasPlacement = sorted[j]
+			if b.cells.position.x >= a.cells.end.x:
+				break
+			if a.cells.intersects(b.cells):
+				out[a.id] = true
+				out[b.id] = true
+	return out
+
+
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.055, 0.062, 0.085), true)
 	if config == null or size.x <= 1.0 or size.y <= 1.0:
@@ -162,7 +180,10 @@ func _draw() -> void:
 	if o.y >= 0.0 and o.y <= size.y:
 		draw_line(Vector2(0, o.y), Vector2(size.x, o.y), axis_col, 1.0)
 
-	for p in config.placements():
+	# 一次取 placements、一次算重叠集合，避免每个房间再全表扫一遍（原先 O(N²)）。
+	var placements := config.placements()
+	var overlap_ids := _overlap_ids(placements)
+	for p in placements:
 		var r := _rect(p)
 		var a := _world_to_canvas(r.position)
 		var b := _world_to_canvas(r.end)
@@ -177,7 +198,7 @@ func _draw() -> void:
 		var cy1 := minf(cr.end.y, size.y)
 		var visible := Rect2(cx0, cy0, maxf(0.0, cx1 - cx0), maxf(0.0, cy1 - cy0))
 		var is_sel := p.id == selected
-		var col := Color(1.0, 0.36, 0.36) if _overlaps(p) \
+		var col := Color(1.0, 0.36, 0.36) if overlap_ids.has(p.id) \
 				else (Color(0.42, 1.0, 0.6) if is_sel else Color(0.75, 0.83, 0.95, 0.6))
 		draw_rect(visible, Color(p.tint.r, p.tint.g, p.tint.b, 0.32), true)
 		draw_rect(visible, col, false, 3.0 if is_sel else 1.5)

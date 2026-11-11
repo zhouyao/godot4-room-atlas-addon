@@ -1,65 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene format=3 uid="uid://brc1npxm2fc8o"]
 
-[ext_resource type="Script" path="res://example/room_view.gd" id="1_view"]
-[ext_resource type="Script" path="res://example/room_platform.gd" id="2_plat"]
-[ext_resource type="Script" path="res://example/room_decor.gd" id="3_decor"]
+[ext_resource type="Script" uid="uid://b7eldc5ppkar3" path="res://example/room_view.gd" id="1_view"]
 
-[node name="R7" type="Node2D"]
+[node name="R7" type="Node2D" unique_id=279538763]
 script = ExtResource("1_view")
 room_id = &"r7"
-room_title = "R7 · 环形柱阵"
-room_size = Vector2i(2400, 1080)
-
-[node name="P1" type="StaticBody2D" parent="."]
-position = Vector2(640, 560)
-script = ExtResource("2_plat")
-size = Vector2(420, 28)
-color = Color(0.72, 0.5, 0.78, 1)
-
-[node name="P2" type="StaticBody2D" parent="."]
-position = Vector2(1760, 460)
-script = ExtResource("2_plat")
-size = Vector2(420, 28)
-color = Color(0.72, 0.5, 0.78, 1)
-
-[node name="D1" type="Node2D" parent="."]
-position = Vector2(220, 810)
-script = ExtResource("3_decor")
-kind = &"pillar"
-size = Vector2(40, 260)
-color = Color(0.72, 0.56, 0.78, 1)
-
-[node name="D2" type="Node2D" parent="."]
-position = Vector2(620, 810)
-script = ExtResource("3_decor")
-kind = &"pillar"
-size = Vector2(40, 340)
-color = Color(0.72, 0.56, 0.78, 1)
-
-[node name="D3" type="Node2D" parent="."]
-position = Vector2(1020, 810)
-script = ExtResource("3_decor")
-kind = &"pillar"
-size = Vector2(40, 420)
-color = Color(0.72, 0.56, 0.78, 1)
-
-[node name="D4" type="Node2D" parent="."]
-position = Vector2(1420, 810)
-script = ExtResource("3_decor")
-kind = &"pillar"
-size = Vector2(40, 420)
-color = Color(0.72, 0.56, 0.78, 1)
-
-[node name="D5" type="Node2D" parent="."]
-position = Vector2(1820, 810)
-script = ExtResource("3_decor")
-kind = &"pillar"
-size = Vector2(40, 340)
-color = Color(0.72, 0.56, 0.78, 1)
-
-[node name="D6" type="Node2D" parent="."]
-position = Vector2(2220, 810)
-script = ExtResource("3_decor")
-kind = &"pillar"
-size = Vector2(40, 260)
-color = Color(0.72, 0.56, 0.78, 1)
+room_title = "R7"
+room_size = Vector2i(4000, 1080)

@@ -1,11 +1,13 @@
 extends CharacterBody2D
 
-## 示例用跟踪目标。它属于游戏层，插件完全不认识这个节点。
+## 示例用跟踪目标：不受重力，方向键 / WASD 四向自由移动。
+## 直接读按键而不依赖 InputMap 动作，避免项目输入映射缺失时按了没反应。
+## 它属于游戏层，插件完全不认识这个节点。
 
-const SPEED := 420.0
-const GRAVITY := 2000.0
-const JUMP := -780.0
-const MAX_FALL := 1400.0
+## 默认移动速度（像素/秒）；由 main.gd 从 camera_policy.player_speed 写入。
+const SPEED := 1480.0
+
+@export var move_speed: float = SPEED
 
 var spawn_point := Vector2.ZERO
 
@@ -22,17 +24,17 @@ func _ready() -> void:
 	add_child(cs)
 
 
-func _physics_process(delta: float) -> void:
-	var dir := 0.0
-	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
-		dir -= 1.0
-	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
-		dir += 1.0
-	velocity.x = dir * SPEED
-	if not is_on_floor():
-		velocity.y = minf(velocity.y + GRAVITY * delta, MAX_FALL)
-	elif Input.is_key_pressed(KEY_SPACE) or Input.is_key_pressed(KEY_W):
-		velocity.y = JUMP
+func _physics_process(_delta: float) -> void:
+	var dir := Vector2.ZERO
+	if Input.is_key_pressed(KEY_LEFT) or Input.is_key_pressed(KEY_A):
+		dir.x -= 1.0
+	if Input.is_key_pressed(KEY_RIGHT) or Input.is_key_pressed(KEY_D):
+		dir.x += 1.0
+	if Input.is_key_pressed(KEY_UP) or Input.is_key_pressed(KEY_W):
+		dir.y -= 1.0
+	if Input.is_key_pressed(KEY_DOWN) or Input.is_key_pressed(KEY_S):
+		dir.y += 1.0
+	velocity = dir.normalized() * move_speed
 	move_and_slide()
 
 

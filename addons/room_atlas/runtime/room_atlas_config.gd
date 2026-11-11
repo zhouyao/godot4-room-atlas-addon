@@ -12,7 +12,7 @@ const SCHEMA_VERSION := 1
 @export var schema_version: int = SCHEMA_VERSION
 ## 网格大小，单位：像素。示例用 1×1 px，于是格坐标 == 世界像素坐标。
 ## 它只决定编辑器吸附与画布网格线；空间索引桶尺寸由
-## RoomAtlasLayout.BUCKET_SIZE 独立控制，网格再细也不会让索引膨胀。
+## RoomAtlasStreamingSettings.bucket_size 独立控制，网格再细也不会让索引膨胀。
 ## 房间 cells 是 Rect2i，直接写像素矩形即可。
 @export var cell_size: Vector2 = Vector2(1, 1)
 ## 用无类型 Array 存储，让 .tres 可手写、可 diff；访问请走 placements()。

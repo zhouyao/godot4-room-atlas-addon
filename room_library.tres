@@ -6,20 +6,20 @@
 [ext_resource type="PackedScene" path="res://example/rooms/r3.tscn" id="2_r3"]
 [ext_resource type="PackedScene" path="res://example/rooms/r4.tscn" id="2_r4"]
 [ext_resource type="PackedScene" path="res://example/rooms/r5.tscn" id="2_r5"]
-[ext_resource type="PackedScene" path="res://example/rooms/r6.tscn" id="2_r6"]
-[ext_resource type="PackedScene" path="res://example/rooms/r7.tscn" id="2_r7"]
+[ext_resource type="PackedScene" uid="uid://k3egym3juyo8" path="res://example/rooms/r6.tscn" id="2_r6"]
+[ext_resource type="PackedScene" uid="uid://brc1npxm2fc8o" path="res://example/rooms/r7.tscn" id="2_r7"]
 [ext_resource type="PackedScene" uid="uid://crvkbthobwvgt" path="res://example/rooms/r8.tscn" id="2_r8"]
 
 [resource]
 script = ExtResource("1_lib")
 scenes = [ExtResource("2_r1"), ExtResource("2_r2"), ExtResource("2_r3"), ExtResource("2_r4"), ExtResource("2_r5"), ExtResource("2_r6"), ExtResource("2_r7"), ExtResource("2_r8")]
 sizes = {
-"res://example/rooms/r1.tscn": Vector2i(2400, 1080),
+"res://example/rooms/r1.tscn": Vector2i(3000, 1080),
 "res://example/rooms/r2.tscn": Vector2i(3000, 1080),
 "res://example/rooms/r3.tscn": Vector2i(2400, 1080),
 "res://example/rooms/r4.tscn": Vector2i(2400, 1080),
 "res://example/rooms/r5.tscn": Vector2i(2400, 2160),
-"res://example/rooms/r6.tscn": Vector2i(2400, 1080),
-"res://example/rooms/r7.tscn": Vector2i(2400, 1080),
-"res://example/rooms/r8.tscn": Vector2i(4000, 1080)
+"res://example/rooms/r6.tscn": Vector2i(5400, 1080),
+"res://example/rooms/r7.tscn": Vector2i(4000, 1080),
+"res://example/rooms/r8.tscn": Vector2i(1920, 2160)
 }

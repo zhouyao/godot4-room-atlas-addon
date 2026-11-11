@@ -1,50 +1,9 @@
 [gd_scene format=3 uid="uid://ceajhcs7m6qgi"]
 
 [ext_resource type="Script" uid="uid://b7eldc5ppkar3" path="res://example/room_view.gd" id="1_view"]
-[ext_resource type="Script" uid="uid://kf78gwywxudf" path="res://example/room_platform.gd" id="2_plat"]
-[ext_resource type="Script" uid="uid://dfu3vtgmmevxf" path="res://example/room_decor.gd" id="3_decor"]
 
-[node name="R2" type="Node2D" unique_id=597168494]
+[node name="R2" type="Node2D"]
 script = ExtResource("1_view")
-room_title = "R2 · 悬空群岛"
 room_id = &"r2"
-
-[node name="P1" type="StaticBody2D" parent="." unique_id=1887474072]
-position = Vector2(320, 660)
-script = ExtResource("2_plat")
-size = Vector2(280, 24)
-
-[node name="P2" type="StaticBody2D" parent="." unique_id=1060996961]
-position = Vector2(820, 520)
-script = ExtResource("2_plat")
-
-[node name="P3" type="StaticBody2D" parent="." unique_id=300544441]
-position = Vector2(1380, 620)
-script = ExtResource("2_plat")
-size = Vector2(340, 24)
-
-[node name="P4" type="StaticBody2D" parent="." unique_id=578000001]
-position = Vector2(2000, 440)
-script = ExtResource("2_plat")
-size = Vector2(260, 24)
-
-[node name="D1" type="Node2D" parent="." unique_id=1848868095]
-position = Vector2(320, 460)
-script = ExtResource("3_decor")
-kind = &"lamp"
-color = Color(0.95, 0.85, 0.5, 1)
-size = Vector2(26, 26)
-
-[node name="D2" type="Node2D" parent="." unique_id=1169676639]
-position = Vector2(1380, 400)
-script = ExtResource("3_decor")
-kind = &"lamp"
-color = Color(0.95, 0.85, 0.5, 1)
-size = Vector2(26, 26)
-
-[node name="D3" type="Node2D" parent="." unique_id=836725521]
-position = Vector2(2000, 260)
-script = ExtResource("3_decor")
-kind = &"crystal"
-color = Color(0.55, 0.8, 1, 1)
-size = Vector2(60, 100)
+room_title = "R2"
+room_size = Vector2i(2400, 1080)

@@ -1,62 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene format=3]
 
-[ext_resource type="Script" path="res://example/room_view.gd" id="1_view"]
-[ext_resource type="Script" path="res://example/room_platform.gd" id="2_plat"]
-[ext_resource type="Script" path="res://example/room_decor.gd" id="3_decor"]
+[ext_resource type="Script" uid="uid://b7eldc5ppkar3" path="res://example/room_view.gd" id="1_view"]
 
 [node name="R3" type="Node2D"]
 script = ExtResource("1_view")
 room_id = &"r3"
-room_title = "R3 · 阶梯回廊"
+room_title = "R3"
 room_size = Vector2i(2400, 1080)
-
-[node name="P1" type="StaticBody2D" parent="."]
-position = Vector2(260, 740)
-script = ExtResource("2_plat")
-size = Vector2(300, 26)
-color = Color(0.9, 0.58, 0.42, 1)
-
-[node name="P2" type="StaticBody2D" parent="."]
-position = Vector2(660, 660)
-script = ExtResource("2_plat")
-size = Vector2(300, 26)
-color = Color(0.9, 0.58, 0.42, 1)
-
-[node name="P3" type="StaticBody2D" parent="."]
-position = Vector2(1060, 580)
-script = ExtResource("2_plat")
-size = Vector2(300, 26)
-color = Color(0.9, 0.58, 0.42, 1)
-
-[node name="P4" type="StaticBody2D" parent="."]
-position = Vector2(1460, 500)
-script = ExtResource("2_plat")
-size = Vector2(300, 26)
-color = Color(0.9, 0.58, 0.42, 1)
-
-[node name="P5" type="StaticBody2D" parent="."]
-position = Vector2(1900, 420)
-script = ExtResource("2_plat")
-size = Vector2(320, 26)
-color = Color(0.9, 0.58, 0.42, 1)
-
-[node name="D1" type="Node2D" parent="."]
-position = Vector2(120, 810)
-script = ExtResource("3_decor")
-kind = &"pillar"
-size = Vector2(34, 220)
-color = Color(0.82, 0.66, 0.5, 1)
-
-[node name="D2" type="Node2D" parent="."]
-position = Vector2(1200, 810)
-script = ExtResource("3_decor")
-kind = &"pillar"
-size = Vector2(34, 260)
-color = Color(0.82, 0.66, 0.5, 1)
-
-[node name="D3" type="Node2D" parent="."]
-position = Vector2(2280, 810)
-script = ExtResource("3_decor")
-kind = &"pillar"
-size = Vector2(34, 300)
-color = Color(0.82, 0.66, 0.5, 1)

@@ -1,3 +1,27 @@
 # Godot 4+ specific ignores
 .godot/
+
+# Godot build/export output
+/export/
 /android/
+/ios/
+
+# Imported assets cache
+*.import
+
+# Editor / OS / filesystem noise
+.DS_Store
+.directory
+.fuse_hidden*
+.nfs*
+.Trashes
+*~
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Godot mono / C# (if ever used)
+.mono/
+/data_*/
+mono_crash.*.json

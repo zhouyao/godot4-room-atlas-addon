@@ -28,6 +28,12 @@ var _add_icon: Texture2D = null
 var _rename_edit: LineEdit = null
 var _rename_item: TreeItem = null
 var _rename_old := ""
+var _filter := ""
+var _last_unloaded := PackedStringArray()
+var _last_loaded := PackedStringArray()
+var _last_changed: Dictionary = {}
+var _last_groups: Array = []
+var _last_group_of: Dictionary = {}
 
 
 func _ready() -> void:
@@ -60,10 +66,38 @@ func _on_item_activated() -> void:
 
 func rebuild(unloaded: PackedStringArray, loaded: PackedStringArray,
 		changed: Dictionary = {}, groups: Array = [], group_of: Dictionary = {}) -> void:
+	_last_unloaded = unloaded
+	_last_loaded = loaded
+	_last_changed = changed
+	_last_groups = groups
+	_last_group_of = group_of
+	_render()
+
+
+## 按文件名筛选；输入为空显示全部。组名命中时整组保留。
+func set_filter(text: String) -> void:
+	var f := text.strip_edges().to_lower()
+	if f == _filter:
+		return
+	_filter = f
+	_render()
+
+
+func _render() -> void:
 	_end_rename()
 	clear()
 	var root := create_item()
 	var icon := _get_delete_icon()
+	var changed := _last_changed
+
+	var unloaded := PackedStringArray()
+	for p in _last_unloaded:
+		if _matches(p):
+			unloaded.append(p)
+	var loaded := PackedStringArray()
+	for p in _last_loaded:
+		if _matches(p):
+			loaded.append(p)
 
 	var top := create_item(root)
 	top.set_text(0, "未载入 (%d)" % unloaded.size())
@@ -76,7 +110,6 @@ func rebuild(unloaded: PackedStringArray, loaded: PackedStringArray,
 				String(changed.get(p, "")))
 
 	var bottom := create_item(root)
-	bottom.set_text(0, "已载入 (%d)" % loaded.size())
 	bottom.set_selectable(0, false)
 	bottom.set_custom_color(0, Color(0.45, 0.9, 0.6))
 	bottom.collapsed = false
@@ -87,14 +120,20 @@ func rebuild(unloaded: PackedStringArray, loaded: PackedStringArray,
 
 	# 先按 groups 顺序建组并挂成员，剩余条目平铺在「已载入」下。
 	var grouped := {}
-	for g in groups:
+	for g in _last_groups:
 		var gname := String(g.get("name", ""))
 		if gname.is_empty():
 			continue
+		var group_hit := _filter.is_empty() or gname.to_lower().contains(_filter)
 		var members := PackedStringArray()
-		for p in loaded:
-			if String(group_of.get(p, "")) == gname:
+		for p in _last_loaded:
+			if String(_last_group_of.get(p, "")) != gname:
+				continue
+			if group_hit or _matches(p):
 				members.append(p)
+		# 组名没命中、成员也全被过滤掉时，隐藏空组。
+		if not _filter.is_empty() and not group_hit and members.is_empty():
+			continue
 		var gi := create_item(bottom)
 		gi.set_text(0, "%s (%d)" % [gname, members.size()])
 		gi.set_metadata(0, GROUP_PREFIX + gname)
@@ -104,6 +143,10 @@ func rebuild(unloaded: PackedStringArray, loaded: PackedStringArray,
 		gi.collapsed = false
 		if icon != null:
 			gi.add_button(0, icon, BTN_DELETE)
+		if group_hit:
+			for p in members:
+				if not loaded.has(p):
+					loaded.append(p)
 		for p in members:
 			grouped[p] = true
 			_add_scene_item(gi, p, "组内 · 拖到画布放置 · × 移出列表", icon,
@@ -113,6 +156,14 @@ func rebuild(unloaded: PackedStringArray, loaded: PackedStringArray,
 			continue
 		_add_scene_item(bottom, p, "已在地图中 · 可继续拖放 · × 从地图移除", icon,
 				String(changed.get(p, "")))
+	# 组名命中时成员已补进 loaded，统一在这里写分区计数。
+	bottom.set_text(0, "已载入 (%d)" % loaded.size())
+
+
+func _matches(path: String) -> bool:
+	if _filter.is_empty():
+		return true
+	return path.get_file().to_lower().contains(_filter)
 
 
 func _add_scene_item(parent: TreeItem, path: String, tip: String, icon: Texture2D,

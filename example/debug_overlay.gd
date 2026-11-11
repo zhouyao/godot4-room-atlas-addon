@@ -1,10 +1,11 @@
 extends Node2D
 
-## 示例调试层：绿框 = 已挂载，灰框 = 未挂载。
+## 示例调试层：标记玩家房内 / 房外。
 ## 只依赖插件公开的查询 API，不读插件内部状态。
 
-var streamer: Node = null
-var config: Resource = null
+var player: Node2D = null
+var controller: Node = null
+var policy: RefCounted = null
 
 
 func _process(_delta: float) -> void:
@@ -12,31 +13,26 @@ func _process(_delta: float) -> void:
 
 
 func _draw() -> void:
-	if streamer == null or config == null:
+	_draw_camera_debug(_status())
+
+
+func _status() -> Dictionary:
+	if controller != null and controller.has_method("status"):
+		return controller.status()
+	return {}
+
+
+func _draw_camera_debug(st: Dictionary) -> void:
+	if st.is_empty() or policy == null:
 		return
 	var xf := get_viewport().get_canvas_transform()
-	var cs: Vector2 = config.get("cell_size")
-	for raw in config.get("rooms"):
-		var p: Resource = raw
-		var cells: Rect2i = p.get("cells")
-		var origin := Vector2(float(cells.position.x), float(cells.position.y)) * cs
-		var size := Vector2(float(cells.size.x), float(cells.size.y)) * cs
-		var r := Rect2(origin, size)
-		var id := StringName(p.get("id"))
-		var mounted := bool(streamer.call("is_mounted", id))
-		var col := Color(0.35, 1.0, 0.55, 0.95) if mounted \
-				else Color(1, 1, 1, 0.20)
-		_stroke_rect(r, xf, col)
-		draw_string(ThemeDB.fallback_font, xf * r.position + Vector2(12, 24),
-				String(id).to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, col)
-
-
-func _stroke_rect(r: Rect2, xf: Transform2D, col: Color) -> void:
-	var pts := PackedVector2Array([
-		xf * r.position,
-		xf * Vector2(r.end.x, r.position.y),
-		xf * r.end,
-		xf * Vector2(r.position.x, r.end.y),
-		xf * r.position,
-	])
-	draw_polyline(pts, col, 2.0)
+	if policy.show_player_room and player != null:
+		var p := xf * player.global_position
+		var inside := bool(st.get("inside", true))
+		var col := Color(0.35, 1.0, 0.55, 0.95) if inside \
+				else Color(1.0, 0.4, 0.35, 0.95)
+		draw_line(p + Vector2(-10, 0), p + Vector2(10, 0), col, 2.0)
+		draw_line(p + Vector2(0, -10), p + Vector2(0, 10), col, 2.0)
+		draw_string(ThemeDB.fallback_font, p + Vector2(14, -12),
+				"房内" if inside else "房外",
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 13, col)

@@ -1,150 +1,116 @@
 # Godot4 Room Atlas
 
-> 网格化房间编排与距离流式加载：编辑期把房间摆在一张网格大地图上，导出一份配置；运行期按这份配置，以玩家附近为中心流式供给房间内容。
+> 编辑期把房间摆在一张网格大地图上，导出一份 `.tres` 配置；运行期按这份配置，以跟踪目标为中心流式加载房间内容。
 
-**引擎**：Godot 4.7 · **渲染器**：Forward Plus / GL Compatibility 均可（纯 2D，不依赖渲染特性）
-**后续迭代目录**：本仓库根目录
+![Godot](https://img.shields.io/badge/Godot-4.7-478cbf?logo=godotengine&logoColor=white)
+![Version](https://img.shields.io/badge/plugin-0.2.0-blue)
+![Language](https://img.shields.io/badge/GDScript-2D-4b8bbe)
+
+![运行截图：r1 房间内的连续滚动相机、左侧调试面板与右上角小地图](screenshot/0.png)
+
+*示例 `example/main.tscn`：WASD 移动，Tab 显隐调试面板；右上角小地图实时显示玩家坐标与相机视野。*
 
 ---
 
-## 这个插件不做什么
+## 特性
 
-边界比功能更重要，先写清楚：
-
-| 插件**不认识** | 原因 |
+| 能力 | 说明 |
 |---|---|
-| 门、传送门、接缝、连通性 | 房间之间怎么来往是游戏层的事 |
-| 玩家、相机、出生点 | 插件只接受一个 `track()` 注入的跟踪目标，从不移动任何节点 |
-| 钥匙、锁、剧情、进度 | 属于关卡内容，随房间加载/卸载 |
-| 房间之间的可达性 | 不做可达性校验；房间之间留空、靠跳跃或飞行过去都是合法设计 |
-| 程序化无限生成 | 插件不生成地形，只负责"已注册的房间"按距离加载 |
+| **可视化编排** | 编辑器底部 dock：tscn 资源列表 + 网格画布 + 属性面板 + 校验报告。拖拽吸附、x/y 辅助线、重叠红框、撤销重做 |
+| **单一配置** | 运行期只认一份 `RoomAtlasConfig`（`.tres`），Inspector 原生可编辑、类型安全、可 diff，也能手写 |
+| **距离流式加载** | `mount → sleep → unload` 四级生命周期 + 滞回带；`PackedScene` 缓存 LRU 淘汰，释放的只是实例 |
+| **网格与索引解耦** | `cell_size` 可以细到 1px（格坐标即像素坐标），空间索引用独立配置的桶，索引开销不随网格粒度膨胀 |
+| **相机几何** | 房间只声明自己的构图规则；插件提供纯几何计算与「相机中心合法区域」预计算，不寻找、不驱动任何 `Camera2D` |
+| **可选配套** | `RoomAtlasMinimap` 小地图、`RoomAtlasParallax` 房间局部视差，都在 `addons/` 内，整套可以删掉 |
 
-一句话：**插件是一台按位置供给房间内容的机器，外加一组纯几何 / 生命周期的原子 API；玩法由游戏层自己拼。**
-
-由此，同一份插件既能做开放连续大地图，也能做"房间孤岛 + 游戏层自己实现传送门"的项目。
-
----
-
-## 当前状态
-
-| 阶段 | 内容 | 状态 |
-|---|---|---|
-| **P0** | 配置契约、空间索引、距离流式调度、原子 API、最小可运行示例 | ✅ 已完成 |
-| **P1** | 可视化网格地图编辑器：拖拽、吸附、x/y 轴相邻辅助线、重叠高亮、撤销、校验报告 | ✅ 已完成 |
-| **P2** | tscn 资源库（导入 + 拖拽落图）已完成；Inspector 场景选择器、画布内搜索与批量操作待做 | ◐ 部分完成 |
-| **P3** | 资源缓存 LRU、按格懒生成索引、每房独立配置资源 | ⬜ 待做 |
-| **P4** | floating origin（大坐标精度） | ⬜ 待做 |
-
-P1 完成后，配置可以在编辑器底部 dock 里可视化编辑，也可以继续手写 `.tres` —— 两者是同一份数据。P2 的资源库是**另一份纯编辑期数据**，只记录哪些 `.tscn` 被导入，运行期不加载。
+**引擎**：Godot 4.7（实测 4.7.2）· **渲染器**：Forward+ / GL Compatibility 均可（纯 2D，不依赖渲染特性）· **无第三方依赖**
 
 ---
 
 ## 快速开始
 
-1. 用 Godot 4.7 打开本目录（`project.godot`），或命令行：
+用 Godot 4.7 打开本目录的 `project.godot`，按 **F5** 运行示例（主场景 `res://example/main.tscn`）。也可以用命令行：
 
-   ```bash
-   /Applications/Godot.app/Contents/MacOS/Godot --path /Users/yao.zhou/GitHub/godot4-room-atlas
-   ```
-
-2. 按 **F5** 运行示例（主场景 `res://example/main.tscn`）。
-3. 操作：`A` / `D` 或 `←` / `→` 移动，`Space` / `W` 跳跃。掉出世界会自动回到起点。
-4. 画面上的**绿框 = 已挂载房间，灰框 = 未挂载**；往右走可以看到相邻房间提前变绿、远处房间变灰。
-
-插件已在 `project.godot` 的 `[editor_plugins]` 中启用，所有编辑与校验能力都集中在底部 dock（不注册工具菜单）。右侧校验报告在每次地图改动后自动刷新；按 F5 前还会再校验一次，配置有 error 会阻止运行。运行期地图配置只有一份：`example/world_config.tres`；编辑期已导入列表是 `example/room_library.tres`。
-
----
-
-## 可视化地图编辑器
-
-插件启用后，编辑器**底部 dock** 会出现 **Room Atlas · 地图**，分三栏：左侧 tscn 资源管理、中间网格画布、右侧属性与校验报告。中间画布编辑 `example/world_config.tres`；左栏的导入 / 移出列表写 `example/room_library.tres`，而删除「已载入」条目会同时从 `world_config.tres` 移除对应房间。两层 `HSplitContainer` 的分隔条可直接拖动，用来调宽左栏（tscn 资源管理）和右栏（房间属性）；三栏最小宽度分别降到 120 / 220 / 170 px，窄窗口下也有余量可拖。左栏底部提示文字做了裁剪（`clip_text`），不会再把最小宽度撑大，因此分隔条可以往里拖窄。两条分隔条的位置保存在 **`EditorSettings`**（`room_atlas/dock_split_outer` / `room_atlas/dock_split_inner`，用户级、不进项目），拖动后约 0.25 秒写入，重新打开编辑器会自动恢复。
-
-> 如果插件是在编辑器打开期间才升级到 P1，需要**重新打开项目**，或在「项目设置 → 插件」里禁用再启用：`EditorPlugin._enter_tree()` 只在插件加载时执行一次，已运行的编辑器不会自动新建 dock。
-
-| 操作 | 说明 |
-|---|---|
-| 左键拖动房间 | 按 `cell_size` 吸附（示例 1 px，即整数像素），并在约 10 屏幕 px 内自动吸附相邻房间边界（贴边 / 共线，x、y 各自独立）；拖动时实时预览并显示 x/y 轴辅助线，松手才提交（可撤销）。贴边吸附不会重叠，共线吸附可能重叠，仍以红框与校验报告为准 |
-| 空白处 / 右键拖动 | 平移视图 |
-| 滚轮 / 双指捏合 | 以鼠标位置为中心缩放；macOS 触控板双指外扩放大、双指收缩缩小（Godot `InputEventMagnifyGesture`），也支持手势事件的兜底接收 |
-| 单击房间 | 选中并高亮；右侧字段分两段——**不可改的在上**（`id` / `title` / `scene` / `w` / `h`，由场景声明），**可改的在下**（`x` / `y` / `tint`）。`x` / `y` 输入框支持 `↑` / `↓` 每次 1 格（示例 1 px），也可直接键入数值；画布同时标注格数与像素尺寸 |
-| 单击列表「已载入」 | 视图平移到对应房间并高亮，右侧显示它完整的房间属性 |
-| 单击列表「未载入」 | 右侧切换为「房间信息 · 未载入」，只显示场景自己声明的 `id` / `title` / `scene` / `w` / `h`；`x` / `y` / `tint` 三行整组隐藏，没有额外提示文案 |
-| `导入 .tscn` | 打开项目内 `*.tscn` 多选对话框，把资源加入列表；新条目默认在「未载入」，只写 `room_library.tres`，不改地图 |
-| 列表 ⚠ 标记 | 保存 `.tscn` 后，若 `room_size` 与地图占位（已载入）或资源库基线（未载入）不一致，条目显示橙色 ⚠ 并在行内多出一个同步按钮，tooltip 写出两边尺寸；改回原尺寸或点同步后自动消失 |
-| 左栏「未载入」 | 已导入但**没有拖入地图**的资源，固定排在**上半区**；拖到画布即放一间房 |
-| 左栏「已载入」 | 已导入且**地图上至少有一间房引用它**的资源，排在下半区；仍可继续拖放复用 |
-| 虚拟组 | 点「已载入」标题右侧的 **+** 新建组；**双击组名**进入内联编辑，回车或点走保存、Esc 取消；把「已载入」条目**拖到组节点**即入组，拖到「已载入」标题移出组；组右侧 × 删组，成员自动回到根层（不动 tscn / 地图） |
-| 每行右侧 × | 统一删除入口：未载入 → 移出列表；已载入 → 从地图移除引用它的房间，资源保留并回到「未载入」（可撤销） |
-| 拖拽辅助线（绿 / 蓝 / 黄） | 拖动房间时贯穿画布的 x/y 轴虚线：**绿** = 与相邻房间边贴合（吸附后出现），**蓝** = 与邻居边共线，**黄** = 更远范围内的最近候选边（只提示，不参与吸附）；松手即消失 |
-| `适应视图` | 缩放平移到能看见全部房间 |
-| 行内同步按钮 | 只处理该行场景：已载入项把 `cells.size` 更新为场景当前 `room_size`（保持左上角，可撤销）；未载入项把资源库基线改为当前值 |
-| `保存配置` | 写回 `world_config.tres`（运行期唯一地图配置）；编辑器保存项目时也会自动落盘未保存改动 |
-
-**红色边框 = 该房间与其它房间的格区间重叠**，必须修掉才能通过校验；绿色边框 = 当前选中。拖拽落图时鼠标位置就是房间 `cells.position`（左上角），不做中心偏移、不自动避让，重叠交给红框与校验报告处理。所有地图改动（含拖拽落图 / 列表删除已载入项 / 改位置 / 改色）都走 `EditorUndoRedoManager`，支持 Ctrl+Z 撤销；导入与「移出列表」只改 `room_library.tres`，不进撤销栈。工具条不再有「对齐邻居」和「删除」：相邻关系改由拖拽辅助线提示，删除统一在列表每行右侧。
-
-画布刻意只表达几何：没有"连接房间""设置门""指定目标"之类的操作——连通性不属于布局层。拖拽辅助线与边界吸附都只影响预览落点，不写入配置。所有绘制都裁剪到画布矩形（引擎级 `clip_contents` + 绘制前剔除越界图元），放大到房间超出视口时不会溢出到编辑器其它 dock。
-
----
-
-## 目录结构
-
-```text
-godot4-room-atlas/
-├── project.godot
-├── addons/room_atlas/
-│   ├── plugin.cfg                          # 插件清单
-│   ├── plugin.gd                           # EditorPlugin：注册 dock + 自动保存 + 运行前校验
-│   ├── editor/
-│   │   ├── room_atlas_world_canvas.gd      # 编辑器面板：三栏 / 导入 / 落图 / 属性 / 撤销
-│   │   ├── room_atlas_grid_canvas.gd       # 网格画布：绘制 / 拖拽吸附 / 相邻辅助线 / 平移缩放 / drop
-│   │   ├── room_atlas_scene_library.gd     # 编辑期资源库：场景清单 + room_size 基线
-│   │   ├── room_atlas_scene_list.gd        # 左栏 Tree：分区 / 拖拽数据 / 每行删除按钮
-│   │   └── room_atlas_validator.gd         # 静态校验（纯逻辑，运行时也可调用）
-│   └── runtime/                            # 游戏包里只需要这些
-│       ├── room_atlas_config.gd            # class_name RoomAtlasConfig
-│       ├── room_placement.gd               # class_name RoomAtlasPlacement
-│       ├── streaming_settings.gd           # class_name RoomAtlasStreamingSettings
-│       ├── room_atlas_layout.gd            # class_name RoomAtlasLayout
-│       ├── room_atlas_room2d.gd            # class_name RoomAtlasRoom2D：房间基类 + 2D 编辑器边界预览
-│       └── room_atlas_streamer.gd          # class_name RoomAtlasStreamer
-└── example/                                # 最小可运行示例，不属于插件本体
-	├── world_config.tres                   # 8 房配置（运行期唯一地图配置；1px 网格）
-	├── room_library.tres                   # 已导入列表 + 尺寸基线 + 虚拟组（入库）
-	├── rooms/r1.tscn … r8.tscn             # 8 个独立房间场景，各自声明 room_id / room_title / room_size 与不同内容
-	├── main.tscn / main.gd                 # 装配序列
-	├── room_view.gd                        # 示例底板：继承 RoomAtlasRoom2D，画底 / 地面 / 标题
-	├── room_platform.gd / room_decor.gd    # 平台与装饰节点脚本，供各房间 .tscn 组合
-	├── player.gd                           # 跟踪目标
-	└── debug_overlay.gd                    # 挂载状态可视化
+```bash
+/Applications/Godot.app/Contents/MacOS/Godot \
+  --path /Users/yao.zhou/GitHub/godot4-room-atlas
 ```
 
-`class_name` 是 Godot 全局注册的，所以 `RoomAtlas*` 前缀不能省，避免和其它插件撞名。
+### 示例操作
+
+| 输入 | 作用 |
+|---|---|
+| `W` `A` `S` `D` / 方向键 | 移动白色玩家（不受重力，四向自由移动） |
+| `J` / `L`、`Space` 或 `I` | 移动 / 跳跃橙色角色（受重力，会落在 r1 的平台上） |
+| `Tab` | 显示 / 隐藏相机调试面板（唯一的全局快捷键） |
+| 面板 | 切换相机策略、跨房过渡、规则覆盖、跨层冻结；调玩家速度；开关小地图角标 / 视野 / 坐标 |
+
+橙色角色只是场景里的第二个普通节点，用来演示「插件不参与玩家管理」：加载中心始终只有 `track()` 注入的那一个目标。
+
+### 在自己的项目里使用
+
+1. 把 `addons/room_atlas/` 复制进目标项目（`companion/` 不需要可以删）。
+2. 在「项目设置 → 插件」里启用 **Godot4 Room Atlas**。
+3. 编辑器底部会出现 **Room Atlas** dock；不存在配置文件时会自动创建。
+4. 让房间场景根节点继承 `RoomAtlasRoom2D`（或至少声明 `room_id` / `room_title` / `room_size` 三个属性）。
+5. 在 dock 里导入 `.tscn`，拖到画布上摆好，点「保存配置」。
+6. 运行时添加 `RoomAtlasStreamer` 节点，`configure(config)` 后 `track(target)` 即可。
+
+> 插件在编辑器打开期间升级过的话，需要重新打开项目（或在插件面板禁用再启用）：`EditorPlugin._enter_tree()` 只在插件加载时执行一次。
 
 ---
 
-## 核心概念
+## 它不做什么
+
+边界比功能更重要：
+
+| 插件**不认识** | 原因 |
+|---|---|
+| 门、传送门、接缝、连通性 | 房间之间怎么来往是游戏层的事 |
+| 玩家、相机、出生点 | 插件只接受一个 `track()` 注入的跟踪目标，从不移动任何节点 |
+| 钥匙、锁、剧情、进度 | 属于关卡内容，随房间加载 / 卸载 |
+| 房间之间的可达性 | 不做可达性校验；留空、跳跃、飞行过去都是合法设计 |
+| 程序化无限生成 | 不生成地形，只负责「已注册的房间」按距离加载 |
+
+一句话：**插件是一台按位置供给房间内容的机器，外加一组纯几何 / 生命周期的原子 API；玩法由游戏层自己拼。**
+
+`addons/room_atlas/companion/` 下的视差组件是唯一的表现层例外：它不认识相机，只消费游戏层每帧推入的相机中心，不寻找、不驱动任何 `Camera2D`。
+
+---
+
+## 工作原理
+
+```text
+room_library.tres ──(编辑器 dock)──> world_config.tres
+                                          │
+                             RoomAtlasStreamer.configure(config)
+                                          │  track(target)
+                                    每 tick 按距离判定
+                                          │
+                    request / instantiate / sleep / unload
+```
 
 ### 1. 格坐标，不是世界坐标
 
-配置里房间的位置是 `Rect2i cells`（格坐标区间），运行时才乘 `cell_size`：
+配置里房间的位置是 `Rect2i cells`，运行时才乘 `cell_size`：
 
 \[
 \text{world\_rect} = \text{Rect2}\big(\text{cells.position} \odot \text{cell\_size},\; \text{cells.size} \odot \text{cell\_size}\big)
 \]
 
-**`cell_size` 的单位就是像素，示例取 `Vector2(1, 1)`**，即一格 1×1 px，格坐标 == 世界像素坐标。于是 `r1` 直接写 `Rect2i(0, 0, 2400, 1080)`，塔井 `r5` 写 `Rect2i(9600, -1080, 2400, 2160)`，房间边界精确到 1 px、任意宽高都可以。
+**`cell_size` 的单位就是像素，示例取 `Vector2(1, 1)`**，一格 1×1 px，格坐标 == 世界像素坐标。于是 `world_config.tres` 里 r1 写 `Rect2i(10141, -1080, 3000, 1080)`，房间边界精确到 1px，任意宽高都可以。
 
-房间内容在 `.tscn` 里本来就用局部像素坐标摆放（平台放 `(803, 512)` 完全合法），`cell_size` 只决定编辑器吸附步长与画布网格线；两者用的是同一把像素尺。
-
-好处：整数可校验、可 diff、无浮点误差；相邻房间的边界由整数相加得出，**严丝合缝是网格的副产品，不需要任何"对齐数据"**。`cells` 是任意 `Rect2i`，所以房间不必等大。
+房间内容在 `.tscn` 里本来就用局部像素坐标摆放，`cell_size` 只决定编辑器吸附步长与画布网格线，两者用的是同一把像素尺。好处：整数可校验、可 diff、无浮点误差；相邻房间的边界由整数相加得出，**严丝合缝是网格的副产品，不需要任何「对齐数据」**。
 
 ### 2. 空间索引与网格解耦
 
-`cell_size` 只管坐标换算、编辑器吸附和画布网格线；**空间索引用的是另一套固定尺寸的桶**——`RoomAtlasLayout.BUCKET_SIZE = 600 px`。房间按它覆盖的桶登记，一间 2400×1080 px 的房只占 4×2 = 8 个桶。
+`cell_size` 只管坐标换算、编辑器吸附和画布网格线；**空间索引用另一套独立尺寸的桶**，由 `RoomAtlasStreamingSettings.bucket_size` 配置（`<= 0` 时按地图房间短边中位数自动推导）。房间按它覆盖的桶登记，而不是逐格登记。
 
-这个解耦是 1px 网格能成立的前提：若按格逐格登记，一间房就是 259 万个桶、8 间房约两千万个，启动即爆内存；`query_near(半径 900)` 每次还要枚举三百多万个桶。解耦后索引开销只与房间数量和房间尺寸有关，与 `cell_size` 无关。
+示例把桶尺寸设为 `1080`：它同时等于示例视口高和示例房间高，所有横向层边界恰好落在桶线上，`room_at()` 的一个桶里不会同时挤进上下两层房间。
 
-`query_near()` 只枚举玩家周围固定的几个桶，循环次数是常数，**与世界里总共有多少房间、玩家走了多远无关**——这是从"有限 demo"迈向无限世界的关键一步。
+这个解耦是 1px 网格能成立的前提：若按格逐格登记，一间 2400×1080 的房就是 259 万个桶，启动即爆内存。解耦后索引开销只与房间数量和**世界**尺寸有关，与 `cell_size` 无关。
+
+`query_near()` 枚举的桶数约为 \((2r/B+1)^2\)，与房间总数无关，但随半径平方增长，并在超过 `MAX_QUERY_BUCKETS = 4096` 时截断半径并告警。
 
 ### 3. 四级生命周期
 
@@ -156,60 +122,141 @@ godot4-room-atlas/
 | 休眠 | 距离 > `sleep_distance`：隐藏、`PROCESS_MODE_DISABLED`、关碰撞 |
 | 释放节点 | 休眠且距离 > `unload_distance`：`queue_free()` |
 
-`PackedScene` 留在缓存里，所以释放的只是实例，回头不用重新读盘。`mount < sleep < unload` 形成滞回带，避免边界抖动。
+`PackedScene` 留在缓存里，所以释放的只是实例，回头不用重新读盘。`mount < sleep < unload` 形成滞回带，避免边界抖动。运行期有效值由 `set_load_radius()` 派生，`effective_distances()` 可只读查询，配置资源不会被写回。
+
+### 4. 加载半径由游戏层注入
+
+插件不做任何视口推算（它不认识相机、玩家、视口）。**游戏层**按当前可见世界尺寸算出「该提前加载多远」，再用 `streamer.set_load_radius(r)` 注入一个世界单位的长度；插件把它夹在 `[mount_distance, 查询桶预算]` 内，并按同一比例派生 `sleep / unload`，保持滞回带形状不变。未注入时等于配置基准，行为与静态配置完全一致。
+
+公式在 `example/room_camera_controller.gd` 的 `compute_load_radius()`：
+
+\[
+r = \sqrt{(\tfrac{vw}{2}+|dz_x|+|off_x|)^2 + (\tfrac{vh}{2}+|dz_y|+|off_y|)^2}
+    \;+\; v_{player}\cdot \text{tick} \;+\; \text{load\_latency\_margin}
+\]
+
+| 量 | 来源 |
+|---|---|
+| `vw, vh` | `_view_size = viewport / zoom`，在 `_apply_camera_bounds()` 算出 |
+| `dz` / `off` | 房间规则的 `camera_deadzone = (220,140)` / `camera_offset = (0,-60)` |
+| `v_player` | `Player.move_speed`（默认 1480，面板可热调） |
+| `tick` | `RoomAtlasStreamingSettings.tick = 0.12` |
+| `load_latency_margin` | 控制器常量 `LOAD_LATENCY_MARGIN = 240`，覆盖异步加载期间玩家继续移动 |
+
+1920×1080 默认参数下 \(r\approx1810\)，1280×720 约 1444，3840×2160 约 2911，都远在桶预算内。分辨率、`zoom`、策略变化都会走幂等入口 `_apply_camera_bounds()`，注入值自动更新。
+
+---
+
+## 编辑器：Room Atlas dock
+
+插件启用后，编辑器**底部 dock** 会出现 **Room Atlas · 地图**，分三栏：左侧 tscn 资源管理、中间网格画布、右侧属性与校验报告。两条 `HSplitContainer` 分隔条可拖动，位置保存在 `EditorSettings`（用户级，不进项目）。
+
+### 数据文件
+
+| 文件 | 作用 |
+|---|---|
+| `res://world_config.tres` | 运行期地图配置（`RoomAtlasConfig`），示例含 8 间房 |
+| `res://room_library.tres` | 编辑期已导入列表（`RoomAtlasSceneLibrary`），运行期不加载 |
+
+默认在项目根目录读写。换目录时在 `project.godot` 里加：
+
+```ini
+[room_atlas]
+config_path="res://data/world_config.tres"
+library_path="res://data/room_library.tres"
+```
+
+也可以在「项目设置 → Room Atlas」里改（已注册默认值与 `*.tres` 文件选择器）。文件不存在时插件会自动创建空配置、空库，父目录一并创建。
+
+### 画布操作
+
+| 操作 | 说明 |
+|---|---|
+| 左键拖动房间 | 按 `cell_size` 吸附，并在约 10 屏幕 px 内自动贴相邻房间边界 / 共线；松手才提交（可撤销） |
+| 空白处 / 右键拖动 | 平移视图 |
+| 滚轮 / 双指捏合 | 以鼠标位置为中心缩放 |
+| 单击房间 | 选中并高亮；右侧上半段只读（`id` / `title` / `scene` / `w` / `h`），下半段可改（`x` / `y` / `tint`） |
+| 单击「已载入」 | 视图平移到对应房间并显示完整属性 |
+| 单击「未载入」 | 右侧只显示该 tscn 声明的 `id` / `title` / `scene` / `w` / `h` |
+| `导入 .tscn` | 多选项目内场景加入列表；新条目落在「未载入」 |
+| 列表 ⚠ 标记 | 保存 `.tscn` 后 `room_id` / `room_size` 与地图或库基线不一致时出现，行内可一键同步 |
+| 每行右侧 × | 未载入 → 移出列表；已载入 → 从地图移除引用它的房间（可撤销） |
+| 虚拟组 | `+` 新建组、双击改名、拖条目入组；删组只影响列表，不动 tscn 与地图 |
+| 筛选框 | 按文件名过滤（大小写不敏感），组名命中时整组保留 |
+| `适应视图` / `保存配置` | 缩放平移到全部房间 / 写回配置路径 |
+
+**红色边框 = 格区间重叠**，必须修掉才能通过校验；绿色边框 = 当前选中。拖拽落图时鼠标位置就是房间 `cells.position`（左上角），不做中心偏移、不自动避让。
+
+画布刻意只表达几何：没有「连接房间」「设置门」之类的操作。所有地图改动都走 `EditorUndoRedoManager`；导入与「移出列表」只改 `room_library.tres`，不进撤销栈。所有绘制都裁剪到画布矩形，放大到房间超出视口时不会溢出到编辑器其它 dock。
+
+### 校验
+
+`RoomAtlasValidator.validate(config)` 只查几何与资源自洽：
+
+- `cell_size` 为正、`rooms` 非空、`id` 唯一非空、`scene` 已指定、`cells.size` 为正
+- **格区间两两不重叠**（重叠会让「谁覆盖谁」取决于加载顺序）
+- `mount < sleep < unload`、`max_mounted >= 0`、`tick > 0`
+- `mount_distance` 超出查询桶预算、`max_mounted` 过小时给出 WARN
+
+面板还会检查库内多个 `.tscn` 声明同一个 `room_id`，命中时追加 WARN。右侧报告在每次地图改动后自动刷新；按 F5 前会再校验一次，**有 error 会阻止运行**。
+
+**不查**连通性、可达性、缝隙、门对齐——这些不是布局层的职责。
 
 ---
 
 ## 配置格式
 
-配置只有一份：自定义 `Resource`（`.tres`），Inspector 原生可编辑、类型安全、引擎管 UID，运行时由 `ResourceLoader` 直接加载。插件不生成 JSON 快照——双份数据容易不同步，且当前没有外部工具消费它。
+配置只有一份：自定义 `Resource`（`.tres`），Inspector 原生可编辑、类型安全、引擎管 UID，运行时由 `ResourceLoader` 直接加载。插件不生成 JSON 快照。
+
+### RoomAtlasConfig
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | `schema_version` | `int` | 当前为 `1`，用于格式迁移 |
-| `cell_size` | `Vector2` | **网格大小**，单位 px；示例 `Vector2(1, 1)`，此时 `cells` 数值就是像素。只影响编辑器吸附与画布网格线，不影响空间索引 |
+| `cell_size` | `Vector2` | 网格大小，单位 px；示例 `Vector2(1, 1)`，只影响编辑器吸附与画布网格线 |
 | `rooms` | `Array` | `RoomAtlasPlacement` 列表；访问请走 `config.placements()` |
 | `streaming` | `RoomAtlasStreamingSettings` | 调度参数 |
 
-`RoomAtlasPlacement`：
+### RoomAtlasPlacement
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | `id` | `StringName` | 房间唯一标识 |
 | `scene` | `PackedScene` | 房间场景；多个房间可共用同一份 |
-| `cells` | `Rect2i` | 格坐标矩形（x, y, w, h）；世界像素矩形 = `cells × cell_size`。`cell_size=1` 时数值就是像素 |
+| `cells` | `Rect2i` | 格坐标矩形；世界像素矩形 = `cells × cell_size` |
 | `tint` | `Color` | 供房间内容 / 地图 / 调试层使用 |
 
-> 编辑期约定：`id` 与 `cells.size` 在拖入地图时由场景根节点的 `room_id` / `room_size` 决定，之后只读；可改的只有 `cells.position` 与 `tint`。
+> 编辑期约定：`id` 与 `cells.size` 在拖入地图时由场景根节点的 `room_id` / `room_size` 决定，之后只读；之后再改场景声明，左栏会出现 ⚠，可用行内同步写回地图（`id` 冲突时跳过）。可改的只有 `cells.position` 与 `tint`。
 
-`RoomAtlasStreamingSettings`：
+### RoomAtlasStreamingSettings
 
-| 字段 | 示例值 | 说明 |
+| 字段 | 插件默认 | 说明 |
 |---|---|---|
-| `mount_distance` | `900` | 小于它开始加载 |
-| `sleep_distance` | `2200` | 大于它休眠 |
-| `unload_distance` | `4200` | 大于它释放节点 |
-| `max_mounted` | `8` | 同时挂载上限 |
-| `tick` | `0.12` | 调度检测间隔（秒） |
+| `mount_distance` | `1000` | 基准下限；运行期有效值由 `set_load_radius()` 注入 |
+| `sleep_distance` | `2000` | 休眠阈值基准，按有效半径同比例派生 |
+| `unload_distance` | `4000` | 释放阈值基准，按有效半径同比例派生 |
+| `max_mounted` | `0` | 同时挂载上限；`<= 0` 表示按有效半径与地图密度自动派生 |
+| `tick` | `0.12` | 调度检测间隔（秒），也参与游戏层的半径公式 |
+| `bucket_size` | `0` | 空间索引桶边长；`<= 0` 表示按地图房间短边中位数自动推导 |
 
-字段的实际取值见 `example/world_config.tres`。
+**插件本体是中立兜底，不绑定任何示例视口或房间尺寸**；示例 `world_config.tres` 写的是 `1200 / 2200 / 4200 / 8 / 1080`（`tick` 未写，取默认 `0.12`），属于 example 层。
 
-### 编辑器资源库（room_library.tres）
+### 编辑期资源库
 
-`RoomAtlasSceneLibrary` 是**纯编辑期** Resource，主要字段：`scenes: Array`（已导入场景，用无类型 Array 便于手写 / diff）、`sizes: Dictionary`（room_size 基线）、`groups: Array` + `group_of: Dictionary`（虚拟分组）。它就是左栏列表的全部内容——项目里其余 `.tscn` 只通过「导入 .tscn」对话框选取，不自动出现在列表里：
+`RoomAtlasSceneLibrary` 是**纯编辑期** Resource：`scenes`（已导入场景）、`sizes`（`room_size` 基线）、`groups` + `group_of`（虚拟分组）。它就是左栏列表的全部内容——项目里其余 `.tscn` 只通过「导入 .tscn」对话框选取，不会自动出现。
 
 | 分区 | 判定 | 行为 |
 |---|---|---|
-| 未载入 | 在 `scenes` 中，但 `world_config.tres` 里没有任何 `placement.scene` 指向它 | 固定排在**上半区**；拖到画布放置房间；× 移出列表 |
-| 已载入 | 在 `scenes` 中，且至少有一个 `placement.scene` 指向它 | 排在下半区；可继续拖放复用；× 从地图移除对应房间后回落到未载入 |
+| 未载入 | 在 `scenes` 中，但配置里没有任何 `placement.scene` 指向它 | 固定排在**上半区**；拖到画布放置房间 |
+| 已载入 | 在 `scenes` 中，且至少有一个 `placement.scene` 指向它 | 排在下半区；可继续拖放复用 |
 
-分区由**是否被拖入地图**决定，与运行期是否挂载无关。拖拽落图、删除「已载入」项以及它们的撤销都会让条目在两个分区之间迁移；内部有差量保护，改 `cells` / `tint` 等不影响分区的操作不会重建列表。若一个资源被多间房引用，删除「已载入」项会一并移除这些房间。
+分区由**是否被拖入地图**决定，与运行期是否挂载无关。若一个资源被多间房引用，删除「已载入」项会一并移除这些房间。虚拟组只影响列表展示，删组不动 tscn 与地图。
 
-虚拟组只影响列表展示：`groups` 存组名（数组顺序即显示顺序），`group_of` 存每个场景的归属。拖拽只改 `group_of`；删组只清 `groups` 与该组的成员归属，tscn 与 `world_config.tres` 都不受影响，成员自动回到「已载入」根层。组内条目仍按 `scenes` 顺序显示。
+---
 
-### 房间基类与身份声明
+## 房间基类与相机规则
 
-自建房间继承 `RoomAtlasRoom2D`（`addons/room_atlas/runtime/room_atlas_room2d.gd`）即可；插件按属性名识别，不依赖具体脚本文件：
+房间场景根节点继承 `RoomAtlasRoom2D`（`addons/room_atlas/runtime/room_atlas_room2d.gd`）即可；插件按属性名识别，不依赖具体脚本文件：
 
 ```gdscript
 @tool
@@ -220,56 +267,61 @@ func _draw() -> void:
 	# 房间内容...
 ```
 
-基类提供 `room_id`（`StringName`）、`room_title`（`String`，显示名）、`room_size`（`Vector2i`，像素）和 `show_editor_bounds`，并在 **2D 编辑器**里常驻绘制边界预览：
+基类提供 `room_id`、`room_title`、`room_size` 和 `show_editor_bounds`，并在 **2D 编辑器**里常驻绘制边界预览：亮青主边框 + 四角外向角标、宽高尺寸线、每 100px 短刻度 / 500px 长刻度、四等分淡网格。`show_camera_bounds` 另外画橙色相机约束区预览。预览只在编辑器绘制，运行时不产生任何绘制。
 
-- 亮青主边框 + 四角外向 L 形角标（画在边界外侧，不会被房间内容盖住）
-- 顶边 `W xxx px`、左边 `H xxx px` 尺寸线与刻度，房间上方写 `宽 × 高 px`
-- 四等分淡网格与很淡填充，方便判断内容是否出界
-- 在 Inspector 改 `room_size` 会立即重绘；`show_editor_bounds = false` 可关闭预览
-- 预览只在编辑器绘制（`Engine.is_editor_hint()`），运行时不产生任何绘制
+### 相机规则（逐房间声明）
 
-编辑器通过 `PackedScene.get_state()` 读取这些属性，不实例化场景；读不到尺寸时退回 `2400×1080`。
+| 字段 | 默认值 | 说明 |
+|---|---|---|
+| `camera_confine` | `true` | 关闭后不再约束相机（恢复无限 `limit_*`），用于对比 |
+| `camera_lock_mode` | `FOLLOW_CONFINED` | 跟随但视图不越界；`FIXED_CENTER` 固定房间中心 |
+| `camera_bounds` | `Rect2(0,0,0,0)` | 房间局部可视区，`size <= 0` 表示整间房 |
+| `camera_deadzone` / `camera_offset` | `(220,140)` / `(0,-60)` | 死区跟随参数；`(0,0)` = 每帧硬贴玩家 |
+| `camera_zoom` | `(1,1)` | 期望缩放 |
+| `camera_fit_mode` | `ZOOM_TO_FIT` | 视口大于房间时是否抬高 zoom |
 
-改完 `room_size` 保存场景后，左栏对应条目会显示橙色 ⚠（与地图占位或资源库基线不一致），行内会多出一个同步按钮，tooltip 写出两边尺寸；点该按钮即可按这个 tscn 的尺寸更新地图（可撤销），未载入项则更新基线。
+基类只提供数据与纯几何计算，**不寻找、不移动任何 `Camera2D`**：
 
-- 拖入地图时 `placement.id` 取 `room_id`、`cells.size` 取 `room_size ÷ cell_size`；`room_id` 已被占用时自动回退到 `rN`，避免重复 id 死锁。
-- 属性面板里 `id` / `title` / `scene` / `w` / `h` 只读并排在上半段，`x` / `y` / `tint` 可改并排在下半段；改 `x` / `y` 或在画布拖动房间都会原样保留 `cells.size`。
-- 单击「未载入」条目时，右侧只读该 `.tscn` 的 `room_id` / `room_title` / `room_size` 显示五项信息，并把下半段的可编辑行整组隐藏。
+| 方法 | 说明 |
+|---|---|
+| `configure(id, placement, cell_size)` | 记录配置算出的权威世界矩形，不依赖房间是否进树 |
+| `camera_rules() -> Dictionary` / `default_camera_rules()` | 输出 / 提供默认规则 |
+| `limit_rect_from(world_bounds) -> Rect2i` | 世界矩形 → 四个 int limit，向内取整不留 1px 越界 |
+| `clamp_camera_position(desired, bounds, view) -> Vector2` | 把相机中心夹到「可见矩形完全落在房间内」 |
+| `required_zoom(bounds, viewport_size, zoom) -> Vector2` | 保证 `viewport / zoom <= 房间尺寸` 的最小 zoom |
+| `view_rect(screen_center, view_size) -> Rect2` | 由屏幕中心算可见矩形 |
 
-### 校验规则
-
-`RoomAtlasValidator.validate(config)` 只查几何与资源自洽：
-
-- `cell_size` 为正、`rooms` 非空、`id` 唯一非空、`scene` 已指定、`cells.size` 为正
-- **格区间两两不重叠**（重叠会让"谁覆盖谁"取决于加载顺序，把确定性交给运行时）
-- `0 < mount < sleep < unload`、`max_mounted > 0`、`tick > 0`
-
-**不查**连通性、可达性、缝隙、门对齐——这些不是布局层的职责。
+几何的**唯一权威来源是配置**（`streamer.world_rect(id)`），不是场景声明的 `room_size`——编辑器允许两者暂时不一致（⚠ 同步机制），以配置为准才不会尺寸漂移。`Camera2D.limit_*` 是世界坐标，同一份 `PackedScene` 被多个 placement 复用时，每个实例都由 `configure()` 注入自己的世界矩形；在 `.tscn` 里写死 limit 是错的。
 
 ---
 
 ## Runtime API
 
-`RoomAtlasStreamer` 是唯一的运行时入口。所有方法都是几何 / 生命周期语义，**没有任何方法会移动节点**。
+运行时入口有两个：`RoomAtlasStreamer`（生命周期）与 `RoomAtlasMinimap`（纯显示）。Streamer 的所有方法都是几何 / 生命周期语义，**没有任何方法会移动节点**。
 
 | 方法 | 说明 |
 |---|---|
 | `configure(config)` | 载入配置、建立索引 |
-| `track(target: Node2D)` | 注入"以谁为中心加载"，可以是玩家 / 镜头 / 载具 / 任意节点 |
+| `track(target: Node2D)` | 注入「以谁为中心加载」，可以是玩家 / 镜头 / 载具 / 任意节点 |
+| `set_load_radius(r)` / `effective_distances()` | 注入运行期加载半径 / 只读查询派生后的三个距离 |
 | `world_rect(id) -> Rect2` | 房间的世界矩形 |
 | `to_world(id, local_pos) -> Vector2` | 房间局部坐标 → 世界坐标（纯换算） |
-| `world_to_room(world_pos) -> Dictionary` | 世界坐标 → `{ id, local }`，不在任何房间时返回 `{}`。刻意不叫 `to_local`，避免与 `Node2D.to_local()` 混淆 |
+| `world_to_room(world_pos) -> Dictionary` | 世界坐标 → `{ id, local }`，不在任何房间时返回 `{}` |
 | `room_at(world_pos) -> StringName` | 点属于哪个房间，空 `StringName` 表示无 |
 | `is_mounted(id)` / `is_loading(id)` | 状态查询 |
-| `mounted_ids() -> Array[StringName]` | 已挂载房间列表 |
-| `request_room(id)` | 异步预载（不等待），插件不知道调用方意图 |
+| `mounted_ids()` / `mounted_room(id)` | 已挂载列表 / 只读查询已挂载实例（休眠或未加载返回 `null`） |
+| `nearest_room(world_pos, radius) -> StringName` | 半径内距离最近的房间（复用桶索引） |
+| `touching_bounds(id) -> Rect2` / `touching_rects(id) -> Array[Rect2]` | 覆盖区包围盒 / 与 id 边贴合的矩形集合 |
+| `request_room(id)` | 异步预载（不等待） |
 | `ensure_room(id)` | 同步保底：返回时该房间一定已挂载或已唤醒 |
 
 信号：`room_mounted(id)`、`room_sleeping(id)`、`room_unloaded(id)`、`room_load_failed(id, path)`。
 
-房间场景根节点可选实现 `configure(id, placement, cell_size)` 钩子，用来拿自己的几何信息；插件不强制，房间内容完全自己决定怎么用。继承 `RoomAtlasRoom2D` 时基类已有默认实现（只记录 id），子类 `super()` 后处理自己的内容即可。示例见 `example/room_view.gd`。
+`RoomAtlasLayout` 提供 `view_covered(view, rects)` 等纯几何静态方法；`RoomAtlasCameraRegion.build(rects, view_size)` 用坐标压缩预计算相机中心合法区域，`is_inside()` / `nearest()` / `project()` / `waypoint()` 供运行期查表、重定位与折线绕路。
 
-### 游戏层如何组合出「前往指定房间的指定位置」
+房间场景根节点可选实现 `configure(id, placement, cell_size)` 钩子；继承 `RoomAtlasRoom2D` 时基类已有默认实现，子类 `super()` 后处理自己的内容即可（示例见 `example/room_view.gd`）。
+
+### 组合出「前往指定房间的指定位置」
 
 下面这段代码**属于游戏层，不在插件里**：
 
@@ -283,22 +335,162 @@ func go_to(room_id: StringName, local_pos: Vector2) -> void:
 	cam.reset_smoothing()
 ```
 
-插件提供 ① 保证挂载 ② 坐标换算，游戏层负责 ③ 移动节点 ④ 清理状态。复活、剧情跳转、调试定位、NPC 生成点都复用这一组 API——这正是它没有玩法语义带来的自由度。
+插件提供 ① 保证挂载 ② 坐标换算，游戏层负责 ③ 移动节点 ④ 清理状态。复活、剧情跳转、调试定位、NPC 生成点都复用这一组 API。
 
 ---
 
-## 设计决策
+## 示例层：相机、调试面板与小地图
 
-| 决策 | 理由 |
+示例用**全局唯一** `Camera2D`，由 `example/room_camera_controller.gd` 驱动：每帧 `streamer.room_at(player.global_position)` 取房间 → 读 `RoomAtlasRoom2D.camera_rules()` → 把 `limit_*` / `zoom` 与相机位置夹在**约束区**内。插件全程不碰相机；配置几何同步可用，房间还在异步加载时也能立即锁好边界。
+
+示例地图共 8 间房：底层 r4 → r1 横向排列，r5 叠在 r4 上方，r6 再叠在 r5 上方，r7 与 r6 同层向右延伸，r8 位于 r1 上方，整体是一块带 L 形转角的连通区。
+
+### 连续滚动（默认）
+
+房间配置是静态的，相机中心的可滚动范围能提前算出来。`RoomAtlasCameraRegion.build(rects, view_size)` 以「与当前房间边贴合连通的矩形集合」和可见世界尺寸为输入，用坐标压缩求出所有满足「视图被房间并集完全覆盖」的相机中心，合并成少量矩形。
+
+结果按「覆盖矩形签名 + 可见尺寸」缓存：签名与矩形顺序无关，连续滚动下同一片连通区跨房不变，所以切房直接复用预计算结果，只有进入另一个连通岛、或视口 / zoom 变化才重跑。运行期每帧只查表：
+
+- 目标点合法 → 直接采用；
+- 直线可达 → 用线段与各合法矩形的交区间**精确投影**；
+- 直线被挡住 → `waypoint()` 走两段折线（先纵向对齐水平带，或先横向进入 L 形竖直通道），每段都做直线可达校验；
+- 所有分支统一限速（`0.02 × 可见宽 + 玩家单帧位移`），避免目标突然合法时一帧跳几百像素；
+- 传送 / 策略切换时用 `nearest()` 直接落到目标附近的合法中心。
+
+纵向只在「房间高度不超过视口」时约束到中线；房间高于视口（r5 高 2160）时放开纵向。跨层回落按 `1.2 × 视口高/秒` 平滑逼近中线，不会一帧切掉上一层。包围盒 `touching_bounds(id)` 只用于 `limit_*` 粗约束、`auto_fit` 缩放与 HUD 数值。
+
+由此得到的行为：从 r1 走到 r2 时 limit / zoom / 覆盖集合都不变，相机按死区继续水平滚动，视图自然越过接缝；从 r4 右侧向上进 r5 时，相机会先左移进竖直通道再上移；从 r5 向下回 r4 时，下排房间高度恰好等于视口高，横向合法带是零厚度的，相机会先把 y 对齐再向右跟随。两种回程玩家都全程不出画。
+
+### 策略与调试面板
+
+所有策略集中在 `example/camera_policy.gd`，运行时热切换（`changed` 信号触发控制器幂等重算）：
+
+| 开关 | 取值（默认） | 说明 |
+|---|---|---|
+| `out_of_room` | `HOLD_LAST` / **`HOLD_AND_RESPAWN`** / `UNLOCK` / `NEAREST_ROOM` | 玩家不在任何房间时：保持上一房 / 保持并回起点 / 解除 limit / 用最近房间规则 |
+| `room_transition` | **`CONTINUOUS`** / `HARD_CUT` | 连续滚动（不换边界） / 硬切一屏 |
+| `switch_cooldown` / `enter_margin` | `0` / `0` | 切换冷却、进入缓冲，消除贴边界反复切屏 |
+| `override_room_rules` + `override_*` | `false` | 用面板数值覆盖所有房间声明，便于横向对比 |
+| `freeze_x_on_layer_change` / `freeze_release_margin` | `true` / `240` | 上层 → 下层跨层后冻结横向跟随；玩家水平位移超过该值解冻 |
+| `player_speed` | `1480` | 玩家速度（px/s），面板热调 |
+| `show_hud` / `show_player_room` | `true` | 中文状态区、玩家「房内」/「房外」标记 |
+| `show_minimap_ids` / `show_minimap_camera` / `show_minimap_coords` | `true` | 小地图房间角标 / 相机视野 / 玩家坐标 |
+
+面板贴在左上角：标题栏（标出 `Tab`）、状态区、可滚动设置区、页脚。设置区按「相机策略 / 房间规则覆盖 / 调试绘制 / 小地图 / 跨层与手感 / 过渡时序」分组；状态区显示房间、房内房外、约束区、缩放与策略、冻结与冷却，几何越界时追加红字警告。
+
+| 想对比 | 操作 | 预期 |
+|---|---|---|
+| 连续滚动 vs 切屏 | 面板切「跨房过渡」，从 r1 走到 r2 | 连续：相机持续滚动、limit 不变；硬切：整屏跳到 r2 并对准玩家 |
+| 锁边有没有用 | 勾「覆盖房间声明的规则」并关「约束生效」，在 r5 里向右走 | 开：停在房间右缘；关：跟到空白区，露出世界网格 |
+| 房间外四策略 | 依次选四种，开局按 `D` 约 1.5 秒出 r1 | 画面稳住 / 回起点 / 自由跟随 / 最近房规则切换 |
+| 视口大于覆盖区 | 硬切 + 缩放 `0.5`，再轮换「视口适配」三项 | 自动抬高 zoom 填满 / 露出房外并红字警告 |
+| 跨层冻结 | 开关「跨层冻结横向」，从 r5 右下角向下进 r4 | 开：保持 x 停在 r4 右半；关：限速右滑到交界 |
+
+调试面板、`override_*` 与显示开关都是**开发期脚手架**，不是插件的公共 API。正式项目建议把「相机运行参数」与「开发期调试开关」拆成两份数据：房间只声明自己那一间的构图参数，跨房过渡与防抖交给统一持有相机的业务系统。
+
+### 小地图（RoomAtlasMinimap）
+
+`RoomAtlasMinimap` 是一个 `Control`，按配置里的房间几何画缩略图，并用光标标出外部传入的世界坐标。它**不认识玩家、不读游戏状态**：谁要显示，谁就每帧把坐标推给它。
+
+```gdscript
+var minimap := RoomAtlasMinimap.new()
+layer.add_child(minimap)
+minimap.configure(config)
+
+# 每帧推入世界坐标（不是房间局部坐标）
+minimap.set_cursor_world_position(player.global_position)
+minimap.set_camera_view(Rect2(center - view * 0.5, view))
+```
+
+| 成员 | 说明 |
 |---|---|
-| 配置里没有门 / seam / portal / 连通图 | 连通性属于内容层；删掉后配置只描述"房间在哪、对应哪个场景"，通用性更强 |
-| 配置里没有 `anchor_room` / 出生点 | 开局挂哪间房由游戏层调 `ensure_room()` 决定 |
-| 用 `track()` 而不是 `player` | 插件不假设世界里存在"玩家"，依赖方向始终是游戏层 → 插件 |
-| 用 `to_world()` 而不是 `teleport_to()` | 插件只返回数据，从不移动节点 |
-| 存格坐标而不是世界坐标 | 整数、可校验、无浮点误差、天然不重叠、支持跨多格 |
-| `cell_size = 1px`，索引桶独立为 600px | 房间边界精确到 1px，同时不让空间索引随网格粒度膨胀；坐标单位与索引粒度是两个不相干的职责 |
-| 房间不生成侧墙 | A 开放连续世界靠网格边界自然连通；墙若要存在，属于房间自己的内容 |
-| `max_mounted` 与距离阈值分离 | 两者需要协同；设太小会让刚挂载的房间立刻被休眠，产生周期性抖动 |
+| `configure(config)` | 载入配置；等价于给导出的 `config` 赋值 |
+| `set_cursor_world_position(world_pos)` | 推入要显示的世界坐标，自动重绘 |
+| `set_camera_view(world_rect)` / `clear_camera_view()` | 推入相机视野矩形 / 隐藏；空矩形等价于隐藏 |
+| `clear_cursor()` / `has_cursor()` | 隐藏 / 查询光标 |
+| `world_to_map(world_pos) -> Vector2` | 世界坐标 → 小地图本地坐标 |
+| `world_bounds() -> Rect2` | 全部房间的世界包围盒 |
+
+绘制分两层：本节点画静态房间层（配置 / 尺寸 / 样式变化时重绘），`MinimapOverlay` 子节点画光标与相机视野（每帧重绘但只有几个图元）。玩家移动的成本与房间数无关。
+
+导出参数包括 `world_padding`、`cursor_color`、`cursor_radius`、`show_cursor_coords`（底部坐标条）、`show_room_ids`（id 角标）、`show_camera_view`（视野矩形）、`camera_view_color` / `camera_view_fill`，以及背景、边框、房间边框、角标底衬等配色。地图等比缩放并居中，不拉伸房间比例；光标超出包围盒时贴边并换成 `out_of_bounds_color`。
+
+### 可选配套：房间局部视差（RoomAtlasParallax）
+
+`addons/room_atlas/companion/` 提供一个可删的视差组件，用来替代内置 `Parallax2D`。内置节点按世界原点 / 当前相机反推自身 `position`，房间被流式摆到任意世界坐标后整层会被推出屏幕；组件的参照系是**房间矩形**：
+
+\[
+\text{shift} = (1 - \text{scroll\_scale}) \odot (\text{camera\_center} - \text{room\_center})
+\]
+
+- `scroll_scale = 1`：与普通世界物体同速，没有视差；
+- `scroll_scale = 0`：钉在屏幕上（最远）；
+- 相机位于房间中心时 `shift = 0`，画面与 2D 编辑器逐像素一致；
+- 只依赖相机中心，不用视口尺寸，分辨率 / zoom 变化不需要重算。
+
+```text
+R1（RoomAtlasRoom2D）
+└─ ParallaxBackground（RoomAtlasParallax，Control，clip_contents）
+   ├─ Far（RoomAtlasParallaxLayer，scroll_scale = 0.2）
+   └─ Near（RoomAtlasParallaxLayer，scroll_scale = 0.4）
+```
+
+和 `RoomAtlasMinimap` 同一契约，由游戏层每帧推入相机中心：
+
+```gdscript
+get_tree().call_group(RoomAtlasParallax.GROUP, &"set_camera_center",
+		cam.get_screen_center_position())
+```
+
+组件在 `_ready` 里加入 `room_atlas_parallax` 组，一行即可覆盖所有已挂载房间；没人推时所有层停在作者摆放的位置（失败模式是「没有视差」，而不是内容消失）。两个脚本都是 `@tool`，编辑器里平移 2D 视图即可实时预览，保存前会复位到作者坐标。第一版只做房间内固定构图，不提供 `repeat_size` / `autoscroll` 这类无限平铺。
+
+---
+
+## 目录结构
+
+```text
+godot4-room-atlas/
+├── project.godot
+├── world_config.tres                 # 运行期地图配置（8 间房，1px 网格）
+├── room_library.tres                 # 编辑期资源库（导入列表 + 尺寸基线）
+├── screenshot/0.png                  # 运行截图
+├── addons/room_atlas/
+│   ├── plugin.cfg                    # 插件清单（v0.2.0）
+│   ├── plugin.gd                     # EditorPlugin：dock + 自动保存 + 运行前校验
+│   ├── editor/
+│   │   ├── room_atlas_world_canvas.gd    # 三栏面板：导入 / 落图 / 属性 / 撤销
+│   │   ├── room_atlas_grid_canvas.gd     # 网格画布：绘制 / 吸附 / 辅助线 / 缩放
+│   │   ├── room_atlas_scene_library.gd   # 编辑期资源库
+│   │   ├── room_atlas_scene_list.gd      # 左栏 Tree：分区 / 拖拽 / 删除
+│   │   └── room_atlas_validator.gd       # 静态校验（纯逻辑）
+│   ├── runtime/                      # 游戏包里只需要这些
+│   │   ├── room_atlas_config.gd      # RoomAtlasConfig
+│   │   ├── room_placement.gd         # RoomAtlasPlacement
+│   │   ├── streaming_settings.gd     # RoomAtlasStreamingSettings
+│   │   ├── room_atlas_layout.gd      # RoomAtlasLayout：几何 + 桶索引
+│   │   ├── room_atlas_streamer.gd    # RoomAtlasStreamer：生命周期
+│   │   ├── room_atlas_room2d.gd      # RoomAtlasRoom2D：房间基类
+│   │   ├── room_atlas_camera_region.gd # RoomAtlasCameraRegion：合法中心预计算
+│   │   └── room_atlas_minimap.gd     # RoomAtlasMinimap：缩略图 + 光标
+│   └── companion/                    # 可选表现层，整个目录可以删
+│       ├── room_atlas_parallax.gd
+│       └── room_atlas_parallax_layer.gd
+└── example/                          # 最小可运行示例，不属于插件本体
+    ├── main.tscn / main.gd           # 装配序列
+    ├── rooms/r1.tscn … r8.tscn       # r1 为苔藓洞窟场景，其余为空白房间
+    ├── assets/sprites/moss_hole/     # r1 使用的贴图
+    ├── player.gd / player2.gd        # 无重力玩家 / 受重力可跳跃角色
+    ├── room_view.gd                  # 房间底板：继承 RoomAtlasRoom2D
+    ├── world_grid.gd                 # 世界网格：空白房间下的移动参照
+    ├── debug_overlay.gd              # 玩家「房内 / 房外」标记
+    ├── camera_policy.gd              # 相机策略开关
+    ├── room_camera_controller.gd     # 相机控制器：跨房 / fit / 加载半径
+    ├── camera_debug_panel.gd         # 调试面板：卡片布局 + Tab 显隐
+    ├── camera_rules_probe.gd         # headless 自检
+    └── room_platform.gd / room_decor.gd  # 备用平台 / 装饰脚本
+```
+
+`class_name` 是 Godot 全局注册的，所以 `RoomAtlas*` 前缀不能省，避免和其它插件撞名。
 
 ---
 
@@ -314,17 +506,16 @@ $GODOT --headless --path "$PROJ" --import
 # 2) 跑几帧，确认示例主场景无运行时报错
 $GODOT --headless --path "$PROJ" --quit-after 5
 
-# 3) 单文件语法检查（新增 / 改动的脚本逐个跑）
-for f in addons/room_atlas/editor/room_atlas_world_canvas.gd \
-         addons/room_atlas/editor/room_atlas_grid_canvas.gd \
-         addons/room_atlas/editor/room_atlas_scene_library.gd \
-         addons/room_atlas/editor/room_atlas_scene_list.gd \
-         addons/room_atlas/runtime/room_atlas_room2d.gd \
-         example/room_view.gd example/room_platform.gd example/room_decor.gd; do
-  $GODOT --headless --path "$PROJ" --check-only --script "res://$f"
+# 3) 单文件语法检查（对 addons/ 与 example/ 下所有脚本）
+cd "$PROJ"
+for f in $(find addons example -name '*.gd'); do
+  $GODOT --headless --path "$PROJ" --check-only --script "res://$f" || exit 1
 done
 
-# 4) 启动编辑器若干帧，确认 dock 构建 / 资源库加载无报错
+# 4) 相机规则自检（limit / zoom / 桶边界 / 半径注入 / 覆盖区签名 / 200 房大地图 / 视差组件）
+$GODOT --headless --path "$PROJ" --script res://example/camera_rules_probe.gd
+
+# 5) 启动编辑器若干帧，确认 dock 构建 / 资源库加载无报错
 $GODOT --headless --path "$PROJ" --editor --quit-after 90
 ```
 
@@ -332,38 +523,53 @@ $GODOT --headless --path "$PROJ" --editor --quit-after 90
 
 ---
 
-### 编辑器上下文：`@tool` 是必需的
+## 设计决策
 
-`addons/room_atlas/` 下除 `room_atlas_streamer.gd` 之外的脚本都带 `@tool`。原因是：编辑器里的 `plugin.gd` 是 `@tool` 脚本，它加载 `.tres` 时，若资源上的自定义脚本没有 `@tool`，Godot 只会创建一个**占位实例（placeholder）**，自定义方法一律不可调用：
-
-> `Invalid call ... Attempt to call a method on a placeholder instance. Check if the script is in tool mode.`
-
-受影响的整条链：`RoomAtlasConfig.placements()`、`r is RoomAtlasPlacement` 类型判断、`RoomAtlasStreamingSettings` 字段读取，以及 `RoomAtlasValidator` 的静态方法——所以这几个脚本都要加 `@tool`，缺一个就可能在编辑器里复现该错误。
-
-`RoomAtlasStreamer` 故意不加：它是运行时节点，加了会让它在编辑器场景里也执行 `_process()` 调度。
-
-`plugin.gd` 加载配置时额外用了 `ResourceLoader.CACHE_MODE_REPLACE`，强制替换缓存中的实例——这样刚给脚本加上 `@tool` 之后，即便编辑器还开着也能立刻拿到真正的实例。保险起见，改动这些脚本后仍建议重新打开项目。
+| 决策 | 理由 |
+|---|---|
+| 配置里没有门 / seam / portal / 连通图 | 连通性属于内容层；配置只描述「房间在哪、对应哪个场景」 |
+| 配置里没有 `anchor_room` / 出生点 | 开局挂哪间房由游戏层调 `ensure_room()` 决定 |
+| 用 `track()` 而不是 `player` | 插件不假设世界里存在「玩家」，依赖方向始终是游戏层 → 插件 |
+| 用 `to_world()` 而不是 `teleport_to()` | 插件只返回数据，从不移动节点 |
+| 存格坐标而不是世界坐标 | 整数、可校验、无浮点误差、天然对齐 |
+| `cell_size = 1px`，索引桶独立由 `bucket_size` 配置 | 房间边界精确到 1px，同时不让索引随网格粒度膨胀 |
+| 插件默认值中立，示例数值留在 `.tres` | 本体不出现示例视口 / 房间尺寸 |
+| 插件不做视口推算，只接受 `set_load_radius(r)` | 半径公式留在认识相机 / 玩家 / 视口的游戏层 |
+| 覆盖区签名顺序无关，跨房复用预计算 | 同一片连通区从不同房间出发 BFS 顺序不同，但矩形集合相同 |
+| 热路径不随房间数平方退化 | 连通查询走桶候选、校验走 x 扫描线、坐标压缩每格只取相交房间 |
+| 房间不生成侧墙 | 开放连续世界靠网格边界自然连通；墙属于房间自己的内容 |
+| 预算保护只休眠半径外的房间 | 上限偏小时保留全部并告警，避免「休眠 → 唤醒」抖动 |
 
 ---
 
 ## 已知限制
 
-- **资源缓存无 LRU**：`_cache` 常驻，走过的房间越多占用越大。房间数量上千后需要淘汰策略（P3）。
-- **`ensure_room()` 与在途线程请求**：同步保底会丢弃该房间的在途请求并直接 `load()`，极端情况下有一次同步读盘。可接受，但生产级应统一成"等待在途请求完成"。
-- **无 floating origin**：Godot 的 `Vector2` 是 32 位浮点，世界坐标超过约 \(1.6\times10^7\) px 后整数精度下降，接缝可能出现裂缝（P4）。
-- **索引桶尺寸固定**：`RoomAtlasLayout.BUCKET_SIZE = 600 px` 是内部常量，未开放到配置。房间普遍远大于或远小于它时可按实际尺寸调整——太小则桶数变多，太大则 `query_near()` 的候选超集变宽。
-- **编辑器属性面板**：`id` / `scene` / `w` / `h` 只读（由 `.tscn` 自己声明，落图时固定下来），只有 `x` / `y` / `tint` 可改；要换房间场景或身份得改 `.tscn` / `.tres` 或重新拖入。
-- **调度参数是全局的**：所有房间共用一套 `mount/sleep/unload`；未来可考虑按房间或按层覆盖。
+- **资源缓存按 LRU 淘汰**：上界 = `max_mounted × 2`；共享同一份 `PackedScene` 的多个房间在缓存被淘汰后会重新读盘一次。
+- **`ensure_room()` 与在途线程请求**：同步保底会丢弃该房间的在途请求并直接 `load()`，极端情况下有一次同步读盘。
+- **无 floating origin**：Godot 的 `Vector2` 是 32 位浮点，世界坐标超过约 \(1.6\times10^7\) px 后精度下降，接缝可能出现裂缝（P4）。
+- **桶尺寸随地图一次选定**：改它要重建整张索引；房间集合运行期不变是静态地图的设计前提，插件不提供增量注册 / 注销。
+- **调度参数是全局的**：所有房间共用一套 `mount / sleep / unload`；未来可考虑按房间或按层覆盖。
+- **合法区域预计算仍是 O(N² log N) 量级**：结果按「覆盖区签名 + 可见尺寸」缓存在进程内，重启会重新预热。实测 200 房规则网格约 17 ms、100 房边界全不对齐约 180 ms。
+- **L 形上下层 / 零厚度水平带需要绕路**：上下层重叠区较窄时，相机会先横向平移到通道 x 范围再上移；房间高度恰好等于视口高时，横向合法带退化成零厚度线，反向通行前相机要先把 y 精确对齐。若两组房间 x 完全不重叠则没有通道，只能靠游戏层传送。
+- **示例层不提供房间外遮罩**：房外内容（`WorldGrid`、超出 `room_size` 的 Sprite2D）在视图越界时会直接可见；需要「房外不可见」时请在自己的渲染层按房间矩形并集做差集遮罩。
+- **连续滚动允许视图跨房**：这是「没有切换过程」的前提；若相邻房间尚未挂载会短暂看到空白，由有效挂载半径提前供给。
+- **`Camera2D.offset` 会推过 limit**：偏移在 limit 计算之后叠加，示例把 `camera_offset` 加在相机 `global_position` 上，并保持 `cam.offset = Vector2.ZERO`。
+- **相机规则在房间场景里，未挂载时用默认值**：规则不写进 `world_config.tres`，因此地图 dock 不展示它们；控制器用 `ensure_room()` 兜底。
+- **示例策略开关只影响运行期**：`override_room_rules` 与调试面板的改动不写回 `.tscn`，重启恢复房间声明值。
 
 ---
 
-## 迭代路线
+## 路线
 
-1. **P2 剩余工作**：tscn 资源库 / 导入 / 拖拽落图 / 列表联动属性面板已完成；接下来把校验结果做成可点击列表并定位到出问题的房间、画布内搜索与批量操作。
-2. **P3 规模化**：`_cache` LRU、按格懒生成空间索引、每房独立 `.tres`（降低多人协作冲突）。
-3. **P4 大坐标**：floating origin，平移量必须是 `cell_size` 的整数倍，否则网格会整体错开。
-
-> **P1 已完成**：`add_dock()` + `EditorDock.default_slot = DOCK_SLOT_BOTTOM`、自绘 `Control` 网格画布、拖拽吸附、x/y 轴相邻辅助线、重叠高亮、`EditorUndoRedoManager` 撤销。Godot 4.7 里 `add_control_to_bottom_panel()` / `add_control_to_dock()` 已弃用，不要再使用。
+| 阶段 | 内容 | 状态 |
+|---|---|---|
+| **P0** | 配置契约、空间索引、距离流式调度、原子 API、最小可运行示例 | 已完成 |
+| **P1** | 可视化网格地图编辑器：拖拽吸附、辅助线、重叠高亮、撤销、校验 | 已完成 |
+| **P2** | tscn 资源库 / 导入 / 拖拽落图 / 列表联动属性面板 | 已完成 |
+| **P2 剩余** | 校验结果可点击定位、画布内搜索与批量操作 | 待做 |
+| **P3** | LRU 缓存、去平方退化、绘制分层、预计算前移、大地图自检 | 已完成 |
+| **P3 剩余** | 按格懒生成索引、每房独立 `.tres`（降低协作冲突） | 待做 |
+| **P4** | floating origin（平移量必须是 `cell_size` 的整数倍） | 待做 |
 
 ---
 

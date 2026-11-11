@@ -22,19 +22,105 @@ var _sleeping: Dictionary = {}     # StringName -> Node
 var _loading: Dictionary = {}      # StringName -> true
 var _requesting: Dictionary = {}   # path -> StringName
 var _cache: Dictionary = {}        # path -> PackedScene
+var _cache_lru: Array[String] = [] # 最近使用的 path 在前，用于 LRU 淘汰
 var _tick := 0.0
+## 运行期有效距离：由游戏层 set_load_radius() 注入，绝不写回 .tres。
+## 未注入时等于配置基准，行为与静态配置完全一致。
+var _effective_mount := 0.0
+var _effective_sleep := 0.0
+var _effective_unload := 0.0
+var _auto_max_mounted := false
 
 
 # ---------------------------------------------------------------- 装配 / 查询
 
 func configure(p_config: RoomAtlasConfig) -> void:
 	_clear_all()
+	_cache.clear()
+	_cache_lru.clear()
+	RoomAtlasCameraRegion.clear_cache()
 	layout = RoomAtlasLayout.new(p_config)
+	var s := layout.streaming()
+	_auto_max_mounted = s.max_mounted <= 0
+	_effective_mount = s.mount_distance
+	_effective_sleep = s.sleep_distance
+	_effective_unload = s.unload_distance
 
 
 ## 注入"以谁为中心加载"。可以是玩家，也可以是镜头、载具或任意节点。
 func track(target: Node2D) -> void:
 	_tracked = target
+
+
+## 启动期 / 分辨率切换时预热所有连通分量的合法区域，把首次切房的坐标压缩
+## 开销前移到配置加载或视口尺寸稳定阶段；运行期切房只查缓存。
+func precompute_regions(view_size: Vector2) -> void:
+	if layout == null or view_size.x <= 0.0 or view_size.y <= 0.0:
+		return
+	for group in layout.connected_groups():
+		RoomAtlasCameraRegion.precompute(group, view_size)
+
+
+## 注入「一次要提前加载多远」（世界像素）。半径由认识视口 / 相机 / 玩家的
+## 游戏层算好；插件不推算视口，只把它限制在 [配置下限, query_near 桶预算] 内，
+## 再按同一比例派生 sleep / unload，保持滞回带形状不变。
+func set_load_radius(radius: float) -> void:
+	if layout == null or not (radius > 0.0):  # NaN / 0 / 负数一律忽略
+		return
+	var s := layout.streaming()
+	var base := maxf(s.mount_distance, 1.0)
+	# 配置的 bucket_size 可能是 0（自动推导），必须用 layout 实际采用的值。
+	var upper := maxf(RoomAtlasLayout.max_query_radius(layout.bucket_size()), base)
+	var mount := clampf(radius, base, upper)  # INF 会被夹到 upper，不会挂死
+	var ratio := mount / base
+	_effective_mount = mount
+	_effective_sleep = s.sleep_distance * ratio
+	_effective_unload = s.unload_distance * ratio
+
+
+## 只读：当前生效的三个距离，供自检 / HUD 使用。
+func effective_distances() -> Dictionary:
+	return {
+		"mount": _effective_mount,
+		"sleep": _effective_sleep,
+		"unload": _effective_unload,
+	}
+
+
+## 只读：当前生效的同时挂载上限（自动派生或配置值），供自检 / HUD 使用。
+func mount_budget() -> int:
+	return _mount_budget() if layout != null else 0
+
+
+## 自动派生同时挂载上限：按有效半径覆盖的圆面积与平均房间面积估算，
+## 留一倍余量，并以地图房间总数为上界（静态地图可控）。
+func _mount_budget() -> int:
+	if not _auto_max_mounted:
+		return maxi(layout.streaming().max_mounted, 1)
+	var r := _effective_mount
+	var est := ceili(PI * r * r / layout.average_room_area() * 2.0) + 4
+	return clampi(est, 4, maxi(layout.room_count(), 4))
+
+
+func _cache_put(path: String, packed: PackedScene) -> void:
+	_cache[path] = packed
+	_cache_touch(path)
+	_trim_cache()
+
+
+func _cache_touch(path: String) -> void:
+	if path.is_empty() or not _cache.has(path):
+		return
+	_cache_lru.erase(path)
+	_cache_lru.push_front(path)
+
+
+## 缓存上界随挂载预算变化；淘汰最久未使用的 PackedScene，已实例化的节点不受影响。
+func _trim_cache() -> void:
+	var budget := maxi(_mount_budget() * 2, 8)
+	while _cache.size() > budget and not _cache_lru.is_empty():
+		var old: String = _cache_lru.pop_back()
+		_cache.erase(old)
 
 
 func world_rect(id: StringName) -> Rect2:
@@ -70,6 +156,24 @@ func mounted_ids() -> Array[StringName]:
 	return out
 
 
+## 只读查询：已挂载的房间实例；休眠 / 未加载时返回 null。
+## 游戏层用它读取房间自己声明的相机规则，插件不解释规则、不驱动相机。
+func mounted_room(id: StringName) -> Node:
+	return _mounted.get(id, null)
+
+
+func nearest_room(world_pos: Vector2, radius: float = -1.0) -> StringName:
+	return layout.nearest_room(world_pos, radius) if layout != null else &""
+
+
+func touching_bounds(id: StringName) -> Rect2:
+	return layout.touching_bounds(id) if layout != null else Rect2()
+
+
+func touching_rects(id: StringName) -> Array[Rect2]:
+	return layout.touching_rects(id) if layout != null else []
+
+
 # ---------------------------------------------------------------- 生命周期 API
 
 ## 异步预载某房间（不等待）。用于提前准备，插件不知道调用方的意图。
@@ -95,7 +199,7 @@ func request_room(id: StringName) -> void:
 		if packed == null:
 			room_load_failed.emit(id, path)
 			return
-		_cache[path] = packed
+		_cache_put(path, packed)
 		_mount_now(id)
 		return
 	_requesting[path] = id
@@ -113,7 +217,7 @@ func ensure_room(id: StringName) -> void:
 	if not _sleeping.has(id) and not _cache.has(path) and not path.is_empty():
 		var packed := ResourceLoader.load(path, "PackedScene") as PackedScene
 		if packed != null:
-			_cache[path] = packed
+			_cache_put(path, packed)
 	_mount_now(id)
 
 
@@ -145,7 +249,7 @@ func _poll_requests() -> void:
 		if st == ResourceLoader.THREAD_LOAD_LOADED:
 			var packed := ResourceLoader.load_threaded_get(path) as PackedScene
 			if packed != null:
-				_cache[path] = packed
+				_cache_put(path, packed)
 				_mount_now(id)
 			else:
 				room_load_failed.emit(id, path)
@@ -155,36 +259,39 @@ func _poll_requests() -> void:
 
 func _update_streaming() -> void:
 	var p := _tracked.global_position
-	var s := layout.streaming()
 
-	# 挂载：只枚举邻域，不遍历全世界。
-	for id in layout.query_near(p, s.mount_distance):
+	# 挂载：只枚举邻域，不遍历全世界。半径来自游戏层注入的有效值。
+	for id in layout.query_near(p, _effective_mount):
 		if _mounted.has(id) or _loading.has(id):
 			continue
-		if _dist_to_rect(p, world_rect(id)) > s.mount_distance:
+		if _dist_to_rect(p, world_rect(id)) > _effective_mount:
 			continue
 		request_room(id)
 
 	# 休眠：远离就停画、停脚本、停碰撞。
 	for id in _mounted.keys():
-		if _dist_to_rect(p, world_rect(id)) > s.sleep_distance:
+		if _dist_to_rect(p, world_rect(id)) > _effective_sleep:
 			_sleep(id)
 
 	# 卸载：休眠且更远才真正释放节点。
 	for id in _sleeping.keys():
-		if _dist_to_rect(p, world_rect(id)) > s.unload_distance:
+		if _dist_to_rect(p, world_rect(id)) > _effective_unload:
 			_unload(id)
 
-	# 预算保护：超出上限时休眠最远的一个。
-	while _mounted.size() > s.max_mounted:
+	# 预算保护：只休眠半径外的房间。若所有房间都还在半径内，说明上限偏小，
+	# 保留全部并告警，避免「休眠 → 下一 tick 唤醒」的周期性抖动。
+	var budget := _mount_budget()
+	while _mounted.size() > budget:
 		var far := &""
 		var far_d := -1.0
 		for id in _mounted.keys():
 			var d := _dist_to_rect(p, world_rect(id))
-			if d > far_d:
-				far_d = d
-				far = id
+			if d <= _effective_mount or d <= far_d:
+				continue
+			far_d = d
+			far = id
 		if far == &"":
+			push_warning("挂载上限 %d 小于半径内房间数，已保留全部" % budget)
 			break
 		_sleep(far)
 
@@ -206,6 +313,7 @@ func _mount_now(id: StringName) -> void:
 	var packed: PackedScene = _cache.get(path, null)
 	if packed == null:
 		return
+	_cache_touch(path)
 	var room := packed.instantiate()
 	if room == null:
 		room_load_failed.emit(id, path)
@@ -248,6 +356,7 @@ func _unload(id: StringName) -> void:
 	if is_instance_valid(n):
 		n.queue_free()
 	room_unloaded.emit(id)
+	_trim_cache()
 
 
 func _set_collision(root: Node, enabled: bool) -> void:

@@ -39,8 +39,8 @@ var _tint_picker: ColorPickerButton = null
 var _editable_row_controls: Array[Control] = []
 var _inspected_scene_path := ""
 var _last_library_state := PackedStringArray()
-## 场景当前 room_size 缓存：path → Vector2i；文件系统变化时整体清空。
-var _scene_size_cache: Dictionary = {}
+## 场景声明缓存：path → { room_id, room_title, room_size }；文件系统变化时整体清空。
+var _scene_props_cache: Dictionary = {}
 ## 编辑器设置，用来记住 dock 内两条分隔条的位置。
 var _settings: EditorSettings = null
 var _split_outer: HSplitContainer = null
@@ -114,6 +114,15 @@ func _build_ui() -> void:
 	var ltitle := Label.new()
 	ltitle.text = "tscn 资源管理"
 	left.add_child(ltitle)
+
+	# 按文件名筛选；输入即过滤，清空恢复全部。
+	var lfilter := LineEdit.new()
+	lfilter.placeholder_text = "筛选文件名…"
+	lfilter.clear_button_enabled = true
+	lfilter.custom_minimum_size = Vector2(0, 0)
+	lfilter.text_changed.connect(func(text: String) -> void:
+		_scene_list.call("set_filter", text))
+	left.add_child(lfilter)
 
 	_scene_list = SceneListScript.new()
 	_scene_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -292,6 +301,16 @@ func _read_only_label() -> Label:
 func _reload() -> void:
 	if config_path.is_empty():
 		return
+	# 新项目第一次打开时在默认位置生成一份空配置，避免面板不可用。
+	if not ResourceLoader.exists(config_path):
+		var dir := config_path.get_base_dir()
+		if not DirAccess.dir_exists_absolute(dir):
+			DirAccess.make_dir_recursive_absolute(dir)
+		var fresh := RoomAtlasConfig.new()
+		fresh.streaming = RoomAtlasStreamingSettings.new()
+		if ResourceSaver.save(fresh, config_path) != OK:
+			_status("配置创建失败：" + config_path)
+			return
 	config = ResourceLoader.load(config_path, "", ResourceLoader.CACHE_MODE_REPLACE) as RoomAtlasConfig
 	if config == null:
 		_status("配置加载失败：" + config_path)
@@ -487,6 +506,7 @@ func _import_paths(paths: PackedStringArray) -> void:
 	library.set("scenes", scenes)
 	_save_library()
 	_refresh_library()
+	_validate()
 	_status("已导入 %d 个 tscn" % added)
 
 
@@ -509,6 +529,7 @@ func _remove_from_library(path: String) -> void:
 		library.set("group_of", go)
 	_save_library()
 	_refresh_library()
+	_validate()
 	_status("已移出列表 " + path.get_file())
 
 
@@ -630,7 +651,7 @@ func _refresh_library() -> void:
 			loaded.append(p)
 		else:
 			unloaded.append(p)
-	var changed := _changed_sizes()
+	var changed := _changed_assets()
 	var groups := _library_groups()
 	var group_of := _library_group_of()
 	var state := PackedStringArray()
@@ -703,19 +724,21 @@ func _scene_info(path: String) -> Dictionary:
 
 # ---------------------------------------------------------------- 尺寸差异
 
-## 场景当前声明的 room_size（带缓存，文件系统变化时由插件清空）。
-func _scene_size_of(path: String) -> Vector2i:
-	if _scene_size_cache.has(path):
-		return _scene_size_cache[path]
-	var out: Vector2i = DEFAULT_ROOM_SIZE
+## 场景当前声明的属性（带缓存，文件系统变化时由插件清空）。
+func _scene_props_of(path: String) -> Dictionary:
+	if _scene_props_cache.has(path):
+		return _scene_props_cache[path]
+	var out := { "room_id": &"", "room_title": "", "room_size": DEFAULT_ROOM_SIZE }
 	if not path.is_empty() and ResourceLoader.exists(path):
 		var packed := ResourceLoader.load(path, "PackedScene", ResourceLoader.CACHE_MODE_REPLACE) as PackedScene
 		if packed != null:
-			var v: Variant = _scene_root_props(packed)["room_size"]
-			if v is Vector2i:
-				out = v
-	_scene_size_cache[path] = out
+			out = _scene_root_props(packed)
+	_scene_props_cache[path] = out
 	return out
+
+
+func _scene_size_of(path: String) -> Vector2i:
+	return _scene_props_of(path)["room_size"]
 
 
 func _library_sizes() -> Dictionary:
@@ -762,15 +785,34 @@ func _placements_for_path(path: String) -> Array:
 	return out
 
 
-## 返回 path → 差异描述（列表 ⚠ 标记与同步都用它）。
-## 已载入：场景尺寸 vs placement.cells.size；未载入：场景尺寸 vs 库基线。
-func _changed_sizes() -> Dictionary:
+## 库内多个 .tscn 声明了同一个 room_id 时返回 id → 路径数组；空 id 不参与。
+func _duplicate_scene_ids() -> Dictionary:
+	var by_id := {}
+	for path in _library_paths():
+		var id: StringName = _scene_props_of(path)["room_id"]
+		if id == &"":
+			continue
+		if not by_id.has(id):
+			by_id[id] = []
+		by_id[id].append(path)
+	var out := {}
+	for id in by_id:
+		var paths: Array = by_id[id]
+		if paths.size() > 1:
+			out[id] = paths
+	return out
+
+
+## 返回 path → 差异描述（列表 ⚠ 标记与行内同步都用它）。
+## 已载入：场景的 room_size / room_id vs placement；未载入：场景尺寸 vs 库基线。
+func _changed_assets() -> Dictionary:
 	var out := {}
 	if library == null:
 		return out
 	var sizes := _library_sizes()
 	for path in _library_paths():
-		var cur := _scene_size_of(path)
+		var props := _scene_props_of(path)
+		var cur: Vector2i = props["room_size"]
 		var placements := _placements_for_path(path)
 		if placements.is_empty():
 			if not sizes.has(path):
@@ -780,62 +822,110 @@ func _changed_sizes() -> Dictionary:
 				out[path] = "场景 %d×%d，记录 %d×%d" % [cur.x, cur.y, base.x, base.y]
 		else:
 			var expect := _px_to_cells(cur)
+			var notes: Array[String] = []
 			for p in placements:
 				if p.cells.size != expect:
-					out[path] = "场景 %d×%d，地图 %d×%d 格" % [
+					notes.append("场景 %d×%d，地图 %d×%d 格" % [
 						cur.x, cur.y, p.cells.size.x, p.cells.size.y
-					]
+					])
 					break
+			# 场景被多间房引用时 id 各不相同，只对唯一 placement 检查 id。
+			if placements.size() == 1:
+				var scene_id: StringName = props["room_id"]
+				var only: RoomAtlasPlacement = placements[0]
+				if scene_id != &"" and only.id != scene_id:
+					notes.append("场景 id %s，地图 id %s" % [scene_id, only.id])
+			if not notes.is_empty():
+				out[path] = "；".join(PackedStringArray(notes))
+	# 跨场景 id 重复：涉及的文件都标出来（行内同步解决不了，需要改 .tscn）。
+	var dup := _duplicate_scene_ids()
+	for id in dup:
+		var paths: Array = dup[id]
+		for i in paths.size():
+			var others: Array[String] = []
+			for j in paths.size():
+				if j != i:
+					others.append(String(paths[j]).get_file())
+			var note := "场景 id %s 与 %s 重复" % [
+				id, ", ".join(PackedStringArray(others))
+			]
+			var target: String = paths[i]
+			out[target] = (out[target] + "；" + note) if out.has(target) else note
 	return out
 
 
 ## 文件系统变化后由插件调用：清缓存 → 重载库 → 重算标记。
 func refresh_library_from_disk() -> void:
-	_scene_size_cache.clear()
+	_scene_props_cache.clear()
 	_load_library()
 	_refresh_library()
 	_validate()
 
 
-## 行内同步：只处理一个场景，按它当前的 room_size 更新地图占位（保持左上角、可撤销）。
+## 行内同步：只处理一个场景，把 room_size / room_id 写回地图占位（可撤销）。
+## id 只在该场景只有一个 placement、且新 id 未被其它房间占用时才更新。
 func _on_sync_path(path: String) -> void:
 	if config == null or path.is_empty():
 		return
-	if not _changed_sizes().has(path):
+	if not _changed_assets().has(path):
 		return
-	var expect := _px_to_cells(_scene_size_of(path))
+	var props := _scene_props_of(path)
+	var expect := _px_to_cells(props["room_size"])
+	var scene_id: StringName = props["room_id"]
+	var placements := _placements_for_path(path)
+	var single := placements.size() == 1
+	var id_conflict := false
+	if single and scene_id != &"" and placements[0].id != scene_id:
+		for q in config.placements():
+			if q != placements[0] and q.id == scene_id:
+				id_conflict = true
+				break
 	var old_rooms: Array = config.rooms.duplicate()
 	var new_rooms: Array = []
 	var synced := 0
+	var new_selected := selected
 	for r in old_rooms:
 		if r is RoomAtlasPlacement:
 			var p: RoomAtlasPlacement = r
-			if p.scene != null and p.scene.resource_path == path \
-					and p.cells.size != expect:
+			if p.scene != null and p.scene.resource_path == path:
 				var copy: RoomAtlasPlacement = p.duplicate()
-				copy.cells = Rect2i(p.cells.position, expect)
-				new_rooms.append(copy)
-				synced += 1
-				continue
+				var touched := false
+				if p.cells.size != expect:
+					copy.cells = Rect2i(p.cells.position, expect)
+					touched = true
+				if single and scene_id != &"" and p.id != scene_id and not id_conflict:
+					copy.id = scene_id
+					new_selected = scene_id
+					touched = true
+				if touched:
+					new_rooms.append(copy)
+					synced += 1
+					continue
 		new_rooms.append(r)
 	# 同步后把基线也更新，之后回到未载入不会误报。
-	if _set_size_baseline(path, _scene_size_of(path)):
+	if _set_size_baseline(path, props["room_size"]):
 		_save_library()
 	if synced == 0:
 		_refresh_library()
-		_status("已按场景尺寸更新基线：" + path.get_file())
+		if id_conflict:
+			_status("场景 id %s 已被其它房间占用，未同步 id" % scene_id)
+		else:
+			_status("已按场景更新基线：" + path.get_file())
 		return
 	if undo_redo == null:
 		config.rooms = new_rooms
 		_after_change()
 	else:
-		undo_redo.create_action("同步 %s 尺寸（%d 间房）" % [path.get_file(), synced])
+		undo_redo.create_action("同步 %s（%d 间房）" % [path.get_file(), synced])
 		undo_redo.add_do_property(config, "rooms", new_rooms)
 		undo_redo.add_undo_property(config, "rooms", old_rooms)
 		undo_redo.add_do_method(self, "_after_change")
 		undo_redo.add_undo_method(self, "_after_change")
 		undo_redo.commit_action()
-	_status("已按 %s 同步 %d 间房尺寸" % [path.get_file(), synced])
+	if new_selected != selected:
+		selected = new_selected
+		_canvas.select(new_selected)
+	_status("已按 %s 同步 %d 间房" % [path.get_file(), synced])
 
 
 func _on_import() -> void:
@@ -1036,6 +1126,15 @@ func _validate() -> void:
 		lines.append("[color=#ff6b6b]ERROR[/color] " + e)
 	for w in result.warnings:
 		lines.append("[color=#ffd166]WARN [/color] " + w)
+	# 库内跨场景 id 重复：配置本身合法，但落图时后放的那份会被自动改名。
+	var dup := _duplicate_scene_ids()
+	for id in dup:
+		var names: Array[String] = []
+		for p in dup[id]:
+			names.append(String(p).get_file())
+		lines.append("[color=#ffd166]WARN [/color] 场景 id 重复：%s（%s）" % [
+			id, ", ".join(PackedStringArray(names))
+		])
 	if lines.is_empty():
 		lines.append("[color=#6bff9b]OK[/color] 配置有效")
 	_report.append_text("\n".join(PackedStringArray(lines)))

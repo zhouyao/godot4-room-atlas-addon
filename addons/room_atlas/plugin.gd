@@ -11,8 +11,10 @@ extends EditorPlugin
 ## room_library.tres 是编辑期资源池（只记录导入了哪些 .tscn），运行期不加载。
 ## 不做 JSON 快照，也不注册工具菜单，所有编辑与校验能力都集中在底部 dock。
 
-const CONFIG_PATH := "res://example/world_config.tres"
-const LIBRARY_PATH := "res://example/room_library.tres"
+## 默认放在项目根目录；可在 project.godot 的 [room_atlas] 段覆盖：
+##   config_path / library_path
+const DEFAULT_CONFIG_PATH := "res://world_config.tres"
+const DEFAULT_LIBRARY_PATH := "res://room_library.tres"
 const WorldCanvasScript = preload("res://addons/room_atlas/editor/room_atlas_world_canvas.gd")
 
 var _dock: EditorDock = null
@@ -20,7 +22,38 @@ var _panel = null
 var _fs_refresh_pending := false
 
 
+func _config_path() -> String:
+	return String(ProjectSettings.get_setting("room_atlas/config_path", DEFAULT_CONFIG_PATH))
+
+
+func _library_path() -> String:
+	return String(ProjectSettings.get_setting("room_atlas/library_path", DEFAULT_LIBRARY_PATH))
+
+
+## 在「项目设置」里为两个路径提供默认值与 *.tres 文件选择器。
+##
+## 顺序很重要：add_property_info() 与 set_initial_value() 都要求设置项已存在，
+## 所以必须先 set_setting() 创建它，否则启动时会报
+## "Request for nonexistent project setting" 和 "!props.has(pinfo.name)"。
+func _register_project_settings() -> void:
+	_register_setting("room_atlas/config_path", DEFAULT_CONFIG_PATH)
+	_register_setting("room_atlas/library_path", DEFAULT_LIBRARY_PATH)
+
+
+func _register_setting(name: String, default_value: String) -> void:
+	if not ProjectSettings.has_setting(name):
+		ProjectSettings.set_setting(name, default_value)
+	ProjectSettings.add_property_info({
+		"name": name,
+		"type": TYPE_STRING,
+		"hint": PROPERTY_HINT_FILE,
+		"hint_string": "*.tres",
+	})
+	ProjectSettings.set_initial_value(name, default_value)
+
+
 func _enter_tree() -> void:
+	_register_project_settings()
 	_dock = EditorDock.new()
 	_dock.name = "RoomAtlasDock"
 	_dock.title = "Room Atlas"
@@ -34,7 +67,7 @@ func _enter_tree() -> void:
 	_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_dock.add_child(_panel)
 	add_dock(_dock)
-	_panel.setup(CONFIG_PATH, LIBRARY_PATH, get_undo_redo(),
+	_panel.setup(_config_path(), _library_path(), get_undo_redo(),
 			get_editor_interface().get_editor_settings())
 	var fs := get_editor_interface().get_resource_filesystem()
 	if fs != null:
@@ -78,16 +111,17 @@ func _current_config() -> RoomAtlasConfig:
 		var c: RoomAtlasConfig = _panel.call("current_config") as RoomAtlasConfig
 		if c != null:
 			return c
-	return ResourceLoader.load(CONFIG_PATH, "", ResourceLoader.CACHE_MODE_REPLACE) as RoomAtlasConfig
+	return ResourceLoader.load(_config_path(), "", ResourceLoader.CACHE_MODE_REPLACE) as RoomAtlasConfig
 
 
 ## 运行前最后一道闸：有 error 就中止运行，避免带着错配置跑半天。
 func _build() -> bool:
-	if not ResourceLoader.exists(CONFIG_PATH):
+	var cfg_path := _config_path()
+	if not ResourceLoader.exists(cfg_path):
 		return true
 	var config := _current_config()
 	if config == null:
-		push_error("[Room Atlas] 无法加载配置：" + CONFIG_PATH)
+		push_error("[Room Atlas] 无法加载配置：" + cfg_path)
 		return false
 	var result := RoomAtlasValidator.validate(config)
 	if not result.errors.is_empty():

@@ -1,37 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene format=3]
 
-[ext_resource type="Script" path="res://example/room_view.gd" id="1_view"]
-[ext_resource type="Script" path="res://example/room_platform.gd" id="2_plat"]
-[ext_resource type="Script" path="res://example/room_decor.gd" id="3_decor"]
+[ext_resource type="Script" uid="uid://b7eldc5ppkar3" path="res://example/room_view.gd" id="1_view"]
 
 [node name="R4" type="Node2D"]
 script = ExtResource("1_view")
 room_id = &"r4"
-room_title = "R4 · 断桥"
+room_title = "R4"
 room_size = Vector2i(2400, 1080)
-
-[node name="P1" type="StaticBody2D" parent="."]
-position = Vector2(420, 640)
-script = ExtResource("2_plat")
-size = Vector2(620, 30)
-color = Color(0.55, 0.72, 0.86, 1)
-
-[node name="P2" type="StaticBody2D" parent="."]
-position = Vector2(1980, 640)
-script = ExtResource("2_plat")
-size = Vector2(620, 30)
-color = Color(0.55, 0.72, 0.86, 1)
-
-[node name="D1" type="Node2D" parent="."]
-position = Vector2(1040, 420)
-script = ExtResource("3_decor")
-kind = &"crystal"
-size = Vector2(80, 140)
-color = Color(0.5, 0.85, 1, 1)
-
-[node name="D2" type="Node2D" parent="."]
-position = Vector2(1380, 520)
-script = ExtResource("3_decor")
-kind = &"crystal"
-size = Vector2(60, 110)
-color = Color(0.72, 0.6, 1, 1)
