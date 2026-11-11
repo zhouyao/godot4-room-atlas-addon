@@ -14,7 +14,7 @@ signal group_deleted(group_name: String)
 signal group_renamed(old_name: String, new_name: String)
 signal path_group_changed(path: String, group_name: String)
 
-const DRAG_TYPE := "room_atlas_scene"
+const DRAG_TYPE := "seamless_rooms_scene"
 const GROUP_PREFIX := "group:"
 const SECTION_LOADED := "section:loaded"
 const SECTION_UNLOADED := "section:unloaded"
@@ -100,14 +100,14 @@ func _render() -> void:
 			loaded.append(p)
 
 	var top := create_item(root)
-	top.set_text(0, RoomAtlasI18n.tf("Not loaded (%d)", [unloaded.size()]))
+	top.set_text(0, SeamlessRoomI18n.tf("Not loaded (%d)", [unloaded.size()]))
 	top.set_selectable(0, false)
 	top.set_custom_color(0, Color(1.0, 0.78, 0.42))
 	top.collapsed = false
 	top.set_metadata(0, SECTION_UNLOADED)
 	for p in unloaded:
 		_add_scene_item(top, p,
-				RoomAtlasI18n.t("Not on the map · drag onto canvas to place · × removes from list"),
+				SeamlessRoomI18n.t("Not on the map · drag onto canvas to place · × removes from list"),
 				icon, String(changed.get(p, "")))
 
 	var bottom := create_item(root)
@@ -139,7 +139,7 @@ func _render() -> void:
 		gi.set_text(0, "%s (%d)" % [gname, members.size()])
 		gi.set_metadata(0, GROUP_PREFIX + gname)
 		gi.set_custom_color(0, Color(0.75, 0.86, 1.0))
-		gi.set_tooltip_text(0, RoomAtlasI18n.tf(
+		gi.set_tooltip_text(0, SeamlessRoomI18n.tf(
 				"Virtual group: %s\nDouble-click the name to rename · drag a tscn here to add it\nDrag onto \"Loaded\" to remove · × deletes the group",
 				[gname]))
 		gi.collapsed = false
@@ -152,16 +152,16 @@ func _render() -> void:
 		for p in members:
 			grouped[p] = true
 			_add_scene_item(gi, p,
-					RoomAtlasI18n.t("In group · drag onto canvas to place · × removes from list"),
+					SeamlessRoomI18n.t("In group · drag onto canvas to place · × removes from list"),
 					icon, String(changed.get(p, "")))
 	for p in loaded:
 		if grouped.has(p):
 			continue
 		_add_scene_item(bottom, p,
-				RoomAtlasI18n.t("On the map · drag to place again · × removes from map"),
+				SeamlessRoomI18n.t("On the map · drag to place again · × removes from map"),
 				icon, String(changed.get(p, "")))
 	# 组名命中时成员已补进 loaded，统一在这里写分区计数。
-	bottom.set_text(0, RoomAtlasI18n.tf("Loaded (%d)", [loaded.size()]))
+	bottom.set_text(0, SeamlessRoomI18n.tf("Loaded (%d)", [loaded.size()]))
 
 
 func _matches(path: String) -> bool:
@@ -181,7 +181,7 @@ func _add_scene_item(parent: TreeItem, path: String, tip: String, icon: Texture2
 		# 场景 room_size 与地图占位/基线不一致：橙色 + ⚠ 标记。
 		it.set_text(0, path.get_file() + "  ⚠")
 		it.set_custom_color(0, Color(1.0, 0.72, 0.35))
-		it.set_tooltip_text(0, path + " · " + tip + RoomAtlasI18n.tf(
+		it.set_tooltip_text(0, path + " · " + tip + SeamlessRoomI18n.tf(
 				"\n⚠ %s\nClick the inline sync button to update from the current tscn size",
 				[warn]))
 		var sync := _get_sync_icon()

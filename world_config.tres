@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="RoomAtlasConfig" format=3 uid="uid://corryvd6gywef"]
+[gd_resource type="Resource" script_class="SeamlessRoomConfig" format=3 uid="uid://corryvd6gywef"]
 
-[ext_resource type="Script" uid="uid://ds72rfix80ob0" path="res://addons/room_atlas/runtime/room_atlas_config.gd" id="1_cfg"]
-[ext_resource type="Script" uid="uid://etbn3c7asj82" path="res://addons/room_atlas/runtime/room_placement.gd" id="2_plc"]
-[ext_resource type="Script" uid="uid://chvclralnoen" path="res://addons/room_atlas/runtime/streaming_settings.gd" id="3_str"]
+[ext_resource type="Script" uid="uid://ds72rfix80ob0" path="res://addons/seamless_rooms/runtime/seamless_rooms_config.gd" id="1_cfg"]
+[ext_resource type="Script" uid="uid://etbn3c7asj82" path="res://addons/seamless_rooms/runtime/seamless_rooms_placement.gd" id="2_plc"]
+[ext_resource type="Script" uid="uid://chvclralnoen" path="res://addons/seamless_rooms/runtime/seamless_rooms_streaming_settings.gd" id="3_str"]
 [ext_resource type="PackedScene" uid="uid://b4yottikb527e" path="res://example/rooms/r1.tscn" id="4_r1"]
 [ext_resource type="PackedScene" uid="uid://ceajhcs7m6qgi" path="res://example/rooms/r2.tscn" id="4_r2"]
 [ext_resource type="PackedScene" path="res://example/rooms/r3.tscn" id="4_r3"]

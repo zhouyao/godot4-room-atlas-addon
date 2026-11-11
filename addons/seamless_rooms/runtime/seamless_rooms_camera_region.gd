@@ -1,5 +1,5 @@
 @tool
-class_name RoomAtlasCameraRegion
+class_name SeamlessRoomCameraRegion
 extends RefCounted
 
 ## 相机中心的合法区域（一次性预计算）。
@@ -14,7 +14,7 @@ const EPS := 0.5
 
 ## 进程内缓存：键 = 顺序无关的覆盖区签名 + 可见尺寸。
 ## 静态地图下同一片覆盖区在同一分辨率只算一次；切换分辨率后旧尺寸的结果也保留，
-## 切回来直接命中。由 RoomAtlasStreamer.configure() 清空，避免跨配置累积。
+## 切回来直接命中。由 SeamlessRoomStreamer.configure() 清空，避免跨配置累积。
 static var _cache: Dictionary = {}
 
 static func cache_key(p_rects: Array, p_view: Vector2) -> String:
@@ -26,7 +26,7 @@ static func cache_key(p_rects: Array, p_view: Vector2) -> String:
 
 
 ## 带缓存的构建；命中时不再跑坐标压缩。
-static func build_cached(p_rects: Array, p_view: Vector2) -> RoomAtlasCameraRegion:
+static func build_cached(p_rects: Array, p_view: Vector2) -> SeamlessRoomCameraRegion:
 	var key := cache_key(p_rects, p_view)
 	if _cache.has(key):
 		return _cache[key]
@@ -53,8 +53,8 @@ var rects: Array[Rect2] = []          # 精确合法区域，由若干矩形组�
 var source_count := 0                 # 参与预计算的房间矩形数
 
 
-static func build(p_room_rects: Array, p_view_size: Vector2) -> RoomAtlasCameraRegion:
-	var region := RoomAtlasCameraRegion.new()
+static func build(p_room_rects: Array, p_view_size: Vector2) -> SeamlessRoomCameraRegion:
+	var region := SeamlessRoomCameraRegion.new()
 	region.view_size = p_view_size
 	region.source_count = p_room_rects.size()
 	if p_room_rects.is_empty() or p_view_size.x <= 0.0 or p_view_size.y <= 0.0:
@@ -96,7 +96,7 @@ static func build(p_room_rects: Array, p_view_size: Vector2) -> RoomAtlasCameraR
 	var ny := ys.size() - 1
 	if nx <= 0 or ny <= 0:
 		var c := Vector2((lo.x + hi.x) * 0.5, (lo.y + hi.y) * 0.5)
-		if RoomAtlasLayout.view_covered(Rect2(c - half, p_view_size), p_room_rects):
+		if SeamlessRoomLayout.view_covered(Rect2(c - half, p_view_size), p_room_rects):
 			region.rects.append(Rect2(c, Vector2.ZERO))
 		return region
 
@@ -114,7 +114,7 @@ static func build(p_room_rects: Array, p_view_size: Vector2) -> RoomAtlasCameraR
 		for i in range(nx):
 			var cx := (xs[i] + xs[i + 1]) * 0.5
 			var view := Rect2(Vector2(cx, cy) - half, p_view_size)
-			row.append(RoomAtlasLayout.view_covered(
+			row.append(SeamlessRoomLayout.view_covered(
 					view, _candidates_for_view(by_x, view, max_width)))
 		legal.append(row)
 	region.rects = _merge_cells(legal, xs, ys, nx, ny)

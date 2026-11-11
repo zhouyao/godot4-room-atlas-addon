@@ -2,11 +2,11 @@ extends Node
 
 ## 示例层相机控制器：全局唯一 Camera2D 的驱动者。
 ##
-## 每帧用 streamer.room_at(player) 判定当前房间，取该房间在 RoomAtlasRoom2D 上
+## 每帧用 streamer.room_at(player) 判定当前房间，取该房间在 SeamlessRoom2D 上
 ## 声明的规则，再用配置里的权威几何把相机 limit / zoom / 位置夹在约束区内。
 ## 插件本身不认识相机、不移动节点。
 ##
-## 连续滚动（默认）：RoomAtlasCameraRegion 在「配置 + 视口 + zoom」确定后一次性
+## 连续滚动（默认）：SeamlessRoomCameraRegion 在「配置 + 视口 + zoom」确定后一次性
 ## 预算出相机中心的合法区域并缓存；运行期只查表 + 精确投影，没有逐帧覆盖检测、
 ## 没有二分、没有切屏。硬切一屏把约束区切回单间房，保留供对比。
 
@@ -52,7 +52,7 @@ static func _merge_rects(p_rects: Array[Rect2]) -> Rect2:
 		out = out.merge(p_rects[i])
 	return out
 
-var streamer: RoomAtlasStreamer
+var streamer: SeamlessRoomStreamer
 var player: Node2D
 var cam: Camera2D
 var policy: RefCounted
@@ -65,7 +65,7 @@ var _bounds := Rect2()          # 当前房间规则给出的单房矩形（状�
 var _confine_rect := Rect2()    # 覆盖区包围盒：limit_* 粗约束 / auto_fit / HUD 数值
 var _cover_rects: Array[Rect2] = []  # 参与预计算的房间矩形集合
 var _cover_signature := ""          # 顺序无关的覆盖区签名，跨房复用预计算结果
-var _region: RoomAtlasCameraRegion = null  # 覆盖区 + 可见尺寸对应的预计算结果
+var _region: SeamlessRoomCameraRegion = null  # 覆盖区 + 可见尺寸对应的预计算结果
 var _last_viewport_size := Vector2.ZERO
 var _precomputed_view := Vector2.ZERO
 var _viewport_settle := 0.0
@@ -88,7 +88,7 @@ var _out_of_bounds := false
 # ---------------------------------------------------------------- 装配
 
 func setup(
-		p_streamer: RoomAtlasStreamer, p_player: Node2D, p_cam: Camera2D,
+		p_streamer: SeamlessRoomStreamer, p_player: Node2D, p_cam: Camera2D,
 		p_policy: RefCounted, p_start_room: StringName, p_start_local: Vector2) -> void:
 	streamer = p_streamer
 	player = p_player
@@ -205,10 +205,10 @@ func _activate_room(id: StringName) -> void:
 
 func _refresh_rules(id: StringName) -> void:
 	var room: Node = streamer.mounted_room(id)
-	if room is RoomAtlasRoom2D:
-		_rules = (room as RoomAtlasRoom2D).camera_rules()
+	if room is SeamlessRoom2D:
+		_rules = (room as SeamlessRoom2D).camera_rules()
 	else:
-		_rules = RoomAtlasRoom2D.default_camera_rules()
+		_rules = SeamlessRoom2D.default_camera_rules()
 	# 几何永远以配置为准，不用房间场景自己声明的 room_size。
 	_rules["world_rect"] = streamer.world_rect(id)
 	if policy.override_room_rules:
@@ -248,8 +248,8 @@ func _apply_camera_bounds() -> void:
 	var vp: Vector2 = get_viewport().get_visible_rect().size
 	var desired: Vector2 = _rules["zoom"]
 	_zoom = Vector2(maxf(absf(desired.x), 0.001), maxf(absf(desired.y), 0.001))
-	if int(_rules["fit_mode"]) == RoomAtlasRoom2D.FIT_ZOOM_TO_FIT:
-		_zoom = RoomAtlasRoom2D.required_zoom(_confine_rect, vp, _zoom)
+	if int(_rules["fit_mode"]) == SeamlessRoom2D.FIT_ZOOM_TO_FIT:
+		_zoom = SeamlessRoom2D.required_zoom(_confine_rect, vp, _zoom)
 	_view_size = vp / _zoom
 	cam.zoom = _zoom
 	# 尺寸变化后一次性预热所有连通分量的合法区域，首次切房不再现场计算。
@@ -272,7 +272,7 @@ func _apply_camera_bounds() -> void:
 	# Camera2D.offset 在 limit 之后叠加，会推过边界；偏移统一加在相机位置上。
 	cam.offset = Vector2.ZERO
 	if bool(_rules["confine"]) and not _unlocked:
-		var lr := RoomAtlasRoom2D.limit_rect_from(_confine_rect)
+		var lr := SeamlessRoom2D.limit_rect_from(_confine_rect)
 		cam.limit_left = lr.position.x
 		cam.limit_top = lr.position.y
 		cam.limit_right = lr.end.x
@@ -288,12 +288,12 @@ func _apply_camera_bounds() -> void:
 
 ## 预计算结果按引用缓存：覆盖矩形变化时由 _refresh_rules() 置空，
 ## 可见尺寸变化时这里按 view_size 判断重算。运行期每帧只做两次比较。
-func _ensure_region(p_view: Vector2) -> RoomAtlasCameraRegion:
+func _ensure_region(p_view: Vector2) -> SeamlessRoomCameraRegion:
 	if _region != null and _region.view_size.is_equal_approx(p_view):
 		return _region
 	if _cover_rects.is_empty():
 		return null
-	_region = RoomAtlasCameraRegion.build_cached(_cover_rects, p_view)
+	_region = SeamlessRoomCameraRegion.build_cached(_cover_rects, p_view)
 	return _region
 
 
@@ -301,7 +301,7 @@ func _follow_player() -> void:
 	if _rules.is_empty():
 		return
 	var target: Vector2
-	if int(_rules["lock_mode"]) == RoomAtlasRoom2D.LOCK_FIXED_CENTER:
+	if int(_rules["lock_mode"]) == SeamlessRoom2D.LOCK_FIXED_CENTER:
 		target = _confine_rect.get_center()
 	else:
 		var off: Vector2 = _rules["offset"]
@@ -318,7 +318,7 @@ func _follow_player() -> void:
 		# 的垂直中线，避免玩家贴近上边界时镜头提前跨层露出上一层。
 		# 房间高于视口（如 r5）则放开纵向，让跨层时镜头跟着玩家连续过渡，
 		# 而不是瞬间切到另一层的中心范围。
-		if int(_rules["lock_mode"]) != RoomAtlasRoom2D.LOCK_FIXED_CENTER \
+		if int(_rules["lock_mode"]) != SeamlessRoom2D.LOCK_FIXED_CENTER \
 				and _bounds.size.y <= _view_size.y + 1.0:
 			var half_h := _view_size.y * 0.5
 			var y_lo := _bounds.position.y + half_h
@@ -347,7 +347,7 @@ func _follow_player() -> void:
 		else:
 			# 跨层冻结：不再主动把相机推向玩家 x，但仍允许 _clamp_camera_to_coverage
 			# 为满足视图合法性做必要修正。
-			if _freeze_x and int(_rules["lock_mode"]) != RoomAtlasRoom2D.LOCK_FIXED_CENTER:
+			if _freeze_x and int(_rules["lock_mode"]) != SeamlessRoom2D.LOCK_FIXED_CENTER:
 				target.x = cam.global_position.x
 			target = _clamp_camera_to_coverage(target, _view_size)
 	cam.global_position = target
@@ -357,7 +357,7 @@ func _follow_player() -> void:
 func _clamp_camera_to_coverage(p_desired: Vector2, p_view: Vector2) -> Vector2:
 	var region := _ensure_region(p_view)
 	if region == null or region.rects.is_empty():
-		return RoomAtlasRoom2D.clamp_camera_position(p_desired, _confine_rect, p_view)
+		return SeamlessRoom2D.clamp_camera_position(p_desired, _confine_rect, p_view)
 	var from := cam.global_position
 	# 当前位置已不在合法区域（切策略 / 瞬移兜底）：立即落到最近合法中心。
 	if not region.is_inside(from):
@@ -396,7 +396,7 @@ func _snap_or_clamp() -> void:
 			cam.global_position = region.nearest(aim)
 		else:
 			# 房间比视口小：合法区为空，回退为房间居中（与跟随逻辑的兜底一致）。
-			cam.global_position = RoomAtlasRoom2D.clamp_camera_position(
+			cam.global_position = SeamlessRoom2D.clamp_camera_position(
 					aim, _confine_rect, _view_size)
 		return
 	_clamp_camera_now()
@@ -466,13 +466,13 @@ func status() -> Dictionary:
 
 func _update_status() -> void:
 	var center := cam.get_screen_center_position()
-	var view := RoomAtlasRoom2D.view_rect(center, _view_size)
-	var fit := int(_rules.get("fit_mode", RoomAtlasRoom2D.FIT_ZOOM_TO_FIT))
+	var view := SeamlessRoom2D.view_rect(center, _view_size)
+	var fit := int(_rules.get("fit_mode", SeamlessRoom2D.FIT_ZOOM_TO_FIT))
 	var confining: bool = bool(_rules.get("confine", false)) and not _unlocked
 	var region := _ensure_region(_view_size)
 	# 直接按「视图是否被房间并集完全覆盖」判定，与遮罩同一套几何；
 	# 视口大于覆盖区时 region.rects 为空，旧判定会漏报。
-	var covered := RoomAtlasLayout.view_covered(view, _cover_rects)
+	var covered := SeamlessRoomLayout.view_covered(view, _cover_rects)
 	_out_of_bounds = confining and not covered
 	# 复用同一个字典，避免每帧重新分配键。
 	_status["room"] = _active_room_id

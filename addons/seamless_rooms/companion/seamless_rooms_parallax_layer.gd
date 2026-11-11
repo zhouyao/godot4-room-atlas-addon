@@ -1,8 +1,8 @@
 @tool
-class_name RoomAtlasParallaxLayer
+class_name SeamlessRoomParallaxLayer
 extends Node2D
 
-## 可选配套：RoomAtlasParallax 下的一个视差层。
+## 可选配套：SeamlessRoomParallax 下的一个视差层。
 ##
 ## 子节点直接按房间局部像素摆放，和 2D 编辑器里完全一致；运行时只有本节点的
 ## position 会被容器推动，子节点的相对位置永远不动。
@@ -26,7 +26,7 @@ func _ready() -> void:
 	_capture_home()
 
 
-## 由 RoomAtlasParallax 调用；camera_delta = 相机中心 - 房间中心（世界单位）。
+## 由 SeamlessRoomParallax 调用；camera_delta = 相机中心 - 房间中心（世界单位）。
 func apply_camera_delta(camera_delta: Vector2) -> void:
 	# 支持在 _ready 之前先推一次（自检 / 工具脚本），此时现记作者位置。
 	_capture_home()

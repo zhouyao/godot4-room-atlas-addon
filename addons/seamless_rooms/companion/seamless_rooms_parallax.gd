@@ -1,5 +1,5 @@
 @tool
-class_name RoomAtlasParallax
+class_name SeamlessRoomParallax
 extends Control
 
 ## 可选配套：房间级视差容器，替代以世界原点为参照系的 Parallax2D。
@@ -9,7 +9,7 @@ extends Control
 ## scroll_scale = 1 → 与普通世界物体同速；0 → 钉在屏幕上（最远）。
 ## 相机正好在房间中心时 shift = 0，画面与 2D 编辑器里完全一致。
 ##
-## 插件不认识相机：游戏层每帧把真实相机中心推给本节点（与 RoomAtlasMinimap
+## 插件不认识相机：游戏层每帧把真实相机中心推给本节点（与 SeamlessRoomMinimap
 ## 的 set_cursor_world_position() 是同一套契约）。没人推时所有层停在作者摆放
 ## 的位置，失败模式是「没有视差」，而不是内容消失。
 ##
@@ -20,13 +20,13 @@ extends Control
 ## 移多少）。预览位移不会写进 .tscn：保存前收到 NOTIFICATION_EDITOR_PRE_SAVE，
 ## 先把各层复位到作者摆放的位置，保存后再恢复预览。
 ##
-## 结构：本节点（Control）下放若干 RoomAtlasParallaxLayer，层里放 Sprite2D 等内容。
+## 结构：本节点（Control）下放若干 SeamlessRoomParallaxLayer，层里放 Sprite2D 等内容。
 
-## 游戏层用 get_tree().call_group(&"room_atlas_parallax", &"set_camera_center", pos)
+## 游戏层用 get_tree().call_group(&"seamless_rooms_parallax", &"set_camera_center", pos)
 ## 批量推送，不需要认识房间实例。
-const GROUP := &"room_atlas_parallax"
+const GROUP := &"seamless_rooms_parallax"
 
-## 父节点不是 RoomAtlasRoom2D 时使用的兜底房间尺寸。
+## 父节点不是 SeamlessRoom2D 时使用的兜底房间尺寸。
 @export var fallback_size := Vector2(2400.0, 1080.0)
 ## 是否把各层裁在房间矩形内。关闭后退化成不裁剪的房间局部视差。
 @export var clip_to_room := true
@@ -53,13 +53,13 @@ func _ready() -> void:
 	_setup_rect()
 	if Engine.is_editor_hint():
 		set_process(true)
-		print("[Room Atlas] parallax editor ready: ", get_path())
+		print("[Seamless Rooms] parallax editor ready: ", get_path())
 
 
 ## 场景面板里给一个可见标记：确认编辑器确实把本节点当成 tool 实例在跑。
 func _get_configuration_warnings() -> PackedStringArray:
 	if Engine.is_editor_hint() and editor_preview:
-		return [RoomAtlasI18n.t(
+		return [SeamlessRoomI18n.t(
 				"Editor preview enabled: pan the 2D view to preview parallax; layers are restored when saving.")]
 	return PackedStringArray()
 
@@ -104,14 +104,14 @@ func _apply() -> void:
 
 func _apply_delta(camera_delta: Vector2) -> void:
 	for child in get_children():
-		if child is RoomAtlasParallaxLayer:
-			(child as RoomAtlasParallaxLayer).apply_camera_delta(camera_delta)
+		if child is SeamlessRoomParallaxLayer:
+			(child as SeamlessRoomParallaxLayer).apply_camera_delta(camera_delta)
 
 
 func _reset_layers() -> void:
 	for child in get_children():
-		if child is RoomAtlasParallaxLayer:
-			(child as RoomAtlasParallaxLayer).reset_to_home()
+		if child is SeamlessRoomParallaxLayer:
+			(child as SeamlessRoomParallaxLayer).reset_to_home()
 	_preview_reset = true
 
 
@@ -137,28 +137,28 @@ func _apply_editor_preview() -> void:
 		_preview_logged = true
 		var layer_pos := Vector2.ZERO
 		for child in get_children():
-			if child is RoomAtlasParallaxLayer:
-				layer_pos = (child as RoomAtlasParallaxLayer).position
+			if child is SeamlessRoomParallaxLayer:
+				layer_pos = (child as SeamlessRoomParallaxLayer).position
 				break
-		print("[Room Atlas] parallax preview: origin=", _preview_view_origin,
+		print("[Seamless Rooms] parallax preview: origin=", _preview_view_origin,
 				" view=", view_center, " delta=", delta,
 				" layer=", layer_pos)
 	elif not _preview_moved_logged and delta != Vector2.ZERO:
 		_preview_moved_logged = true
 		var moved := Vector2.ZERO
 		for child in get_children():
-			if child is RoomAtlasParallaxLayer:
-				moved = (child as RoomAtlasParallaxLayer).position
+			if child is SeamlessRoomParallaxLayer:
+				moved = (child as SeamlessRoomParallaxLayer).position
 				break
-		print("[Room Atlas] parallax preview moved: delta=", delta, " layer=", moved)
+		print("[Seamless Rooms] parallax preview moved: delta=", delta, " layer=", moved)
 
 
 ## 几何的权威来源是配置注入的世界矩形，而不是场景里声明的 room_size。
 ## 单独打开房间场景 / 被别的容器复用时退回自己的尺寸。
 func _setup_rect() -> void:
 	var room := get_parent()
-	if room is RoomAtlasRoom2D:
-		var r := (room as RoomAtlasRoom2D).camera_world_rect()
+	if room is SeamlessRoom2D:
+		var r := (room as SeamlessRoom2D).camera_world_rect()
 		if r.size.x > 0.0 and r.size.y > 0.0:
 			size = r.size
 			_room_center = r.get_center()

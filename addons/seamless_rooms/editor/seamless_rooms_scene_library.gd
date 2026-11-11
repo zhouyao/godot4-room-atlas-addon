@@ -1,12 +1,12 @@
 @tool
-class_name RoomAtlasSceneLibrary
+class_name SeamlessRoomSceneLibrary
 extends Resource
 
 ## 地图编辑器的 tscn 已导入列表，也就是左栏列表的全部内容。
 ##
 ## 纯编辑期数据，运行期不加载。分区（载入 / 未载入）不存本资源里，
 ## 由 world_config.tres 中是否存在引用该场景的 placement 实时决定。
-## 用无类型 Array，让 .tres 可手写、可 diff（与 RoomAtlasConfig.rooms 一致）。
+## 用无类型 Array，让 .tres 可手写、可 diff（与 SeamlessRoomConfig.rooms 一致）。
 @export var scenes: Array = []
 
 ## 导入 / 上次同步时的 room_size 基线：path(String) → Vector2i。

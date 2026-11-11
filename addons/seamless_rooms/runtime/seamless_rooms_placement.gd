@@ -1,10 +1,10 @@
 @tool
-class_name RoomAtlasPlacement
+class_name SeamlessRoomPlacement
 extends Resource
 
 ## 一条房间记录：只有几何与资源引用，不描述连通性。
 ##
-## cells 是格坐标区间（不是世界坐标）。运行时由 RoomAtlasLayout 乘以
+## cells 是格坐标区间（不是世界坐标）。运行时由 SeamlessRoomLayout 乘以
 ## config.cell_size 换算成 world_rect。size 可以是 (1, 2)、(2, 1) 等，
 ## 因此房间不必等大 —— 大房间就是跨多格的房间。
 

@@ -11,29 +11,29 @@ var _failed := 0
 func _initialize() -> void:
 	var r1 := Rect2(10141, -1080, 3000, 1080)
 	_check("r1 四个 limit 与配置一致",
-			RoomAtlasRoom2D.limit_rect_from(r1) == Rect2i(10141, -1080, 3000, 1080))
+			SeamlessRoom2D.limit_rect_from(r1) == Rect2i(10141, -1080, 3000, 1080))
 	_check("limit 向内取整，不留 1px 越界",
-			RoomAtlasRoom2D.limit_rect_from(Rect2(0.2, 0.2, 10.8, 10.8)) == Rect2i(1, 1, 10, 10))
+			SeamlessRoom2D.limit_rect_from(Rect2(0.2, 0.2, 10.8, 10.8)) == Rect2i(1, 1, 10, 10))
 	_check("房间大于视口时保持期望 zoom",
-			RoomAtlasRoom2D.required_zoom(r1, Vector2(1920, 1080), Vector2.ONE) == Vector2.ONE)
+			SeamlessRoom2D.required_zoom(r1, Vector2(1920, 1080), Vector2.ONE) == Vector2.ONE)
 	var narrow := Rect2(0, 0, 2400, 1080)
-	var wide := RoomAtlasRoom2D.required_zoom(narrow, Vector2(3000, 1080), Vector2.ONE)
+	var wide := SeamlessRoom2D.required_zoom(narrow, Vector2(3000, 1080), Vector2.ONE)
 	_check("视口宽于房间时抬高 zoom", is_equal_approx(wide.x, 1.25) and is_equal_approx(wide.y, 1.0))
 	_check("相机中心夹在房间内",
-			RoomAtlasRoom2D.clamp_camera_position(Vector2(99999, 0), r1, Vector2(1920, 1080))
+			SeamlessRoom2D.clamp_camera_position(Vector2(99999, 0), r1, Vector2(1920, 1080))
 					== Vector2(10141 + 3000 - 960, -540))
 	_check("房间小于视口时退回居中",
-			RoomAtlasRoom2D.clamp_camera_position(Vector2.ZERO,
+			SeamlessRoom2D.clamp_camera_position(Vector2.ZERO,
 					Rect2(0, 0, 1000, 500), Vector2(1920, 1080)) == Vector2(500, 250))
 	_check("视图矩形以真实屏幕中心为准",
-			RoomAtlasRoom2D.view_rect(Vector2(100, 50), Vector2(20, 10)) == Rect2(90, 45, 20, 10))
+			SeamlessRoom2D.view_rect(Vector2(100, 50), Vector2(20, 10)) == Rect2(90, 45, 20, 10))
 
-	var config := ResourceLoader.load("res://world_config.tres") as RoomAtlasConfig
+	var config := ResourceLoader.load("res://world_config.tres") as SeamlessRoomConfig
 	if config == null:
 		push_error("FAIL  world_config.tres 加载失败")
 		quit(1)
 		return
-	var layout := RoomAtlasLayout.new(config)
+	var layout := SeamlessRoomLayout.new(config)
 	_check("r1 世界矩形", layout.world_rect(&"r1") == r1)
 	_check("nearest_room 落在 r1", layout.nearest_room(Vector2(10200, -500)) == &"r1")
 	_check("nearest_room 落在 r2", layout.nearest_room(Vector2(7900, -500)) == &"r2")
@@ -45,7 +45,7 @@ func _initialize() -> void:
 	_check("bucket_size 取 1080 与视口高对齐",
 			is_equal_approx(config.streaming.bucket_size, 1080.0))
 	_check("挂载半径未超出桶预算",
-			config.streaming.mount_distance <= RoomAtlasLayout.max_query_radius(
+			config.streaming.mount_distance <= SeamlessRoomLayout.max_query_radius(
 					config.streaming.bucket_size))
 
 	# 方案 C：半径由游戏层按视口算好，插件只接受一个世界单位的长度。
@@ -67,13 +67,13 @@ func _initialize() -> void:
 	_check("半径包含 tick 位移与加载余量",
 			is_equal_approx(r1080, far_corner + speed * tick + latency))
 	_check("各分辨率半径都在桶预算内",
-			r4k <= RoomAtlasLayout.max_query_radius(config.streaming.bucket_size))
+			r4k <= SeamlessRoomLayout.max_query_radius(config.streaming.bucket_size))
 	_check("非法视口返回 0",
 			is_equal_approx(RoomCameraController.compute_load_radius(
 					Vector2.ZERO, dz, off, speed, tick, latency), 0.0))
 
 	# 注入行为：插件不写回配置，且把半径限制在 [配置下限, 桶预算] 内。
-	var st := RoomAtlasStreamer.new()
+	var st := SeamlessRoomStreamer.new()
 	st.configure(config)
 	var base := st.effective_distances()
 	_check("未注入时等于配置基准",
@@ -91,32 +91,32 @@ func _initialize() -> void:
 	st.set_load_radius(INF)
 	_check("INF 半径被桶预算截断",
 			st.effective_distances().mount
-					<= RoomAtlasLayout.max_query_radius(config.streaming.bucket_size))
+					<= SeamlessRoomLayout.max_query_radius(config.streaming.bucket_size))
 	st.free()
 
 	# 桶边界：浮点 end 略越过桶线时，旧的「减 0.001」写法会少登记最后一桶。
-	var frac := RoomAtlasConfig.new()
+	var frac := SeamlessRoomConfig.new()
 	frac.cell_size = Vector2(0.0005, 1.0)
-	var frac_s := RoomAtlasStreamingSettings.new()
+	var frac_s := SeamlessRoomStreamingSettings.new()
 	frac_s.bucket_size = 600.0
 	frac.streaming = frac_s
-	var frac_room := RoomAtlasPlacement.new()
+	var frac_room := SeamlessRoomPlacement.new()
 	frac_room.id = &"frac"
 	frac_room.cells = Rect2i(0, 0, 1200001, 600)  # end.x = 600.0005
 	frac.rooms = [frac_room]
-	var frac_layout := RoomAtlasLayout.new(frac)
+	var frac_layout := SeamlessRoomLayout.new(frac)
 	_check("浮点 end 略越过桶线时不漏判",
 			frac_layout.room_at(Vector2(600.0002, 100)) == &"frac")
 	_check("桶线左侧仍可定位", frac_layout.room_at(Vector2(599.9, 100)) == &"frac")
 
 	# 换桶尺寸不应改变查询结果（只改变索引粒度）。
-	var alt := RoomAtlasConfig.new()
+	var alt := SeamlessRoomConfig.new()
 	alt.cell_size = config.cell_size
 	alt.rooms = config.rooms
-	var alt_s := RoomAtlasStreamingSettings.new()
+	var alt_s := SeamlessRoomStreamingSettings.new()
 	alt_s.bucket_size = 300.0
 	alt.streaming = alt_s
-	var alt_layout := RoomAtlasLayout.new(alt)
+	var alt_layout := SeamlessRoomLayout.new(alt)
 	var probe_p := Vector2(10200, -500)
 	_check("桶尺寸不影响 room_at", alt_layout.room_at(probe_p) == layout.room_at(probe_p))
 	var near_a := layout.query_near(probe_p, 1200.0)
@@ -154,17 +154,17 @@ func _initialize() -> void:
 			RoomCameraController.cover_signature(subset) != sig5)
 
 	_check("r5 右侧空白视图未被覆盖",
-			not RoomAtlasLayout.view_covered(Rect2(4400, -2500, 1920, 1080), rects))
+			not SeamlessRoomLayout.view_covered(Rect2(4400, -2500, 1920, 1080), rects))
 	_check("完全在 r5 内的视图被覆盖",
-			RoomAtlasLayout.view_covered(Rect2(3000, -3100, 1920, 1080), rects))
+			SeamlessRoomLayout.view_covered(Rect2(3000, -3100, 1920, 1080), rects))
 	_check("跨 r1/r2 接缝的视图被覆盖",
-			RoomAtlasLayout.view_covered(Rect2(9200, -1080, 1920, 1080), rects))
+			SeamlessRoomLayout.view_covered(Rect2(9200, -1080, 1920, 1080), rects))
 	_check("房间边界的亚像素误差不算漏出",
-			RoomAtlasLayout.view_covered(Rect2(4381, -1080.25, 1920, 1080), rects))
+			SeamlessRoomLayout.view_covered(Rect2(4381, -1080.25, 1920, 1080), rects))
 	_check("L 形凹处视图未被覆盖",
-			not RoomAtlasLayout.view_covered(Rect2(6000, -2000, 1920, 1080), rects))
+			not SeamlessRoomLayout.view_covered(Rect2(6000, -2000, 1920, 1080), rects))
 
-	var region := RoomAtlasCameraRegion.build(rects, Vector2(1920, 1080))
+	var region := SeamlessRoomCameraRegion.build(rects, Vector2(1920, 1080))
 	_check("预计算得到合法中心区域", not region.rects.is_empty())
 	_check("r1 内合法中心被判定为合法", region.is_inside(Vector2(11581, -540)))
 	_check("r5 内合法中心被判定为合法", region.is_inside(Vector2(4200, -2000)))
@@ -182,43 +182,43 @@ func _initialize() -> void:
 
 	# 单房约束区（HARD_CUT）：某条轴等于可见尺寸时，另一条轴必须保留完整区间，
 	# 否则相机会被钉在房间中心，玩家进房后直接出画。
-	var solo_r5 := RoomAtlasCameraRegion.build(
+	var solo_r5 := SeamlessRoomCameraRegion.build(
 			[Rect2(2941, -3240, 2400, 2160)], Vector2(2400, 1080))
 	_check("单房 r5：x 固定、y 保留整段可移动区间",
 			is_equal_approx(solo_r5.nearest(Vector2(4141, -9999)).y, -2700.0)
 					and is_equal_approx(solo_r5.nearest(Vector2(4141, 9999)).y, -1620.0))
-	var solo_r6 := RoomAtlasCameraRegion.build(
+	var solo_r6 := SeamlessRoomCameraRegion.build(
 			[Rect2(2941, -4320, 5400, 1080)], Vector2(2400, 1080))
 	_check("单房 r6：y 固定、x 保留整段可移动区间",
 			is_equal_approx(solo_r6.nearest(Vector2(-9999, -3780)).x, 4141.0)
 					and is_equal_approx(solo_r6.nearest(Vector2(9999, -3780)).x, 7141.0))
 	_check("单房 r6：区间外仍判定非法", not solo_r6.is_inside(Vector2(5641, -3580)))
-	var solo_r1 := RoomAtlasCameraRegion.build(
+	var solo_r1 := SeamlessRoomCameraRegion.build(
 			[Rect2(10141, -1080, 2400, 1080)], Vector2(2400, 1080))
 	_check("单房 r1：两轴都退化时锁在房中心",
 			solo_r1.nearest(Vector2.ZERO) == Vector2(11341, -540))
 
 	# 连续滚动行为锁定：多矩形覆盖区不走单房补点分支，退化轴仍按原逻辑压点。
-	var row_region := RoomAtlasCameraRegion.build(
+	var row_region := SeamlessRoomCameraRegion.build(
 			[Rect2(0, 0, 2400, 1080), Rect2(2400, 0, 2400, 1080)], Vector2(1920, 1080))
 	_check("多矩形覆盖区保持原有退化行为（连续滚动不受影响）",
 			row_region.rects.size() == 1 and row_region.rects[0].size == Vector2.ZERO)
 
-	var solo := RoomAtlasConfig.new()
-	var a := RoomAtlasPlacement.new()
+	var solo := SeamlessRoomConfig.new()
+	var a := SeamlessRoomPlacement.new()
 	a.id = &"a"
 	a.cells = Rect2i(0, 0, 100, 100)
-	var b := RoomAtlasPlacement.new()
+	var b := SeamlessRoomPlacement.new()
 	b.id = &"b"
 	b.cells = Rect2i(500, 0, 100, 100)
 	solo.rooms = [a, b]
 	_check("孤岛房间各自独立",
-			RoomAtlasLayout.new(solo).touching_bounds(&"a") == Rect2(0, 0, 100, 100))
+			SeamlessRoomLayout.new(solo).touching_bounds(&"a") == Rect2(0, 0, 100, 100))
 
 	# P3：程序化大地图。插件不能只在 8 房规模下被验证；
 	# 这里的 streaming 全部留默认值，走「自动推导」路径。
 	var big := _make_grid_config(20, 10, 1200, 800)
-	var big_layout := RoomAtlasLayout.new(big)
+	var big_layout := SeamlessRoomLayout.new(big)
 	_check("大地图 200 房全部登记", big_layout.room_count() == 200)
 	_check("大地图桶尺寸按房间短边自动推导",
 			is_equal_approx(big_layout.bucket_size(), 800.0))
@@ -236,14 +236,14 @@ func _initialize() -> void:
 	_check("大地图连通区包含全部房间", big_rects.size() == 200)
 	_check("大地图桶化 BFS 在预算内", t1 - t0 < 2_000_000)
 	var t2 := Time.get_ticks_usec()
-	var big_region := RoomAtlasCameraRegion.build(big_rects, Vector2(1920, 1080))
+	var big_region := SeamlessRoomCameraRegion.build(big_rects, Vector2(1920, 1080))
 	var t3 := Time.get_ticks_usec()
 	_check("大地图预计算得到合法区域", not big_region.rects.is_empty())
 	_check("大地图坐标压缩在预算内", t3 - t2 < 8_000_000)
-	print("[Room Atlas] 大地图 200 房：桶化 BFS %d ms，坐标压缩 %d ms" % [
+	print("[Seamless Rooms] 大地图 200 房：桶化 BFS %d ms，坐标压缩 %d ms" % [
 			(t1 - t0) / 1000, (t3 - t2) / 1000])
-	_check("大地图配置校验通过", RoomAtlasValidator.validate(big).errors.is_empty())
-	var big_streamer := RoomAtlasStreamer.new()
+	_check("大地图配置校验通过", SeamlessRoomValidator.validate(big).errors.is_empty())
+	var big_streamer := SeamlessRoomStreamer.new()
 	big_streamer.configure(big)
 	big_streamer.set_load_radius(2000.0)
 	_check("大地图自动挂载上限大于 demo 的 8", big_streamer.mount_budget() > 8)
@@ -252,7 +252,7 @@ func _initialize() -> void:
 	# P4：边界完全不对齐的离散地图 —— 候选坐标不会像规则网格那样大量合并，
 	# 是坐标压缩的最坏布局。房间彼此不连通，但一起传给 build() 压满候选网格。
 	var scattered := _make_scattered_config(100)
-	var scattered_layout := RoomAtlasLayout.new(scattered)
+	var scattered_layout := SeamlessRoomLayout.new(scattered)
 	var scattered_groups := scattered_layout.connected_groups()
 	_check("离散地图分出多个连通分量", scattered_groups.size() > 1)
 	var all_rects: Array[Rect2] = []
@@ -260,35 +260,35 @@ func _initialize() -> void:
 		for r in group:
 			all_rects.append(r)
 	var s0 := Time.get_ticks_usec()
-	var scattered_region := RoomAtlasCameraRegion.build(all_rects, Vector2(1920, 1080))
+	var scattered_region := SeamlessRoomCameraRegion.build(all_rects, Vector2(1920, 1080))
 	var s1 := Time.get_ticks_usec()
 	_check("离散地图预计算完成", scattered_region != null)
 	_check("离散地图坐标压缩在预算内", s1 - s0 < 15_000_000)
-	print("[Room Atlas] 离散 100 房（最坏布局）：坐标压缩 %d ms" % [(s1 - s0) / 1000])
+	print("[Seamless Rooms] 离散 100 房（最坏布局）：坐标压缩 %d ms" % [(s1 - s0) / 1000])
 
 	# 缓存与预热：同一覆盖区 / 尺寸只算一次，分辨率切换后按尺寸区分。
-	RoomAtlasCameraRegion.clear_cache()
-	_check("区域缓存可清空", RoomAtlasCameraRegion.cache_size() == 0)
-	var cached_a := RoomAtlasCameraRegion.build_cached(all_rects, Vector2(1920, 1080))
-	var after_first := RoomAtlasCameraRegion.cache_size()
-	var cached_b := RoomAtlasCameraRegion.build_cached(all_rects, Vector2(1920, 1080))
+	SeamlessRoomCameraRegion.clear_cache()
+	_check("区域缓存可清空", SeamlessRoomCameraRegion.cache_size() == 0)
+	var cached_a := SeamlessRoomCameraRegion.build_cached(all_rects, Vector2(1920, 1080))
+	var after_first := SeamlessRoomCameraRegion.cache_size()
+	var cached_b := SeamlessRoomCameraRegion.build_cached(all_rects, Vector2(1920, 1080))
 	_check("缓存命中返回同一实例", cached_a == cached_b)
-	_check("缓存命中不新增条目", RoomAtlasCameraRegion.cache_size() == after_first)
-	var cached_c := RoomAtlasCameraRegion.build_cached(all_rects, Vector2(1280, 720))
+	_check("缓存命中不新增条目", SeamlessRoomCameraRegion.cache_size() == after_first)
+	var cached_c := SeamlessRoomCameraRegion.build_cached(all_rects, Vector2(1280, 720))
 	_check("缓存按可见尺寸区分", cached_c != cached_a)
-	var pre_streamer := RoomAtlasStreamer.new()
+	var pre_streamer := SeamlessRoomStreamer.new()
 	pre_streamer.configure(big)
 	pre_streamer.precompute_regions(Vector2(1920, 1080))
-	_check("批量预热填满合法区域缓存", RoomAtlasCameraRegion.cache_size() > 0)
+	_check("批量预热填满合法区域缓存", SeamlessRoomCameraRegion.cache_size() > 0)
 	pre_streamer.free()
 
 	# 可选配套：房间局部视差组件。相机中心由游戏层推入，插件不认识相机。
-	var px_room := RoomAtlasRoom2D.new()
+	var px_room := SeamlessRoom2D.new()
 	px_room.room_size = Vector2i(2400, 1080)
-	var px := RoomAtlasParallax.new()
-	var px_far := RoomAtlasParallaxLayer.new()
+	var px := SeamlessRoomParallax.new()
+	var px_far := SeamlessRoomParallaxLayer.new()
 	px_far.scroll_scale = Vector2(0.2, 1.0)
-	var px_near := RoomAtlasParallaxLayer.new()
+	var px_near := SeamlessRoomParallaxLayer.new()
 	px_near.scroll_scale = Vector2(0.4, 1.0)
 	px.add_child(px_far)
 	px.add_child(px_near)
@@ -316,19 +316,19 @@ func _initialize() -> void:
 	_check("reset_to_home 回到作者位置", px_far.position == Vector2.ZERO)
 	px_room.free()
 
-	print("[Room Atlas] 相机规则自检：%s" % ("全部通过" if _failed == 0 else "%d 项失败" % _failed))
+	print("[Seamless Rooms] 相机规则自检：%s" % ("全部通过" if _failed == 0 else "%d 项失败" % _failed))
 	quit(1 if _failed > 0 else 0)
 
 
 ## 生成规则网格地图：房间彼此边贴合、全部连通，streaming 留默认走自动推导。
-func _make_grid_config(cols: int, rows: int, w: int, h: int) -> RoomAtlasConfig:
-	var cfg := RoomAtlasConfig.new()
+func _make_grid_config(cols: int, rows: int, w: int, h: int) -> SeamlessRoomConfig:
+	var cfg := SeamlessRoomConfig.new()
 	cfg.cell_size = Vector2(1, 1)
-	cfg.streaming = RoomAtlasStreamingSettings.new()
+	cfg.streaming = SeamlessRoomStreamingSettings.new()
 	var rooms: Array = []
 	for y in range(rows):
 		for x in range(cols):
-			var p := RoomAtlasPlacement.new()
+			var p := SeamlessRoomPlacement.new()
 			p.id = StringName("g_%d_%d" % [x, y])
 			p.cells = Rect2i(x * w, y * h, w, h)
 			p.scene = PackedScene.new()
@@ -338,11 +338,11 @@ func _make_grid_config(cols: int, rows: int, w: int, h: int) -> RoomAtlasConfig:
 
 
 ## 确定性伪随机：房间位置 / 尺寸都不同、彼此不连通，边界不共享，
-## 用来压满 RoomAtlasCameraRegion 的候选坐标（最坏布局）。
-func _make_scattered_config(n: int) -> RoomAtlasConfig:
-	var cfg := RoomAtlasConfig.new()
+## 用来压满 SeamlessRoomCameraRegion 的候选坐标（最坏布局）。
+func _make_scattered_config(n: int) -> SeamlessRoomConfig:
+	var cfg := SeamlessRoomConfig.new()
 	cfg.cell_size = Vector2(1, 1)
-	cfg.streaming = RoomAtlasStreamingSettings.new()
+	cfg.streaming = SeamlessRoomStreamingSettings.new()
 	var rooms: Array = []
 	var seed := 12345
 	for i in range(n):
@@ -354,7 +354,7 @@ func _make_scattered_config(n: int) -> RoomAtlasConfig:
 		var w := 900 + (seed % 700)
 		seed = (seed * 1103515245 + 12345) % 2147483647
 		var h := 700 + (seed % 500)
-		var p := RoomAtlasPlacement.new()
+		var p := SeamlessRoomPlacement.new()
 		p.id = StringName("s_%d" % i)
 		p.cells = Rect2i(x, y, w, h)
 		p.scene = PackedScene.new()

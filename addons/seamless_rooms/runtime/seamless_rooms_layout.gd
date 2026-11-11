@@ -1,5 +1,5 @@
 @tool
-class_name RoomAtlasLayout
+class_name SeamlessRoomLayout
 extends RefCounted
 
 ## 把配置变成可查询的几何：世界矩形、坐标换算、空间索引。
@@ -7,29 +7,29 @@ extends RefCounted
 
 ## 空间索引桶尺寸（世界像素），与 cell_size 完全解耦。
 ## 网格可以细到 1px，索引桶数仍然是常数。
-## 桶尺寸由 RoomAtlasStreamingSettings.bucket_size 配置；<= 0 时按地图房间
+## 桶尺寸由 SeamlessRoomStreamingSettings.bucket_size 配置；<= 0 时按地图房间
 ## 短边的中位数自动推导，不依赖任何示例视口或房间尺寸。
-const FALLBACK_BUCKET_SIZE := RoomAtlasStreamingSettings.FALLBACK_BUCKET_SIZE
+const FALLBACK_BUCKET_SIZE := SeamlessRoomStreamingSettings.FALLBACK_BUCKET_SIZE
 ## 单次邻域查询允许枚举的桶数上限，防止 radius 误配时卡死主线程。
 const MAX_QUERY_BUCKETS := 4096
 
-var config: RoomAtlasConfig
+var config: SeamlessRoomConfig
 
 var _by_id: Dictionary = {}
 var _buckets: Dictionary = {}  # Vector2i(桶坐标) -> Array[StringName]
 var _cell_size := Vector2(1, 1)
-var _streaming: RoomAtlasStreamingSettings = null
+var _streaming: SeamlessRoomStreamingSettings = null
 var _bucket_size := FALLBACK_BUCKET_SIZE
 var _world_bounds := Rect2()   # 全图包围盒，供自动推导搜索半径
 var _avg_room_area := 1.0     # 平均房间面积，供自动派生挂载上限
 
 
-func _init(p_config: RoomAtlasConfig = null) -> void:
+func _init(p_config: SeamlessRoomConfig = null) -> void:
 	if p_config != null:
 		configure(p_config)
 
 
-func configure(p_config: RoomAtlasConfig) -> void:
+func configure(p_config: SeamlessRoomConfig) -> void:
 	config = p_config
 	_by_id.clear()
 	_buckets.clear()
@@ -38,7 +38,7 @@ func configure(p_config: RoomAtlasConfig) -> void:
 	if p_config.cell_size.x > 0.0 and p_config.cell_size.y > 0.0:
 		_cell_size = p_config.cell_size
 	_streaming = p_config.streaming if p_config.streaming != null \
-			else RoomAtlasStreamingSettings.new()
+			else SeamlessRoomStreamingSettings.new()
 	# bucket_size <= 0 / NaN / INF 一律走自动推导，不绑定任何示例尺度。
 	_bucket_size = FALLBACK_BUCKET_SIZE
 	if _streaming.bucket_size > 0.0 and _streaming.bucket_size < INF:
@@ -89,7 +89,7 @@ func cell_size() -> Vector2:
 	return _cell_size
 
 
-func streaming() -> RoomAtlasStreamingSettings:
+func streaming() -> SeamlessRoomStreamingSettings:
 	return _streaming
 
 
@@ -111,7 +111,7 @@ func world_bounds() -> Rect2:
 
 ## 按地图房间短边的中位数选桶尺寸：桶太大候选超集宽，太小登记数多。
 ## 只依据地图几何，不假设任何视口或示例房间尺寸。
-static func suggest_bucket_size(p_config: RoomAtlasConfig) -> float:
+static func suggest_bucket_size(p_config: SeamlessRoomConfig) -> float:
 	var cs := p_config.cell_size
 	var sizes: Array[float] = []
 	for p in p_config.placements():
@@ -121,7 +121,7 @@ static func suggest_bucket_size(p_config: RoomAtlasConfig) -> float:
 		if short_side > 0.0 and short_side < INF:
 			sizes.append(short_side)
 	if sizes.is_empty():
-		return RoomAtlasStreamingSettings.FALLBACK_BUCKET_SIZE
+		return SeamlessRoomStreamingSettings.FALLBACK_BUCKET_SIZE
 	sizes.sort()
 	return clampf(sizes[sizes.size() / 2], 64.0, 8192.0)
 
@@ -137,19 +137,19 @@ func has_room(id: StringName) -> bool:
 	return _by_id.has(id)
 
 
-func placement(id: StringName) -> RoomAtlasPlacement:
+func placement(id: StringName) -> SeamlessRoomPlacement:
 	return _by_id.get(id, null)
 
 
 func scene_path(id: StringName) -> String:
-	var p: RoomAtlasPlacement = _by_id.get(id, null)
+	var p: SeamlessRoomPlacement = _by_id.get(id, null)
 	if p == null or p.scene == null:
 		return ""
 	return p.scene.resource_path
 
 
 func world_rect(id: StringName) -> Rect2:
-	var p: RoomAtlasPlacement = _by_id.get(id, null)
+	var p: SeamlessRoomPlacement = _by_id.get(id, null)
 	if p == null:
 		return Rect2()
 	return Rect2(_v2(p.cells.position) * _cell_size, _v2(p.cells.size) * _cell_size)
@@ -195,7 +195,7 @@ func query_near(world_pos: Vector2, radius: float) -> Array[StringName]:
 		return out
 	var max_radius := max_query_radius(_bucket_size)
 	if radius > max_radius:
-		push_warning(RoomAtlasI18n.tf(
+		push_warning(SeamlessRoomI18n.tf(
 				"query_near: radius %.1f exceeds the bucket budget; clamped to %.1f",
 				[radius, max_radius]))
 		radius = max_radius

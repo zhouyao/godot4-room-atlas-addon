@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="RoomAtlasSceneLibrary" format=3 uid="uid://cfrd5lmir1fn"]
+[gd_resource type="Resource" script_class="SeamlessRoomSceneLibrary" format=3 uid="uid://cfrd5lmir1fn"]
 
-[ext_resource type="Script" uid="uid://b5q08yld85lna" path="res://addons/room_atlas/editor/room_atlas_scene_library.gd" id="1_lib"]
+[ext_resource type="Script" uid="uid://b5q08yld85lna" path="res://addons/seamless_rooms/editor/seamless_rooms_scene_library.gd" id="1_lib"]
 [ext_resource type="PackedScene" uid="uid://b4yottikb527e" path="res://example/rooms/r1.tscn" id="2_r1"]
 [ext_resource type="PackedScene" uid="uid://ceajhcs7m6qgi" path="res://example/rooms/r2.tscn" id="2_r2"]
 [ext_resource type="PackedScene" path="res://example/rooms/r3.tscn" id="2_r3"]

@@ -30,7 +30,7 @@ enum RoomTransition {
 	HARD_CUT,           ## 当帧换 limit，切屏
 }
 
-## 与 RoomAtlasRoom2D 的常量一一对应，覆盖房间声明时使用。
+## 与 SeamlessRoom2D 的常量一一对应，覆盖房间声明时使用。
 ## 锁死模式（固定中心）不提供运行时开关：相机始终跟随玩家、玩家始终在画面内；
 ## 跟随的松紧由每个房间自己声明的 camera_deadzone 决定（(0,0) = 每帧硬贴）。
 const FIT_ZOOM_TO_FIT := 0

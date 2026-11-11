@@ -1,10 +1,10 @@
 @tool
-class_name RoomAtlasRoom2D
+class_name SeamlessRoom2D
 extends Node2D
 
 ## 房间场景可选基类：声明房间身份 / 尺寸 / 相机规则，并在 2D 编辑器里常驻边界预览。
 ##
-## 自建房间继承本类即可被 Room Atlas 编辑器识别：
+## 自建房间继承本类即可被 Seamless Rooms 编辑器识别：
 ## · room_id / room_size 由编辑器通过 SceneState 读取（列表信息、落图尺寸）
 ## · configure() 是运行时可选钩子，基类记录 id 与权威世界矩形，子类可覆盖并 super()
 ## · 改 room_size 会立即重绘边界；预览只在编辑器里画，运行时不产生绘制
@@ -89,11 +89,11 @@ var _has_camera_world_rect := false
 func _validate_property(property: Dictionary) -> void:
 	match String(property.get("name", "")):
 		"camera_lock_mode":
-			property["hint_string"] = RoomAtlasI18n.t("Follow & Confine") + "," \
-					+ RoomAtlasI18n.t("Fixed Center")
+			property["hint_string"] = SeamlessRoomI18n.t("Follow & Confine") + "," \
+					+ SeamlessRoomI18n.t("Fixed Center")
 		"camera_fit_mode":
-			property["hint_string"] = RoomAtlasI18n.t("Auto Zoom") + "," \
-					+ RoomAtlasI18n.t("Keep Zoom") + "," + RoomAtlasI18n.t("Center Only")
+			property["hint_string"] = SeamlessRoomI18n.t("Auto Zoom") + "," \
+					+ SeamlessRoomI18n.t("Keep Zoom") + "," + SeamlessRoomI18n.t("Center Only")
 
 
 ## 运行时可选钩子：记录 id 与配置算出的权威世界矩形（不依赖房间实例是否进树）。
@@ -305,10 +305,10 @@ func _draw_camera_bounds() -> void:
 	var col := CAMERA_BOUNDS_COLOR if camera_confine else CAMERA_BOUNDS_OFF_COLOR
 	draw_rect(b, CAMERA_BOUNDS_FILL, true)
 	draw_rect(b.grow(-1.0), col, false, 2.0)
-	var mode := RoomAtlasI18n.t("Follow & Confine") \
-			if camera_lock_mode == LOCK_FOLLOW_CONFINED else RoomAtlasI18n.t("Fixed Center")
-	var suffix := "" if camera_confine else RoomAtlasI18n.t(" (disabled)")
+	var mode := SeamlessRoomI18n.t("Follow & Confine") \
+			if camera_lock_mode == LOCK_FOLLOW_CONFINED else SeamlessRoomI18n.t("Fixed Center")
+	var suffix := "" if camera_confine else SeamlessRoomI18n.t(" (disabled)")
 	draw_string(ThemeDB.fallback_font, b.position + Vector2(8, 24),
-			RoomAtlasI18n.tf("Camera %s  %d × %d px%s",
+			SeamlessRoomI18n.tf("Camera %s  %d × %d px%s",
 					[mode, roundi(b.size.x), roundi(b.size.y), suffix]),
 			HORIZONTAL_ALIGNMENT_LEFT, -1, CAMERA_LABEL_SIZE, col)

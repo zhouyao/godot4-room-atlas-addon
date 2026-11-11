@@ -2,13 +2,13 @@
 extends Control
 
 ## 网格画布：只负责画与交互，不碰文件、不碰 undo。
-## 所有修改都以信号交给 RoomAtlasWorldCanvas 统一提交。
+## 所有修改都以信号交给 SeamlessRoomWorldCanvas 统一提交。
 
 signal selection_changed(id: StringName)
-signal cells_committed(placement: RoomAtlasPlacement, old_cells: Rect2i, new_cells: Rect2i)
+signal cells_committed(placement: SeamlessRoomPlacement, old_cells: Rect2i, new_cells: Rect2i)
 signal scene_dropped(path: String, grid_pos: Vector2i)
 
-const DRAG_TYPE := "room_atlas_scene"
+const DRAG_TYPE := "seamless_rooms_scene"
 
 # 拖拽辅助线：绿色 = 与邻居边贴合（相邻），蓝色 = 边共线，黄色 = 最近候选。
 const GUIDE_SEAM := Color(0.42, 1.0, 0.6, 0.95)
@@ -21,7 +21,7 @@ const GUIDE_GAP := 6.0
 # 拖动时的边界吸附阈值（屏幕像素）：缩放变化时手感保持一致。
 const SNAP_PX := 10.0
 
-var config: RoomAtlasConfig = null
+var config: SeamlessRoomConfig = null
 var selected: StringName = &""
 
 var _zoom := 0.12
@@ -30,7 +30,7 @@ var _drag_room := false
 var _drag_pan := false
 var _drag_start_mouse := Vector2.ZERO
 var _drag_start_pan := Vector2.ZERO
-var _drag_placement: RoomAtlasPlacement = null
+var _drag_placement: SeamlessRoomPlacement = null
 var _drag_grab_world := Vector2.ZERO
 var _drag_start_cells := Rect2i()
 var _drag_preview_cells := Rect2i()
@@ -46,7 +46,7 @@ func _ready() -> void:
 	resized.connect(func(): queue_redraw())
 
 
-func set_config(c: RoomAtlasConfig) -> void:
+func set_config(c: SeamlessRoomConfig) -> void:
 	config = c
 	selected = &""
 	# 不依赖 _ready() 的调用时机，配置注入时再确认一次裁剪开启。
@@ -107,12 +107,12 @@ func _v2(v: Vector2i) -> Vector2:
 	return Vector2(float(v.x), float(v.y))
 
 
-func _rect(p: RoomAtlasPlacement) -> Rect2:
+func _rect(p: SeamlessRoomPlacement) -> Rect2:
 	var cs := config.cell_size
 	return Rect2(_v2(p.cells.position) * cs, _v2(p.cells.size) * cs)
 
 
-func _overlaps(target: RoomAtlasPlacement) -> bool:
+func _overlaps(target: SeamlessRoomPlacement) -> bool:
 	for p in config.placements():
 		if p != target and target.cells.intersects(p.cells):
 			return true
@@ -126,9 +126,9 @@ static func _overlap_ids(placements: Array) -> Dictionary:
 	sorted.sort_custom(func(a, b): return a.cells.position.x < b.cells.position.x)
 	var out := {}
 	for i in range(sorted.size()):
-		var a: RoomAtlasPlacement = sorted[i]
+		var a: SeamlessRoomPlacement = sorted[i]
 		for j in range(i + 1, sorted.size()):
-			var b: RoomAtlasPlacement = sorted[j]
+			var b: SeamlessRoomPlacement = sorted[j]
 			if b.cells.position.x >= a.cells.end.x:
 				break
 			if a.cells.intersects(b.cells):
@@ -231,7 +231,7 @@ func _clamp_label(p: Vector2) -> Vector2:
 
 ## 拖动时把房间边缘吸附到邻居的边（贴边或共线），x / y 独立判断。
 ## 阈值按屏幕像素换算，任何缩放下手感一致；只吸附，不阻止重叠。
-func _snap_cells(pos: Vector2i, size: Vector2i, ignore: RoomAtlasPlacement = null) -> Vector2i:
+func _snap_cells(pos: Vector2i, size: Vector2i, ignore: SeamlessRoomPlacement = null) -> Vector2i:
 	if config == null:
 		return pos
 	var cs := config.cell_size
@@ -260,7 +260,7 @@ func _snap_cells(pos: Vector2i, size: Vector2i, ignore: RoomAtlasPlacement = nul
 # ---------------------------------------------------------------- 拖拽辅助线
 
 ## 纯计算：拖拽矩形与所有邻居的边关系，供绘制与验证共用。
-func _guide_state(target: RoomAtlasPlacement, cells: Rect2i) -> Dictionary:
+func _guide_state(target: SeamlessRoomPlacement, cells: Rect2i) -> Dictionary:
 	var cs := config.cell_size
 	var t := Rect2(_v2(cells.position) * cs, _v2(cells.size) * cs)
 	var seam_x := {}
@@ -302,7 +302,7 @@ func _guide_state(target: RoomAtlasPlacement, cells: Rect2i) -> Dictionary:
 ## 拖拽时画贯穿画布的 x/y 轴辅助线，只作相邻提示、不改吸附结果：
 ## 绿色 = 与邻居边贴合（严丝合缝），蓝色 = 与邻居边共线，
 ## 黄色 = 尚未贴合时最接近的候选边，并标出还差多少世界像素。
-func _draw_drag_guides(target: RoomAtlasPlacement, cells: Rect2i) -> void:
+func _draw_drag_guides(target: SeamlessRoomPlacement, cells: Rect2i) -> void:
 	var st := _guide_state(target, cells)
 	var seam_x: Dictionary = st["seam_x"]
 	var seam_y: Dictionary = st["seam_y"]
@@ -322,16 +322,16 @@ func _draw_drag_guides(target: RoomAtlasPlacement, cells: Rect2i) -> void:
 			_dashed_h(_world_to_canvas(Vector2(0, float(y))).y, GUIDE_ALIGN, 1.0)
 
 	var parts: Array[String] = []
-	_append_guides(parts, RoomAtlasI18n.t("X seam"), seam_x)
-	_append_guides(parts, RoomAtlasI18n.t("Y seam"), seam_y)
-	_append_guides(parts, RoomAtlasI18n.t("X align"), align_x)
-	_append_guides(parts, RoomAtlasI18n.t("Y align"), align_y)
+	_append_guides(parts, SeamlessRoomI18n.t("X seam"), seam_x)
+	_append_guides(parts, SeamlessRoomI18n.t("Y seam"), seam_y)
+	_append_guides(parts, SeamlessRoomI18n.t("X align"), align_x)
+	_append_guides(parts, SeamlessRoomI18n.t("Y align"), align_y)
 	if seam_x.is_empty() and near["x"] < INF:
 		_dashed_v(_world_to_canvas(Vector2(float(near["x_at"]), 0)).x, GUIDE_NEAR, 1.0)
-		parts.append(RoomAtlasI18n.tf("Nearest X: Δ%d px", [int(round(near["x_d"]))]))
+		parts.append(SeamlessRoomI18n.tf("Nearest X: Δ%d px", [int(round(near["x_d"]))]))
 	if seam_y.is_empty() and near["y"] < INF:
 		_dashed_h(_world_to_canvas(Vector2(0, float(near["y_at"]))).y, GUIDE_NEAR, 1.0)
-		parts.append(RoomAtlasI18n.tf("Nearest Y: Δ%d px", [int(round(near["y_d"]))]))
+		parts.append(SeamlessRoomI18n.tf("Nearest Y: Δ%d px", [int(round(near["y_d"]))]))
 	if parts.is_empty():
 		return
 
@@ -386,7 +386,7 @@ func _dashed_h(y: float, col: Color, width: float) -> void:
 		x += GUIDE_DASH + GUIDE_GAP
 
 
-func _hit_room(cpos: Vector2) -> RoomAtlasPlacement:
+func _hit_room(cpos: Vector2) -> SeamlessRoomPlacement:
 	var w := _canvas_to_world(cpos)
 	var ps := config.placements()
 	for i in range(ps.size() - 1, -1, -1):

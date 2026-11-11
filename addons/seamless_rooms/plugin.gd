@@ -1,7 +1,7 @@
 @tool
 extends EditorPlugin
 
-## Godot4 Room Atlas 编辑器入口。
+## Seamless Rooms 编辑器入口。
 ##
 ## · 底部 dock：tscn 资源列表 / 网格画布（导入 / 拖拽落图 / 删除 / 吸附 / 对齐 / 校验 / 保存）
 ## · _apply_changes()：编辑器保存项目时自动落盘未保存的配置
@@ -11,11 +11,11 @@ extends EditorPlugin
 ## room_library.tres 是编辑期资源池（只记录导入了哪些 .tscn），运行期不加载。
 ## 不做 JSON 快照，也不注册工具菜单，所有编辑与校验能力都集中在底部 dock。
 
-## 默认放在项目根目录；可在 project.godot 的 [room_atlas] 段覆盖：
+## 默认放在项目根目录；可在 project.godot 的 [seamless_rooms] 段覆盖：
 ##   config_path / library_path
 const DEFAULT_CONFIG_PATH := "res://world_config.tres"
 const DEFAULT_LIBRARY_PATH := "res://room_library.tres"
-const WorldCanvasScript = preload("res://addons/room_atlas/editor/room_atlas_world_canvas.gd")
+const WorldCanvasScript = preload("res://addons/seamless_rooms/editor/seamless_rooms_world_canvas.gd")
 
 var _dock: EditorDock = null
 var _panel = null
@@ -23,11 +23,11 @@ var _fs_refresh_pending := false
 
 
 func _config_path() -> String:
-	return String(ProjectSettings.get_setting("room_atlas/config_path", DEFAULT_CONFIG_PATH))
+	return String(ProjectSettings.get_setting("seamless_rooms/config_path", DEFAULT_CONFIG_PATH))
 
 
 func _library_path() -> String:
-	return String(ProjectSettings.get_setting("room_atlas/library_path", DEFAULT_LIBRARY_PATH))
+	return String(ProjectSettings.get_setting("seamless_rooms/library_path", DEFAULT_LIBRARY_PATH))
 
 
 ## 在「项目设置」里为两个路径提供默认值与 *.tres 文件选择器。
@@ -36,8 +36,8 @@ func _library_path() -> String:
 ## 所以必须先 set_setting() 创建它，否则启动时会报
 ## "Request for nonexistent project setting" 和 "!props.has(pinfo.name)"。
 func _register_project_settings() -> void:
-	_register_setting("room_atlas/config_path", DEFAULT_CONFIG_PATH)
-	_register_setting("room_atlas/library_path", DEFAULT_LIBRARY_PATH)
+	_register_setting("seamless_rooms/config_path", DEFAULT_CONFIG_PATH)
+	_register_setting("seamless_rooms/library_path", DEFAULT_LIBRARY_PATH)
 
 
 func _register_setting(name: String, default_value: String) -> void:
@@ -55,8 +55,8 @@ func _register_setting(name: String, default_value: String) -> void:
 func _enter_tree() -> void:
 	_register_project_settings()
 	_dock = EditorDock.new()
-	_dock.name = "RoomAtlasDock"
-	_dock.title = "Room Atlas"
+	_dock.name = "SeamlessRoomDock"
+	_dock.title = "Seamless Rooms"
 	_dock.default_slot = EditorDock.DOCK_SLOT_BOTTOM
 	_dock.closable = true
 	_dock.custom_minimum_size = Vector2(0, 360)
@@ -106,12 +106,12 @@ func _apply_changes() -> void:
 		_panel.call("save_if_dirty")
 
 
-func _current_config() -> RoomAtlasConfig:
+func _current_config() -> SeamlessRoomConfig:
 	if _panel != null and _panel.has_method("current_config"):
-		var c: RoomAtlasConfig = _panel.call("current_config") as RoomAtlasConfig
+		var c: SeamlessRoomConfig = _panel.call("current_config") as SeamlessRoomConfig
 		if c != null:
 			return c
-	return ResourceLoader.load(_config_path(), "", ResourceLoader.CACHE_MODE_REPLACE) as RoomAtlasConfig
+	return ResourceLoader.load(_config_path(), "", ResourceLoader.CACHE_MODE_REPLACE) as SeamlessRoomConfig
 
 
 ## 运行前最后一道闸：有 error 就中止运行，避免带着错配置跑半天。
@@ -121,11 +121,11 @@ func _build() -> bool:
 		return true
 	var config := _current_config()
 	if config == null:
-		push_error("[Room Atlas] " + RoomAtlasI18n.t("Failed to load config: ") + cfg_path)
+		push_error("[Seamless Rooms] " + SeamlessRoomI18n.t("Failed to load config: ") + cfg_path)
 		return false
-	var result := RoomAtlasValidator.validate(config)
+	var result := SeamlessRoomValidator.validate(config)
 	if not result.errors.is_empty():
-		push_error("[Room Atlas] " + RoomAtlasI18n.t("Config validation failed, build blocked:\n")
-				+ RoomAtlasValidator.format(result))
+		push_error("[Seamless Rooms] " + SeamlessRoomI18n.t("Config validation failed, build blocked:\n")
+				+ SeamlessRoomValidator.format(result))
 		return false
 	return true

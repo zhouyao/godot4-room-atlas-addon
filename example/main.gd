@@ -11,25 +11,25 @@ const CameraPolicy = preload("res://example/camera_policy.gd")
 const RoomCameraController = preload("res://example/room_camera_controller.gd")
 const CameraDebugPanel = preload("res://example/camera_debug_panel.gd")
 
-var streamer: RoomAtlasStreamer
+var streamer: SeamlessRoomStreamer
 var player: CharacterBody2D
 var player2: CharacterBody2D
 var cam: Camera2D
-var minimap: RoomAtlasMinimap
+var minimap: SeamlessRoomMinimap
 var policy: RefCounted
 var controller: Node
 
 
 func _ready() -> void:
-	var config := ResourceLoader.load(CONFIG_PATH) as RoomAtlasConfig
+	var config := ResourceLoader.load(CONFIG_PATH) as SeamlessRoomConfig
 	if config == null:
-		push_error("[Room Atlas] 配置加载失败：" + CONFIG_PATH)
+		push_error("[Seamless Rooms] 配置加载失败：" + CONFIG_PATH)
 		return
-	var result := RoomAtlasValidator.validate(config)
+	var result := SeamlessRoomValidator.validate(config)
 	for w in result.warnings:
-		push_warning("[Room Atlas] " + w)
+		push_warning("[Seamless Rooms] " + w)
 	if not result.errors.is_empty():
-		push_error("[Room Atlas] 配置不合法：\n" + RoomAtlasValidator.format(result))
+		push_error("[Seamless Rooms] 配置不合法：\n" + SeamlessRoomValidator.format(result))
 		return
 
 	# 房间是空白的，铺一层世界网格，否则相机跟随会让移动看起来像静止。
@@ -40,8 +40,8 @@ func _ready() -> void:
 	grid.set("config", config)
 	add_child(grid)
 
-	streamer = RoomAtlasStreamer.new()
-	streamer.name = "RoomAtlasStreamer"
+	streamer = SeamlessRoomStreamer.new()
+	streamer.name = "SeamlessRoomStreamer"
 	add_child(streamer)
 	streamer.configure(config)
 
@@ -94,14 +94,14 @@ func _ready() -> void:
 	_build_minimap(config)
 	minimap.show_room_ids = policy.show_minimap_ids
 
-	print("[Room Atlas] 已就绪：WASD 移动 ｜ Tab 显隐调试面板")
+	print("[Seamless Rooms] 已就绪：WASD 移动 ｜ Tab 显隐调试面板")
 
 
-## 视差组件不认识相机：每帧把真实相机中心推给所有 RoomAtlasParallax 实例。
+## 视差组件不认识相机：每帧把真实相机中心推给所有 SeamlessRoomParallax 实例。
 ## 放在 _process 而不是 _physics_process，保证读到的是控制器本帧移动后的相机。
 func _process(_delta: float) -> void:
 	if is_instance_valid(cam):
-		get_tree().call_group(RoomAtlasParallax.GROUP, &"set_camera_center",
+		get_tree().call_group(SeamlessRoomParallax.GROUP, &"set_camera_center",
 				cam.get_screen_center_position())
 
 
@@ -145,13 +145,13 @@ func _on_debug_option_changed(key: StringName) -> void:
 
 
 ## 右上角小地图：外部把玩家坐标推进去，它负责换算与画光标。
-func _build_minimap(p_config: RoomAtlasConfig) -> void:
+func _build_minimap(p_config: SeamlessRoomConfig) -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "MinimapLayer"
 	layer.layer = 2
 	add_child(layer)
 
-	minimap = RoomAtlasMinimap.new()
+	minimap = SeamlessRoomMinimap.new()
 	minimap.name = "Minimap"
 	layer.add_child(minimap)
 	# 锚点钉在右上角，窗口缩放时自动跟随。

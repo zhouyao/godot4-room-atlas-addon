@@ -15,7 +15,7 @@ const MINOR_COLOR := Color(1.0, 1.0, 1.0, 0.08)
 const MAJOR_COLOR := Color(1.0, 1.0, 1.0, 0.18)
 
 ## 保留该字段只为兼容 main.gd 的装配；网格本身与房间配置无关。
-@export var config: RoomAtlasConfig:
+@export var config: SeamlessRoomConfig:
 	set(value):
 		config = value
 		queue_redraw()

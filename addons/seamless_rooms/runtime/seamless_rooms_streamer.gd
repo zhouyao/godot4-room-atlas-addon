@@ -1,4 +1,4 @@
-class_name RoomAtlasStreamer
+class_name SeamlessRoomStreamer
 extends Node
 
 ## 距离驱动的房间供给器。
@@ -14,7 +14,7 @@ signal room_sleeping(id: StringName)
 signal room_unloaded(id: StringName)
 signal room_load_failed(id: StringName, path: String)
 
-var layout: RoomAtlasLayout
+var layout: SeamlessRoomLayout
 
 var _tracked: Node2D = null
 var _mounted: Dictionary = {}      # StringName -> Node
@@ -34,12 +34,12 @@ var _auto_max_mounted := false
 
 # ---------------------------------------------------------------- 装配 / 查询
 
-func configure(p_config: RoomAtlasConfig) -> void:
+func configure(p_config: SeamlessRoomConfig) -> void:
 	_clear_all()
 	_cache.clear()
 	_cache_lru.clear()
-	RoomAtlasCameraRegion.clear_cache()
-	layout = RoomAtlasLayout.new(p_config)
+	SeamlessRoomCameraRegion.clear_cache()
+	layout = SeamlessRoomLayout.new(p_config)
 	var s := layout.streaming()
 	_auto_max_mounted = s.max_mounted <= 0
 	_effective_mount = s.mount_distance
@@ -58,7 +58,7 @@ func precompute_regions(view_size: Vector2) -> void:
 	if layout == null or view_size.x <= 0.0 or view_size.y <= 0.0:
 		return
 	for group in layout.connected_groups():
-		RoomAtlasCameraRegion.precompute(group, view_size)
+		SeamlessRoomCameraRegion.precompute(group, view_size)
 
 
 ## 注入「一次要提前加载多远」（世界像素）。半径由认识视口 / 相机 / 玩家的
@@ -70,7 +70,7 @@ func set_load_radius(radius: float) -> void:
 	var s := layout.streaming()
 	var base := maxf(s.mount_distance, 1.0)
 	# 配置的 bucket_size 可能是 0（自动推导），必须用 layout 实际采用的值。
-	var upper := maxf(RoomAtlasLayout.max_query_radius(layout.bucket_size()), base)
+	var upper := maxf(SeamlessRoomLayout.max_query_radius(layout.bucket_size()), base)
 	var mount := clampf(radius, base, upper)  # INF 会被夹到 upper，不会挂死
 	var ratio := mount / base
 	_effective_mount = mount
@@ -291,7 +291,7 @@ func _update_streaming() -> void:
 			far_d = d
 			far = id
 		if far == &"":
-			push_warning(RoomAtlasI18n.tf(
+			push_warning(SeamlessRoomI18n.tf(
 					"Mount limit %d is smaller than the number of rooms in range; all rooms were kept",
 					[budget]))
 			break

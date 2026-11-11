@@ -1,5 +1,5 @@
 @tool
-class_name RoomAtlasI18n
+class_name SeamlessRoomI18n
 extends RefCounted
 
 ## 插件文案的中英双语表。
@@ -18,7 +18,7 @@ const ZH := {
 	"Failed to load config: ": "无法加载配置：",
 	"Config validation failed, build blocked:\n": "配置校验失败，已阻止运行：\n",
 
-	# room_atlas_validator.gd
+	# seamless_rooms_validator.gd
 	"Config is empty": "配置为空",
 	"schema_version=%d, this build is %d; verify whether migration is required":
 			"schema_version=%d，当前实现为 %d，请确认是否需要迁移",
@@ -37,14 +37,14 @@ const ZH := {
 	"max_mounted is small and may conflict with mount_distance, causing repeated sleep/wake cycles":
 			"max_mounted 偏小，可能与 mount_distance 冲突导致反复休眠/唤醒",
 	"rooms is empty": "rooms 为空",
-	"rooms[%d] is not a RoomAtlasPlacement": "rooms[%d] 不是 RoomAtlasPlacement",
+	"rooms[%d] is not a SeamlessRoomPlacement": "rooms[%d] 不是 SeamlessRoomPlacement",
 	"%s is missing id": "%s 缺少 id",
 	"Duplicate id: %s": "id 重复：%s",
 	"%s (%s) has no scene": "%s (%s) 未指定 scene",
 	"%s (%s) cells.size must be positive": "%s (%s) 的 cells.size 必须为正",
 	"Room cells overlap: %s and %s": "房间格区间重叠：%s 与 %s",
 
-	# room_atlas_scene_list.gd
+	# seamless_rooms_scene_list.gd
 	"Not loaded (%d)": "未载入 (%d)",
 	"Loaded (%d)": "已载入 (%d)",
 	"Not on the map · drag onto canvas to place · × removes from list":
@@ -58,7 +58,7 @@ const ZH := {
 	"\n⚠ %s\nClick the inline sync button to update from the current tscn size":
 			"\n⚠ %s\n点行内同步按钮：按该 tscn 当前尺寸更新",
 
-	# room_atlas_world_canvas.gd
+	# seamless_rooms_world_canvas.gd
 	"Import .tscn": "导入 .tscn",
 	"Fit View": "适应视图",
 	"Save Config": "保存配置",
@@ -114,7 +114,7 @@ const ZH := {
 	"Config is valid": "配置有效",
 	"Duplicate scene id: %s (%s)": "场景 id 重复：%s（%s）",
 
-	# room_atlas_grid_canvas.gd
+	# seamless_rooms_grid_canvas.gd
 	"X seam": "X 贴合",
 	"Y seam": "Y 贴合",
 	"X align": "X 对齐",
@@ -122,21 +122,21 @@ const ZH := {
 	"Nearest X: Δ%d px": "最近 X: Δ%d px",
 	"Nearest Y: Δ%d px": "最近 Y: Δ%d px",
 
-	# room_atlas_parallax.gd
+	# seamless_rooms_parallax.gd
 	"Editor preview enabled: pan the 2D view to preview parallax; layers are restored when saving.":
 			"编辑器预览已启用：平移 2D 视图查看视差；保存时自动复位各层。",
 
-	# room_atlas_layout.gd / room_atlas_streamer.gd
+	# seamless_rooms_layout.gd / seamless_rooms_streamer.gd
 	"query_near: radius %.1f exceeds the bucket budget; clamped to %.1f":
 			"query_near: radius %.1f 超出桶预算，已截断到 %.1f",
 	"Mount limit %d is smaller than the number of rooms in range; all rooms were kept":
 			"挂载上限 %d 小于半径内房间数，已保留全部",
 
-	# room_atlas_minimap.gd
+	# seamless_rooms_minimap.gd
 	"Player coords  —": "玩家坐标  —",
 	"Player coords  x %d   y %d": "玩家坐标  x %d   y %d",
 
-	# room_atlas_room2d.gd
+	# seamless_rooms_room2d.gd
 	"Follow & Confine": "跟随并锁边界",
 	"Fixed Center": "固定房间中心",
 	"Auto Zoom": "自动抬高缩放",

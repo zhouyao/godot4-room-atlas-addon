@@ -1,5 +1,5 @@
 @tool
-class_name RoomAtlasStreamingSettings
+class_name SeamlessRoomStreamingSettings
 extends Resource
 
 ## 距离流式调度参数 + 空间索引粒度。
@@ -7,8 +7,8 @@ extends Resource
 ##
 ## 这里的默认值是中立兜底，不绑定任何示例视口或房间尺寸：
 ## - 三个距离只作为基准下限，运行期有效值由游戏层 set_load_radius() 注入；
-## - bucket_size <= 0 表示由 RoomAtlasLayout 按地图房间尺寸自动推导；
-## - max_mounted <= 0 表示由 RoomAtlasStreamer 按有效半径与地图密度自动派生。
+## - bucket_size <= 0 表示由 SeamlessRoomLayout 按地图房间尺寸自动推导；
+## - max_mounted <= 0 表示由 SeamlessRoomStreamer 按有效半径与地图密度自动派生。
 ## 具体项目请把取值显式写在自己的 .tres 里（示例见 world_config.tres）。
 
 ## 自动推导桶尺寸时、地图里没有有效房间的兜底值。

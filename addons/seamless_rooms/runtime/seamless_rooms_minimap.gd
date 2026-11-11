@@ -1,10 +1,10 @@
 @tool
-class_name RoomAtlasMinimap
+class_name SeamlessRoomMinimap
 extends Control
 
 ## 房间小地图（纯显示，不含任何玩法语义）。
 ##
-## 按 RoomAtlasConfig 里的房间几何画一张缩略图；外部把世界坐标推给
+## 按 SeamlessRoomConfig 里的房间几何画一张缩略图；外部把世界坐标推给
 ## set_cursor_world_position()，小地图就用光标标出它在图上的位置。
 ##
 ## 插件不认识"玩家"，也不读游戏状态：谁要显示，谁就喂坐标。
@@ -15,7 +15,7 @@ extends Control
 ## 玩家移动时不再重画 O(N) 个房间矩形。
 
 ## 地图配置。赋值后自动重算世界包围盒并重绘。
-@export var config: RoomAtlasConfig:
+@export var config: SeamlessRoomConfig:
 	set(value):
 		config = value
 		_rebuild()
@@ -128,7 +128,7 @@ func _redraw_overlay() -> void:
 # ---------------------------------------------------------------- 对外 API
 
 ## 载入配置；等价于给 config 赋值。
-func configure(p_config: RoomAtlasConfig) -> void:
+func configure(p_config: SeamlessRoomConfig) -> void:
 	config = p_config
 
 
@@ -275,7 +275,7 @@ func _update_map_transform() -> void:
 
 ## 动态层：每帧只画光标 + 相机视野，图元数量恒定，与房间数无关。
 class Overlay extends Control:
-	var host: RoomAtlasMinimap
+	var host: SeamlessRoomMinimap
 
 	func _draw() -> void:
 		if host == null or not is_instance_valid(host):
@@ -302,13 +302,13 @@ class Overlay extends Control:
 
 	## 底部坐标条：底衬 + 分隔线 + 世界坐标文字；光标还没推入时显示占位符。
 	func _draw_coords_bar() -> void:
-		var h := RoomAtlasMinimap.COORDS_BAR_HEIGHT
+		var h := SeamlessRoomMinimap.COORDS_BAR_HEIGHT
 		var top := size.y - h
 		draw_rect(Rect2(0.0, top, size.x, h), host.coords_bar_color, true)
 		draw_line(Vector2(0.0, top), Vector2(size.x, top), host.border_color, 1.0)
-		var text := RoomAtlasI18n.t("Player coords  —")
+		var text := SeamlessRoomI18n.t("Player coords  —")
 		if host._has_cursor:
-			text = RoomAtlasI18n.tf("Player coords  x %d   y %d", [
+			text = SeamlessRoomI18n.tf("Player coords  x %d   y %d", [
 					roundi(host._cursor_world.x), roundi(host._cursor_world.y)])
 		var font := ThemeDB.fallback_font
 		var font_size := 11
