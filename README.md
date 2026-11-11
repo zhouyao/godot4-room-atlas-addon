@@ -1,4 +1,4 @@
-# Godot4 Room Atlas
+# Seamless Rooms
 
 > 编辑期把房间摆在一张网格大地图上，导出一份 `.tres` 配置；运行期按这份配置，以跟踪目标为中心流式加载房间内容。
 
@@ -17,11 +17,11 @@
 | 能力 | 说明 |
 |---|---|
 | **可视化编排** | 编辑器底部 dock：tscn 资源列表 + 网格画布 + 属性面板 + 校验报告。拖拽吸附、x/y 辅助线、重叠红框、撤销重做 |
-| **单一配置** | 运行期只认一份 `RoomAtlasConfig`（`.tres`），Inspector 原生可编辑、类型安全、可 diff，也能手写 |
+| **单一配置** | 运行期只认一份 `SeamlessRoomConfig`（`.tres`），Inspector 原生可编辑、类型安全、可 diff，也能手写 |
 | **距离流式加载** | `mount → sleep → unload` 四级生命周期 + 滞回带；`PackedScene` 缓存 LRU 淘汰，释放的只是实例 |
 | **网格与索引解耦** | `cell_size` 可以细到 1px（格坐标即像素坐标），空间索引用独立配置的桶，索引开销不随网格粒度膨胀 |
 | **相机几何** | 房间只声明自己的构图规则；插件提供纯几何计算与「相机中心合法区域」预计算，不寻找、不驱动任何 `Camera2D` |
-| **可选配套** | `RoomAtlasMinimap` 小地图、`RoomAtlasParallax` 房间局部视差，都在 `addons/` 内，整套可以删掉 |
+| **可选配套** | `SeamlessRoomMinimap` 小地图、`SeamlessRoomParallax` 房间局部视差，都在 `addons/` 内，整套可以删掉 |
 
 **引擎**：Godot 4.7（实测 4.7.2）· **渲染器**：Forward+ / GL Compatibility 均可（纯 2D，不依赖渲染特性）· **无第三方依赖**
 
@@ -32,8 +32,8 @@
 用 Godot 4.7 打开本目录的 `project.godot`，按 **F5** 运行示例（主场景 `res://example/main.tscn`）。也可以用命令行：
 
 ```bash
-/Applications/Godot.app/Contents/MacOS/Godot \
-  --path /Users/yao.zhou/GitHub/godot4-room-atlas
+# 在仓库根目录执行
+godot --path .
 ```
 
 ### 示例操作
@@ -49,12 +49,12 @@
 
 ### 在自己的项目里使用
 
-1. 把 `addons/room_atlas/` 复制进目标项目（`companion/` 不需要可以删）。
-2. 在「项目设置 → 插件」里启用 **Godot4 Room Atlas**。
-3. 编辑器底部会出现 **Room Atlas** dock；不存在配置文件时会自动创建。
-4. 让房间场景根节点继承 `RoomAtlasRoom2D`（或至少声明 `room_id` / `room_title` / `room_size` 三个属性）。
+1. 把 `addons/seamless_rooms/` 复制进目标项目（`companion/` 不需要可以删）。
+2. 在「项目设置 → 插件」里启用 **Seamless Rooms**。
+3. 编辑器底部会出现 **Seamless Rooms** dock；不存在配置文件时会自动创建。
+4. 让房间场景根节点继承 `SeamlessRoom2D`（或至少声明 `room_id` / `room_title` / `room_size` 三个属性）。
 5. 在 dock 里导入 `.tscn`，拖到画布上摆好，点「保存配置」。
-6. 运行时添加 `RoomAtlasStreamer` 节点，`configure(config)` 后 `track(target)` 即可。
+6. 运行时添加 `SeamlessRoomStreamer` 节点，`configure(config)` 后 `track(target)` 即可。
 
 > 插件在编辑器打开期间升级过的话，需要重新打开项目（或在插件面板禁用再启用）：`EditorPlugin._enter_tree()` 只在插件加载时执行一次。
 
@@ -74,7 +74,7 @@
 
 一句话：**插件是一台按位置供给房间内容的机器，外加一组纯几何 / 生命周期的原子 API；玩法由游戏层自己拼。**
 
-`addons/room_atlas/companion/` 下的视差组件是唯一的表现层例外：它不认识相机，只消费游戏层每帧推入的相机中心，不寻找、不驱动任何 `Camera2D`。
+`addons/seamless_rooms/companion/` 下的视差组件是唯一的表现层例外：它不认识相机，只消费游戏层每帧推入的相机中心，不寻找、不驱动任何 `Camera2D`。
 
 ---
 
@@ -83,7 +83,7 @@
 ```text
 room_library.tres ──(编辑器 dock)──> world_config.tres
                                           │
-                             RoomAtlasStreamer.configure(config)
+                             SeamlessRoomStreamer.configure(config)
                                           │  track(target)
                                     每 tick 按距离判定
                                           │
@@ -104,7 +104,7 @@ room_library.tres ──(编辑器 dock)──> world_config.tres
 
 ### 2. 空间索引与网格解耦
 
-`cell_size` 只管坐标换算、编辑器吸附和画布网格线；**空间索引用另一套独立尺寸的桶**，由 `RoomAtlasStreamingSettings.bucket_size` 配置（`<= 0` 时按地图房间短边中位数自动推导）。房间按它覆盖的桶登记，而不是逐格登记。
+`cell_size` 只管坐标换算、编辑器吸附和画布网格线；**空间索引用另一套独立尺寸的桶**，由 `SeamlessRoomStreamingSettings.bucket_size` 配置（`<= 0` 时按地图房间短边中位数自动推导）。房间按它覆盖的桶登记，而不是逐格登记。
 
 示例把桶尺寸设为 `1080`：它同时等于示例视口高和示例房间高，所有横向层边界恰好落在桶线上，`room_at()` 的一个桶里不会同时挤进上下两层房间。
 
@@ -140,20 +140,20 @@ r = \sqrt{(\tfrac{vw}{2}+|dz_x|+|off_x|)^2 + (\tfrac{vh}{2}+|dz_y|+|off_y|)^2}
 | `vw, vh` | `_view_size = viewport / zoom`，在 `_apply_camera_bounds()` 算出 |
 | `dz` / `off` | 房间规则的 `camera_deadzone = (220,140)` / `camera_offset = (0,-60)` |
 | `v_player` | `Player.move_speed`（默认 1480，面板可热调） |
-| `tick` | `RoomAtlasStreamingSettings.tick = 0.12` |
+| `tick` | `SeamlessRoomStreamingSettings.tick = 0.12` |
 | `load_latency_margin` | 控制器常量 `LOAD_LATENCY_MARGIN = 240`，覆盖异步加载期间玩家继续移动 |
 
 1920×1080 默认参数下 \(r\approx1810\)，1280×720 约 1444，3840×2160 约 2911，都远在桶预算内。分辨率、`zoom`、策略变化都会走幂等入口 `_apply_camera_bounds()`，注入值自动更新。
 
 ---
 
-## 编辑器：Room Atlas dock
+## 编辑器：Seamless Rooms dock
 
-插件启用后，编辑器**底部 dock** 会出现 **Room Atlas · 地图**，分三栏：左侧 tscn 资源管理、中间网格画布、右侧属性与校验报告。两条 `HSplitContainer` 分隔条可拖动，位置保存在 `EditorSettings`（用户级，不进项目）。
+插件启用后，编辑器**底部 dock** 会出现 **Seamless Rooms · 地图**，分三栏：左侧 tscn 资源管理、中间网格画布、右侧属性与校验报告。两条 `HSplitContainer` 分隔条可拖动，位置保存在 `EditorSettings`（用户级，不进项目）。
 
 dock 文案中英双语，跟随「编辑器设置 → 界面 → 编辑器 → 编辑器语言」；切换语言并重开编辑器后自动生效。运行时组件的文案跟随项目当前 locale，非中文环境回退英文。
 
-![Room Atlas 编辑器 dock：左栏 tscn 资源列表、中间 1px 网格画布、右侧房间属性与校验报告](screenshot/editor.webp)
+![Seamless Rooms 编辑器 dock：左栏 tscn 资源列表、中间 1px 网格画布、右侧房间属性与校验报告](screenshot/editor.webp)
 
 *底部 dock：8 间房按 `world_config.tres` 排布，左栏「已载入」8 项，右栏校验报告显示「配置有效」。*
 
@@ -161,18 +161,18 @@ dock 文案中英双语，跟随「编辑器设置 → 界面 → 编辑器 → 
 
 | 文件 | 作用 |
 |---|---|
-| `res://world_config.tres` | 运行期地图配置（`RoomAtlasConfig`），示例含 8 间房 |
-| `res://room_library.tres` | 编辑期已导入列表（`RoomAtlasSceneLibrary`），运行期不加载 |
+| `res://world_config.tres` | 运行期地图配置（`SeamlessRoomConfig`），示例含 8 间房 |
+| `res://room_library.tres` | 编辑期已导入列表（`SeamlessRoomSceneLibrary`），运行期不加载 |
 
 默认在项目根目录读写。换目录时在 `project.godot` 里加：
 
 ```ini
-[room_atlas]
+[seamless_rooms]
 config_path="res://data/world_config.tres"
 library_path="res://data/room_library.tres"
 ```
 
-也可以在「项目设置 → Room Atlas」里改（已注册默认值与 `*.tres` 文件选择器）。文件不存在时插件会自动创建空配置、空库，父目录一并创建。
+也可以在「项目设置 → Seamless Rooms」里改（已注册默认值与 `*.tres` 文件选择器）。文件不存在时插件会自动创建空配置、空库，父目录一并创建。
 
 ### 画布操作
 
@@ -197,7 +197,7 @@ library_path="res://data/room_library.tres"
 
 ### 校验
 
-`RoomAtlasValidator.validate(config)` 只查几何与资源自洽：
+`SeamlessRoomValidator.validate(config)` 只查几何与资源自洽：
 
 - `cell_size` 为正、`rooms` 非空、`id` 唯一非空、`scene` 已指定、`cells.size` 为正
 - **格区间两两不重叠**（重叠会让「谁覆盖谁」取决于加载顺序）
@@ -214,16 +214,16 @@ library_path="res://data/room_library.tres"
 
 配置只有一份：自定义 `Resource`（`.tres`），Inspector 原生可编辑、类型安全、引擎管 UID，运行时由 `ResourceLoader` 直接加载。插件不生成 JSON 快照。
 
-### RoomAtlasConfig
+### SeamlessRoomConfig
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | `schema_version` | `int` | 当前为 `1`，用于格式迁移 |
 | `cell_size` | `Vector2` | 网格大小，单位 px；示例 `Vector2(1, 1)`，只影响编辑器吸附与画布网格线 |
-| `rooms` | `Array` | `RoomAtlasPlacement` 列表；访问请走 `config.placements()` |
-| `streaming` | `RoomAtlasStreamingSettings` | 调度参数 |
+| `rooms` | `Array` | `SeamlessRoomPlacement` 列表；访问请走 `config.placements()` |
+| `streaming` | `SeamlessRoomStreamingSettings` | 调度参数 |
 
-### RoomAtlasPlacement
+### SeamlessRoomPlacement
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
@@ -234,7 +234,7 @@ library_path="res://data/room_library.tres"
 
 > 编辑期约定：`id` 与 `cells.size` 在拖入地图时由场景根节点的 `room_id` / `room_size` 决定，之后只读；之后再改场景声明，左栏会出现 ⚠，可用行内同步写回地图（`id` 冲突时跳过）。可改的只有 `cells.position` 与 `tint`。
 
-### RoomAtlasStreamingSettings
+### SeamlessRoomStreamingSettings
 
 | 字段 | 插件默认 | 说明 |
 |---|---|---|
@@ -249,7 +249,7 @@ library_path="res://data/room_library.tres"
 
 ### 编辑期资源库
 
-`RoomAtlasSceneLibrary` 是**纯编辑期** Resource：`scenes`（已导入场景）、`sizes`（`room_size` 基线）、`groups` + `group_of`（虚拟分组）。它就是左栏列表的全部内容——项目里其余 `.tscn` 只通过「导入 .tscn」对话框选取，不会自动出现。
+`SeamlessRoomSceneLibrary` 是**纯编辑期** Resource：`scenes`（已导入场景）、`sizes`（`room_size` 基线）、`groups` + `group_of`（虚拟分组）。它就是左栏列表的全部内容——项目里其余 `.tscn` 只通过「导入 .tscn」对话框选取，不会自动出现。
 
 | 分区 | 判定 | 行为 |
 |---|---|---|
@@ -262,11 +262,11 @@ library_path="res://data/room_library.tres"
 
 ## 房间基类与相机规则
 
-房间场景根节点继承 `RoomAtlasRoom2D`（`addons/room_atlas/runtime/room_atlas_room2d.gd`）即可；插件按属性名识别，不依赖具体脚本文件：
+房间场景根节点继承 `SeamlessRoom2D`（`addons/seamless_rooms/runtime/seamless_rooms_room2d.gd`）即可；插件按属性名识别，不依赖具体脚本文件：
 
 ```gdscript
 @tool
-extends RoomAtlasRoom2D
+extends SeamlessRoom2D
 
 func _draw() -> void:
 	super()   # 基类画编辑器边界预览，运行时自动跳过
@@ -303,7 +303,7 @@ func _draw() -> void:
 
 ## Runtime API
 
-运行时入口有两个：`RoomAtlasStreamer`（生命周期）与 `RoomAtlasMinimap`（纯显示）。Streamer 的所有方法都是几何 / 生命周期语义，**没有任何方法会移动节点**。
+运行时入口有两个：`SeamlessRoomStreamer`（生命周期）与 `SeamlessRoomMinimap`（纯显示）。Streamer 的所有方法都是几何 / 生命周期语义，**没有任何方法会移动节点**。
 
 | 方法 | 说明 |
 |---|---|
@@ -323,9 +323,9 @@ func _draw() -> void:
 
 信号：`room_mounted(id)`、`room_sleeping(id)`、`room_unloaded(id)`、`room_load_failed(id, path)`。
 
-`RoomAtlasLayout` 提供 `view_covered(view, rects)` 等纯几何静态方法；`RoomAtlasCameraRegion.build(rects, view_size)` 用坐标压缩预计算相机中心合法区域，`is_inside()` / `nearest()` / `project()` / `waypoint()` 供运行期查表、重定位与折线绕路。
+`SeamlessRoomLayout` 提供 `view_covered(view, rects)` 等纯几何静态方法；`SeamlessRoomCameraRegion.build(rects, view_size)` 用坐标压缩预计算相机中心合法区域，`is_inside()` / `nearest()` / `project()` / `waypoint()` 供运行期查表、重定位与折线绕路。
 
-房间场景根节点可选实现 `configure(id, placement, cell_size)` 钩子；继承 `RoomAtlasRoom2D` 时基类已有默认实现，子类 `super()` 后处理自己的内容即可（示例见 `example/room_view.gd`）。
+房间场景根节点可选实现 `configure(id, placement, cell_size)` 钩子；继承 `SeamlessRoom2D` 时基类已有默认实现，子类 `super()` 后处理自己的内容即可（示例见 `example/room_view.gd`）。
 
 ### 组合出「前往指定房间的指定位置」
 
@@ -347,13 +347,13 @@ func go_to(room_id: StringName, local_pos: Vector2) -> void:
 
 ## 示例层：相机、调试面板与小地图
 
-示例用**全局唯一** `Camera2D`，由 `example/room_camera_controller.gd` 驱动：每帧 `streamer.room_at(player.global_position)` 取房间 → 读 `RoomAtlasRoom2D.camera_rules()` → 把 `limit_*` / `zoom` 与相机位置夹在**约束区**内。插件全程不碰相机；配置几何同步可用，房间还在异步加载时也能立即锁好边界。
+示例用**全局唯一** `Camera2D`，由 `example/room_camera_controller.gd` 驱动：每帧 `streamer.room_at(player.global_position)` 取房间 → 读 `SeamlessRoom2D.camera_rules()` → 把 `limit_*` / `zoom` 与相机位置夹在**约束区**内。插件全程不碰相机；配置几何同步可用，房间还在异步加载时也能立即锁好边界。
 
 示例地图共 8 间房：底层 r4 → r1 横向排列，r5 叠在 r4 上方，r6 再叠在 r5 上方，r7 与 r6 同层向右延伸，r8 位于 r1 上方，整体是一块带 L 形转角的连通区。
 
 ### 连续滚动（默认）
 
-房间配置是静态的，相机中心的可滚动范围能提前算出来。`RoomAtlasCameraRegion.build(rects, view_size)` 以「与当前房间边贴合连通的矩形集合」和可见世界尺寸为输入，用坐标压缩求出所有满足「视图被房间并集完全覆盖」的相机中心，合并成少量矩形。
+房间配置是静态的，相机中心的可滚动范围能提前算出来。`SeamlessRoomCameraRegion.build(rects, view_size)` 以「与当前房间边贴合连通的矩形集合」和可见世界尺寸为输入，用坐标压缩求出所有满足「视图被房间并集完全覆盖」的相机中心，合并成少量矩形。
 
 结果按「覆盖矩形签名 + 可见尺寸」缓存：签名与矩形顺序无关，连续滚动下同一片连通区跨房不变，所以切房直接复用预计算结果，只有进入另一个连通岛、或视口 / zoom 变化才重跑。运行期每帧只查表：
 
@@ -394,12 +394,12 @@ func go_to(room_id: StringName, local_pos: Vector2) -> void:
 
 调试面板、`override_*` 与显示开关都是**开发期脚手架**，不是插件的公共 API。正式项目建议把「相机运行参数」与「开发期调试开关」拆成两份数据：房间只声明自己那一间的构图参数，跨房过渡与防抖交给统一持有相机的业务系统。
 
-### 小地图（RoomAtlasMinimap）
+### 小地图（SeamlessRoomMinimap）
 
-`RoomAtlasMinimap` 是一个 `Control`，按配置里的房间几何画缩略图，并用光标标出外部传入的世界坐标。它**不认识玩家、不读游戏状态**：谁要显示，谁就每帧把坐标推给它。
+`SeamlessRoomMinimap` 是一个 `Control`，按配置里的房间几何画缩略图，并用光标标出外部传入的世界坐标。它**不认识玩家、不读游戏状态**：谁要显示，谁就每帧把坐标推给它。
 
 ```gdscript
-var minimap := RoomAtlasMinimap.new()
+var minimap := SeamlessRoomMinimap.new()
 layer.add_child(minimap)
 minimap.configure(config)
 
@@ -421,9 +421,9 @@ minimap.set_camera_view(Rect2(center - view * 0.5, view))
 
 导出参数包括 `world_padding`、`cursor_color`、`cursor_radius`、`show_cursor_coords`（底部坐标条）、`show_room_ids`（id 角标）、`show_camera_view`（视野矩形）、`camera_view_color` / `camera_view_fill`，以及背景、边框、房间边框、角标底衬等配色。地图等比缩放并居中，不拉伸房间比例；光标超出包围盒时贴边并换成 `out_of_bounds_color`。
 
-### 可选配套：房间局部视差（RoomAtlasParallax）
+### 可选配套：房间局部视差（SeamlessRoomParallax）
 
-`addons/room_atlas/companion/` 提供一个可删的视差组件，用来替代内置 `Parallax2D`。内置节点按世界原点 / 当前相机反推自身 `position`，房间被流式摆到任意世界坐标后整层会被推出屏幕；组件的参照系是**房间矩形**：
+`addons/seamless_rooms/companion/` 提供一个可删的视差组件，用来替代内置 `Parallax2D`。内置节点按世界原点 / 当前相机反推自身 `position`，房间被流式摆到任意世界坐标后整层会被推出屏幕；组件的参照系是**房间矩形**：
 
 \[
 \text{shift} = (1 - \text{scroll\_scale}) \odot (\text{camera\_center} - \text{room\_center})
@@ -435,60 +435,60 @@ minimap.set_camera_view(Rect2(center - view * 0.5, view))
 - 只依赖相机中心，不用视口尺寸，分辨率 / zoom 变化不需要重算。
 
 ```text
-R1（RoomAtlasRoom2D）
-└─ ParallaxBackground（RoomAtlasParallax，Control，clip_contents）
-   ├─ Far（RoomAtlasParallaxLayer，scroll_scale = 0.2）
-   └─ Near（RoomAtlasParallaxLayer，scroll_scale = 0.4）
+R1（SeamlessRoom2D）
+└─ ParallaxBackground（SeamlessRoomParallax，Control，clip_contents）
+   ├─ Far（SeamlessRoomParallaxLayer，scroll_scale = 0.2）
+   └─ Near（SeamlessRoomParallaxLayer，scroll_scale = 0.4）
 ```
 
-和 `RoomAtlasMinimap` 同一契约，由游戏层每帧推入相机中心：
+和 `SeamlessRoomMinimap` 同一契约，由游戏层每帧推入相机中心：
 
 ```gdscript
-get_tree().call_group(RoomAtlasParallax.GROUP, &"set_camera_center",
+get_tree().call_group(SeamlessRoomParallax.GROUP, &"set_camera_center",
 		cam.get_screen_center_position())
 ```
 
-组件在 `_ready` 里加入 `room_atlas_parallax` 组，一行即可覆盖所有已挂载房间；没人推时所有层停在作者摆放的位置（失败模式是「没有视差」，而不是内容消失）。两个脚本都是 `@tool`，编辑器里平移 2D 视图即可实时预览，保存前会复位到作者坐标。第一版只做房间内固定构图，不提供 `repeat_size` / `autoscroll` 这类无限平铺。
+组件在 `_ready` 里加入 `seamless_rooms_parallax` 组，一行即可覆盖所有已挂载房间；没人推时所有层停在作者摆放的位置（失败模式是「没有视差」，而不是内容消失）。两个脚本都是 `@tool`，编辑器里平移 2D 视图即可实时预览，保存前会复位到作者坐标。第一版只做房间内固定构图，不提供 `repeat_size` / `autoscroll` 这类无限平铺。
 
 ---
 
 ## 目录结构
 
 ```text
-godot4-room-atlas/
+godot4-seamless-rooms/
 ├── project.godot
 ├── world_config.tres                 # 运行期地图配置（8 间房，1px 网格）
 ├── room_library.tres                 # 编辑期资源库（导入列表 + 尺寸基线）
 ├── screenshot/0.webp                  # 运行截图
 ├── screenshot/editor.webp             # 编辑器 dock 截图
-├── addons/room_atlas/
+├── addons/seamless_rooms/
 │   ├── plugin.cfg                    # 插件清单（v0.2.0）
 │   ├── plugin.gd                     # EditorPlugin：dock + 自动保存 + 运行前校验
 │   ├── editor/
-│   │   ├── room_atlas_world_canvas.gd    # 三栏面板：导入 / 落图 / 属性 / 撤销
-│   │   ├── room_atlas_grid_canvas.gd     # 网格画布：绘制 / 吸附 / 辅助线 / 缩放
-│   │   ├── room_atlas_scene_library.gd   # 编辑期资源库
-│   │   ├── room_atlas_scene_list.gd      # 左栏 Tree：分区 / 拖拽 / 删除
-│   │   └── room_atlas_validator.gd       # 静态校验（纯逻辑）
+│   │   ├── seamless_rooms_world_canvas.gd    # 三栏面板：导入 / 落图 / 属性 / 撤销
+│   │   ├── seamless_rooms_grid_canvas.gd     # 网格画布：绘制 / 吸附 / 辅助线 / 缩放
+│   │   ├── seamless_rooms_scene_library.gd   # 编辑期资源库
+│   │   ├── seamless_rooms_scene_list.gd      # 左栏 Tree：分区 / 拖拽 / 删除
+│   │   └── seamless_rooms_validator.gd       # 静态校验（纯逻辑）
 │   ├── runtime/                      # 游戏包里只需要这些
-│   │   ├── room_atlas_config.gd      # RoomAtlasConfig
-│   │   ├── room_placement.gd         # RoomAtlasPlacement
-│   │   ├── streaming_settings.gd     # RoomAtlasStreamingSettings
-│   │   ├── room_atlas_layout.gd      # RoomAtlasLayout：几何 + 桶索引
-│   │   ├── room_atlas_streamer.gd    # RoomAtlasStreamer：生命周期
-│   │   ├── room_atlas_room2d.gd      # RoomAtlasRoom2D：房间基类
-│   │   ├── room_atlas_camera_region.gd # RoomAtlasCameraRegion：合法中心预计算
-│   │   ├── room_atlas_minimap.gd     # RoomAtlasMinimap：缩略图 + 光标
-│   │   └── room_atlas_i18n.gd        # RoomAtlasI18n：插件文案中英双语
+│   │   ├── seamless_rooms_config.gd      # SeamlessRoomConfig
+│   │   ├── seamless_rooms_placement.gd         # SeamlessRoomPlacement
+│   │   ├── seamless_rooms_streaming_settings.gd # SeamlessRoomStreamingSettings
+│   │   ├── seamless_rooms_layout.gd      # SeamlessRoomLayout：几何 + 桶索引
+│   │   ├── seamless_rooms_streamer.gd    # SeamlessRoomStreamer：生命周期
+│   │   ├── seamless_rooms_room2d.gd      # SeamlessRoom2D：房间基类
+│   │   ├── seamless_rooms_camera_region.gd # SeamlessRoomCameraRegion：合法中心预计算
+│   │   ├── seamless_rooms_minimap.gd     # SeamlessRoomMinimap：缩略图 + 光标
+│   │   └── seamless_rooms_i18n.gd        # SeamlessRoomI18n：插件文案中英双语
 │   └── companion/                    # 可选表现层，整个目录可以删
-│       ├── room_atlas_parallax.gd
-│       └── room_atlas_parallax_layer.gd
+│       ├── seamless_rooms_parallax.gd
+│       └── seamless_rooms_parallax_layer.gd
 └── example/                          # 最小可运行示例，不属于插件本体
     ├── main.tscn / main.gd           # 装配序列
     ├── rooms/r1.tscn … r8.tscn       # r1 为苔藓洞窟场景，其余为空白房间
     ├── assets/sprites/moss_hole/     # r1 使用的贴图
     ├── player.gd / player2.gd        # 无重力玩家 / 受重力可跳跃角色
-    ├── room_view.gd                  # 房间底板：继承 RoomAtlasRoom2D
+    ├── room_view.gd                  # 房间底板：继承 SeamlessRoom2D
     ├── world_grid.gd                 # 世界网格：空白房间下的移动参照
     ├── debug_overlay.gd              # 玩家「房内 / 房外」标记
     ├── camera_policy.gd              # 相机策略开关
@@ -498,15 +498,15 @@ godot4-room-atlas/
     └── room_platform.gd / room_decor.gd  # 备用平台 / 装饰脚本
 ```
 
-`class_name` 是 Godot 全局注册的，所以 `RoomAtlas*` 前缀不能省，避免和其它插件撞名。
+`class_name` 是 Godot 全局注册的，所以 `SeamlessRoom*` 前缀不能省，避免和其它插件撞名。
 
 ---
 
 ## 验证
 
 ```bash
-GODOT=/Applications/Godot.app/Contents/MacOS/Godot
-PROJ=/Users/yao.zhou/GitHub/godot4-room-atlas
+GODOT=godot    # macOS 图形版可写 /Applications/Godot.app/Contents/MacOS/Godot
+PROJ=$(pwd)    # 在仓库根目录执行
 
 # 1) 资源导入 + 脚本解析（会生成 .uid 文件，务必入库）
 $GODOT --headless --path "$PROJ" --import
