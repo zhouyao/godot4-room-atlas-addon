@@ -121,10 +121,11 @@ func _build() -> bool:
 		return true
 	var config := _current_config()
 	if config == null:
-		push_error("[Room Atlas] 无法加载配置：" + cfg_path)
+		push_error("[Room Atlas] " + RoomAtlasI18n.t("Failed to load config: ") + cfg_path)
 		return false
 	var result := RoomAtlasValidator.validate(config)
 	if not result.errors.is_empty():
-		push_error("[Room Atlas] 配置校验失败，已阻止运行：\n" + RoomAtlasValidator.format(result))
+		push_error("[Room Atlas] " + RoomAtlasI18n.t("Config validation failed, build blocked:\n")
+				+ RoomAtlasValidator.format(result))
 		return false
 	return true

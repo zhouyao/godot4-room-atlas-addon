@@ -195,7 +195,9 @@ func query_near(world_pos: Vector2, radius: float) -> Array[StringName]:
 		return out
 	var max_radius := max_query_radius(_bucket_size)
 	if radius > max_radius:
-		push_warning("query_near: radius %.1f 超出桶预算，已截断到 %.1f" % [radius, max_radius])
+		push_warning(RoomAtlasI18n.tf(
+				"query_near: radius %.1f exceeds the bucket budget; clamped to %.1f",
+				[radius, max_radius]))
 		radius = max_radius
 	var seen: Dictionary = {}
 	var lo := Vector2i(

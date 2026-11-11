@@ -306,10 +306,10 @@ class Overlay extends Control:
 		var top := size.y - h
 		draw_rect(Rect2(0.0, top, size.x, h), host.coords_bar_color, true)
 		draw_line(Vector2(0.0, top), Vector2(size.x, top), host.border_color, 1.0)
-		var text := "玩家坐标  —"
+		var text := RoomAtlasI18n.t("Player coords  —")
 		if host._has_cursor:
-			text = "玩家坐标  x %d   y %d" % [
-					roundi(host._cursor_world.x), roundi(host._cursor_world.y)]
+			text = RoomAtlasI18n.tf("Player coords  x %d   y %d", [
+					roundi(host._cursor_world.x), roundi(host._cursor_world.y)])
 		var font := ThemeDB.fallback_font
 		var font_size := 11
 		var baseline := top + (h + font.get_ascent(font_size)) * 0.5 - 1.0

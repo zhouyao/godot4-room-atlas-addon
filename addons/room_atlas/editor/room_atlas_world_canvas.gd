@@ -87,9 +87,9 @@ func _build_ui() -> void:
 
 	var bar := HBoxContainer.new()
 	add_child(bar)
-	_add_button(bar, "导入 .tscn", _on_import)
-	_add_button(bar, "适应视图", _on_fit)
-	_add_button(bar, "保存配置", _on_save)
+	_add_button(bar, RoomAtlasI18n.t("Import .tscn"), _on_import)
+	_add_button(bar, RoomAtlasI18n.t("Fit View"), _on_fit)
+	_add_button(bar, RoomAtlasI18n.t("Save Config"), _on_save)
 	_status_label = Label.new()
 	_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -112,12 +112,12 @@ func _build_ui() -> void:
 	outer.add_child(left)
 
 	var ltitle := Label.new()
-	ltitle.text = "tscn 资源管理"
+	ltitle.text = RoomAtlasI18n.t("tscn Assets")
 	left.add_child(ltitle)
 
 	# 按文件名筛选；输入即过滤，清空恢复全部。
 	var lfilter := LineEdit.new()
-	lfilter.placeholder_text = "筛选文件名…"
+	lfilter.placeholder_text = RoomAtlasI18n.t("Filter by file name…")
 	lfilter.clear_button_enabled = true
 	lfilter.custom_minimum_size = Vector2(0, 0)
 	lfilter.text_changed.connect(func(text: String) -> void:
@@ -138,7 +138,8 @@ func _build_ui() -> void:
 	_scene_list.connect("path_group_changed", _on_path_group_changed)
 
 	var lhint := Label.new()
-	lhint.text = "未载入在上 · 拖到画布放置 · 已载入 + 新建组 · 双击组名改名"
+	lhint.text = RoomAtlasI18n.t(
+			"Not loaded on top · drag onto canvas to place · loaded + creates a group · double-click a group name to rename")
 	lhint.modulate.a = 0.6
 	# 不设置 clip 时 Label 会按文本宽度撑大左栏最小宽度，导致分隔条只能放大。
 	lhint.clip_text = true
@@ -178,7 +179,7 @@ func _build_ui() -> void:
 	split.add_child(right)
 
 	_right_title = Label.new()
-	_right_title.text = "房间属性"
+	_right_title.text = RoomAtlasI18n.t("Room Properties")
 	right.add_child(_right_title)
 	_inspector = VBoxContainer.new()
 	right.add_child(_inspector)
@@ -215,7 +216,7 @@ func _build_ui() -> void:
 	_tint_picker.color_changed.connect(_on_tint_changed)
 
 	var rtitle := Label.new()
-	rtitle.text = "校验报告"
+	rtitle.text = RoomAtlasI18n.t("Validation Report")
 	right.add_child(rtitle)
 	_report = RichTextLabel.new()
 	_report.bbcode_enabled = true
@@ -224,7 +225,8 @@ func _build_ui() -> void:
 	right.add_child(_report)
 
 	var hint := Label.new()
-	hint.text = "左侧列表拖到画布放房间 · 左键拖房间（吸附格，绿/蓝/黄辅助线提示相邻） · 空白处/右键拖动平移 · 滚轮缩放 · 红框 = 重叠"
+	hint.text = RoomAtlasI18n.t(
+			"Drag from the list onto the canvas to place rooms · left-drag a room (snaps to grid; green/blue/yellow guides show neighbors) · drag empty space or right-drag to pan · wheel to zoom · red outline = overlap")
 	hint.modulate.a = 0.6
 	hint.clip_text = true
 	add_child(hint)
@@ -309,11 +311,11 @@ func _reload() -> void:
 		var fresh := RoomAtlasConfig.new()
 		fresh.streaming = RoomAtlasStreamingSettings.new()
 		if ResourceSaver.save(fresh, config_path) != OK:
-			_status("配置创建失败：" + config_path)
+			_status(RoomAtlasI18n.t("Failed to create config: ") + config_path)
 			return
 	config = ResourceLoader.load(config_path, "", ResourceLoader.CACHE_MODE_REPLACE) as RoomAtlasConfig
 	if config == null:
-		_status("配置加载失败：" + config_path)
+		_status(RoomAtlasI18n.t("Failed to load config: ") + config_path)
 		return
 	selected = &""
 	_inspected_scene_path = ""
@@ -323,9 +325,9 @@ func _reload() -> void:
 	_refresh_inspector()
 	_validate()
 	dirty = false
-	_status("格 %d×%d px · 已加载 %d 个房间" % [
+	_status(RoomAtlasI18n.tf("Grid %d×%d px · %d rooms loaded", [
 		int(config.cell_size.x), int(config.cell_size.y), config.placements().size()
-	])
+	]))
 
 
 func _selected_placement() -> RoomAtlasPlacement:
@@ -351,7 +353,8 @@ func _refresh_inspector() -> void:
 		return
 	_updating = true
 	var scene_mode := p == null
-	_right_title.text = "房间信息 · 未载入" if scene_mode else "房间属性"
+	_right_title.text = RoomAtlasI18n.t("Room Info · Not Loaded") if scene_mode \
+			else RoomAtlasI18n.t("Room Properties")
 	for c in _editable_row_controls:
 		c.visible = not scene_mode
 	if scene_mode:
@@ -365,7 +368,8 @@ func _refresh_inspector() -> void:
 		_id_label.text = String(p.id)
 		_title_label.text = "" if p.scene == null \
 				else String(_scene_root_props(p.scene).get("room_title", ""))
-		_scene_label.text = p.scene.resource_path if p.scene != null else "(未指定)"
+		_scene_label.text = p.scene.resource_path if p.scene != null \
+				else RoomAtlasI18n.t("(not assigned)")
 		_w_label.text = str(p.cells.size.x)
 		_h_label.text = str(p.cells.size.y)
 		_spin[0].set_value_no_signal(p.cells.position.x)
@@ -405,7 +409,7 @@ func _after_change() -> void:
 	_validate()
 	# 房间增删会改变「是否拖入地图」，需同步列表分区（内部有差量保护）。
 	_refresh_library()
-	_status("已修改 · 未保存")
+	_status(RoomAtlasI18n.t("Modified · unsaved"))
 
 
 func _insert_placement(p: RoomAtlasPlacement, idx: int) -> void:
@@ -475,7 +479,7 @@ func _save_library() -> void:
 		return
 	var err := ResourceSaver.save(library, library_path)
 	if err != OK:
-		push_error("[Room Atlas] 保存资源库失败：%d" % err)
+		push_error("[Room Atlas] " + RoomAtlasI18n.tf("Failed to save scene library: %d", [err]))
 
 
 func _import_paths(paths: PackedStringArray) -> void:
@@ -501,13 +505,13 @@ func _import_paths(paths: PackedStringArray) -> void:
 		known[p] = true
 		added += 1
 	if added == 0:
-		_status("没有新增资源（可能已导入）")
+		_status(RoomAtlasI18n.t("No new assets (already imported?)"))
 		return
 	library.set("scenes", scenes)
 	_save_library()
 	_refresh_library()
 	_validate()
-	_status("已导入 %d 个 tscn" % added)
+	_status(RoomAtlasI18n.tf("Imported %d tscn", [added]))
 
 
 ## 未载入项删除：从导入清单移除，列表里消失。
@@ -530,7 +534,7 @@ func _remove_from_library(path: String) -> void:
 	_save_library()
 	_refresh_library()
 	_validate()
-	_status("已移出列表 " + path.get_file())
+	_status(RoomAtlasI18n.t("Removed from list: ") + path.get_file())
 
 
 # ---------------------------------------------------------------- 虚拟组
@@ -561,16 +565,17 @@ func _on_group_create_requested() -> void:
 	if library == null:
 		return
 	var n := 1
-	var name := "组 %d" % n
+	var name := RoomAtlasI18n.tf("Group %d", [n])
 	while _group_exists(name):
 		n += 1
-		name = "组 %d" % n
+		name = RoomAtlasI18n.tf("Group %d", [n])
 	var groups := _library_groups()
 	groups.append({ "name": name })
 	library.set("groups", groups)
 	_save_library()
 	_refresh_library()
-	_status("已新建组：" + name + "（双击组名可重命名）")
+	_status(RoomAtlasI18n.tf(
+			"Created group: %s (double-click the name to rename)", [name]))
 
 
 ## 组名内联编辑提交。
@@ -578,7 +583,7 @@ func _on_group_renamed(old_name: String, new_name: String) -> void:
 	if library == null or old_name.is_empty() or new_name.is_empty() or old_name == new_name:
 		return
 	if _group_exists(new_name):
-		_status("组已存在：" + new_name)
+		_status(RoomAtlasI18n.tf("Group already exists: %s", [new_name]))
 		return
 	var groups := _library_groups()
 	for g in groups:
@@ -594,7 +599,7 @@ func _on_group_renamed(old_name: String, new_name: String) -> void:
 	library.set("group_of", go)
 	_save_library()
 	_refresh_library()
-	_status("已重命名组：" + new_name)
+	_status(RoomAtlasI18n.tf("Renamed group: %s", [new_name]))
 
 
 func _on_group_delete_name(name: String) -> void:
@@ -617,7 +622,7 @@ func _delete_group(name: String) -> void:
 	library.set("group_of", go)
 	_save_library()
 	_refresh_library()
-	_status("已删除组（成员回到未分组）：" + name)
+	_status(RoomAtlasI18n.tf("Deleted group (members are ungrouped): %s", [name]))
 
 
 func _on_path_group_changed(path: String, group_name: String) -> void:
@@ -631,8 +636,8 @@ func _on_path_group_changed(path: String, group_name: String) -> void:
 	library.set("group_of", go)
 	_save_library()
 	_refresh_library()
-	_status("已分组：" + path.get_file() + " → "
-			+ (group_name if not group_name.is_empty() else "未分组"))
+	_status(RoomAtlasI18n.tf("Grouped: %s → %s", [path.get_file(),
+			group_name if not group_name.is_empty() else RoomAtlasI18n.t("Ungrouped")]))
 
 
 ## 分区：清单里被地图 placement 引用的为「已载入」，其余「未载入」。
@@ -819,24 +824,26 @@ func _changed_assets() -> Dictionary:
 				continue
 			var base: Vector2i = sizes[path]
 			if base != cur:
-				out[path] = "场景 %d×%d，记录 %d×%d" % [cur.x, cur.y, base.x, base.y]
+				out[path] = RoomAtlasI18n.tf("Scene %d×%d, recorded %d×%d",
+						[cur.x, cur.y, base.x, base.y])
 		else:
 			var expect := _px_to_cells(cur)
 			var notes: Array[String] = []
 			for p in placements:
 				if p.cells.size != expect:
-					notes.append("场景 %d×%d，地图 %d×%d 格" % [
+					notes.append(RoomAtlasI18n.tf("Scene %d×%d, map %d×%d cells", [
 						cur.x, cur.y, p.cells.size.x, p.cells.size.y
-					])
+					]))
 					break
 			# 场景被多间房引用时 id 各不相同，只对唯一 placement 检查 id。
 			if placements.size() == 1:
 				var scene_id: StringName = props["room_id"]
 				var only: RoomAtlasPlacement = placements[0]
 				if scene_id != &"" and only.id != scene_id:
-					notes.append("场景 id %s，地图 id %s" % [scene_id, only.id])
+					notes.append(RoomAtlasI18n.tf("Scene id %s, map id %s",
+							[scene_id, only.id]))
 			if not notes.is_empty():
-				out[path] = "；".join(PackedStringArray(notes))
+				out[path] = RoomAtlasI18n.list_sep().join(PackedStringArray(notes))
 	# 跨场景 id 重复：涉及的文件都标出来（行内同步解决不了，需要改 .tscn）。
 	var dup := _duplicate_scene_ids()
 	for id in dup:
@@ -846,11 +853,12 @@ func _changed_assets() -> Dictionary:
 			for j in paths.size():
 				if j != i:
 					others.append(String(paths[j]).get_file())
-			var note := "场景 id %s 与 %s 重复" % [
+			var note := RoomAtlasI18n.tf("Scene id %s is also used by %s", [
 				id, ", ".join(PackedStringArray(others))
-			]
+			])
 			var target: String = paths[i]
-			out[target] = (out[target] + "；" + note) if out.has(target) else note
+			out[target] = (out[target] + RoomAtlasI18n.list_sep() + note) \
+					if out.has(target) else note
 	return out
 
 
@@ -908,15 +916,17 @@ func _on_sync_path(path: String) -> void:
 	if synced == 0:
 		_refresh_library()
 		if id_conflict:
-			_status("场景 id %s 已被其它房间占用，未同步 id" % scene_id)
+			_status(RoomAtlasI18n.tf(
+					"Scene id %s is already used by another room; id not synced", [scene_id]))
 		else:
-			_status("已按场景更新基线：" + path.get_file())
+			_status(RoomAtlasI18n.t("Baseline updated from scene: ") + path.get_file())
 		return
 	if undo_redo == null:
 		config.rooms = new_rooms
 		_after_change()
 	else:
-		undo_redo.create_action("同步 %s（%d 间房）" % [path.get_file(), synced])
+		undo_redo.create_action(RoomAtlasI18n.tf(
+				"Sync %s (%d rooms)", [path.get_file(), synced]))
 		undo_redo.add_do_property(config, "rooms", new_rooms)
 		undo_redo.add_undo_property(config, "rooms", old_rooms)
 		undo_redo.add_do_method(self, "_after_change")
@@ -925,7 +935,7 @@ func _on_sync_path(path: String) -> void:
 	if new_selected != selected:
 		selected = new_selected
 		_canvas.select(new_selected)
-	_status("已按 %s 同步 %d 间房" % [path.get_file(), synced])
+	_status(RoomAtlasI18n.tf("Synced from %s · %d rooms", [path.get_file(), synced]))
 
 
 func _on_import() -> void:
@@ -933,9 +943,9 @@ func _on_import() -> void:
 		var dlg := EditorFileDialog.new()
 		dlg.file_mode = FileDialog.FILE_MODE_OPEN_FILES
 		dlg.access = FileDialog.ACCESS_RESOURCES
-		dlg.add_filter("*.tscn", "Godot 场景")
+		dlg.add_filter("*.tscn", RoomAtlasI18n.t("Godot Scene"))
 		dlg.mode_overrides_title = false
-		dlg.title = "导入 tscn 到资源列表"
+		dlg.title = RoomAtlasI18n.t("Import tscn into asset list")
 		dlg.files_selected.connect(_on_import_files)
 		add_child(dlg)
 		_import_dialog = dlg
@@ -976,12 +986,12 @@ func _on_scene_selected(path: String) -> void:
 	if p != null:
 		_canvas.call("focus_room", p.id)
 		_canvas.select(p.id)
-		_status("已定位地图房间 " + String(p.id))
+		_status(RoomAtlasI18n.tf("Located map room %s", [String(p.id)]))
 	else:
 		_canvas.select(&"")
 		_inspected_scene_path = path
 		_refresh_inspector()
-		_status("未载入资源：" + path.get_file())
+		_status(RoomAtlasI18n.t("Not loaded asset: ") + path.get_file())
 
 
 ## 移除地图上所有引用该场景的房间；资源留在清单里，自动回落到「未载入」。
@@ -1003,14 +1013,17 @@ func _delete_placements_for_path(path: String) -> void:
 		config.rooms = new_rooms
 		_after_change()
 	else:
-		undo_redo.create_action("从地图移除 %s（%d 间房）" % [path.get_file(), removed])
+		undo_redo.create_action(RoomAtlasI18n.tf(
+				"Remove %s from map (%d rooms)", [path.get_file(), removed]))
 		undo_redo.add_do_property(config, "rooms", new_rooms)
 		undo_redo.add_undo_property(config, "rooms", old_rooms)
 		undo_redo.add_do_method(self, "_after_change")
 		undo_redo.add_undo_method(self, "_after_change")
 		undo_redo.commit_action()
 	_canvas.select(&"")
-	_status("已从地图移除 %d 间房：%s（资源回到未载入）" % [removed, path.get_file()])
+	_status(RoomAtlasI18n.tf(
+			"Removed %d rooms from map: %s (assets return to not loaded)",
+			[removed, path.get_file()]))
 
 
 # ---------------------------------------------------------------- 交互回调
@@ -1027,7 +1040,7 @@ func _on_cells_committed(p: RoomAtlasPlacement, old_cells: Rect2i, new_cells: Re
 		return
 	# 拖动期间为了预览已直接改过属性，这里先还原，再交给 undo 的 do 应用新值。
 	p.cells = old_cells
-	_set_property(p, "cells", new_cells, "移动房间 %s" % p.id)
+	_set_property(p, "cells", new_cells, RoomAtlasI18n.tf("Move room %s", [p.id]))
 
 
 func _on_cells_value_changed(_v: float) -> void:
@@ -1040,7 +1053,7 @@ func _on_cells_value_changed(_v: float) -> void:
 	var new_cells := Rect2i(
 		int(_spin[0].value), int(_spin[1].value), p.cells.size.x, p.cells.size.y
 	)
-	_set_property(p, "cells", new_cells, "移动房间 %s" % p.id)
+	_set_property(p, "cells", new_cells, RoomAtlasI18n.tf("Move room %s", [p.id]))
 
 
 ## SpinBox 自身不处理上下键，这里在 _input 阶段接管：
@@ -1073,7 +1086,7 @@ func _on_tint_changed(c: Color) -> void:
 	var p := _selected_placement()
 	if p == null:
 		return
-	_set_property(p, "tint", c, "修改房间颜色")
+	_set_property(p, "tint", c, RoomAtlasI18n.t("Change room color"))
 
 
 ## 拖拽落图：鼠标所在格点即房间左上角，尺寸取场景声明的 room_size。
@@ -1083,7 +1096,7 @@ func _on_scene_dropped(path: String, grid_pos: Vector2i) -> void:
 		return
 	var packed := ResourceLoader.load(path, "PackedScene") as PackedScene
 	if packed == null:
-		_status("场景加载失败：" + path)
+		_status(RoomAtlasI18n.t("Scene load failed: ") + path)
 		return
 	var props := _scene_root_props(packed)
 	var preferred: StringName = props["room_id"]
@@ -1100,7 +1113,7 @@ func _on_scene_dropped(path: String, grid_pos: Vector2i) -> void:
 		config.rooms.append(p)
 		_after_change()
 	else:
-		undo_redo.create_action("放置房间 %s" % p.id)
+		undo_redo.create_action(RoomAtlasI18n.tf("Place room %s", [p.id]))
 		undo_redo.add_do_method(self, "_insert_placement", p, idx)
 		undo_redo.add_undo_method(self, "_erase_placement", p)
 		undo_redo.add_do_method(self, "_after_change")
@@ -1118,7 +1131,8 @@ func _validate() -> void:
 		return
 	_report.clear()
 	if config == null:
-		_report.append_text("[color=#ff6b6b]配置未加载[/color]")
+		_report.append_text("[color=#ff6b6b]"
+				+ RoomAtlasI18n.t("Config not loaded") + "[/color]")
 		return
 	var result := RoomAtlasValidator.validate(config)
 	var lines: Array[String] = []
@@ -1132,11 +1146,10 @@ func _validate() -> void:
 		var names: Array[String] = []
 		for p in dup[id]:
 			names.append(String(p).get_file())
-		lines.append("[color=#ffd166]WARN [/color] 场景 id 重复：%s（%s）" % [
-			id, ", ".join(PackedStringArray(names))
-		])
+		lines.append("[color=#ffd166]WARN [/color] " + RoomAtlasI18n.tf(
+				"Duplicate scene id: %s (%s)", [id, ", ".join(PackedStringArray(names))]))
 	if lines.is_empty():
-		lines.append("[color=#6bff9b]OK[/color] 配置有效")
+		lines.append("[color=#6bff9b]OK[/color] " + RoomAtlasI18n.t("Config is valid"))
 	_report.append_text("\n".join(PackedStringArray(lines)))
 
 
@@ -1145,11 +1158,11 @@ func _on_save() -> void:
 		return
 	var err := ResourceSaver.save(config, config_path)
 	if err != OK:
-		_status("保存失败：错误码 %d" % err)
-		push_error("[Room Atlas] 保存配置失败：%d" % err)
+		_status(RoomAtlasI18n.tf("Save failed: error code %d", [err]))
+		push_error("[Room Atlas] " + RoomAtlasI18n.tf("Failed to save config: %d", [err]))
 	else:
 		dirty = false
-		_status("已保存 " + config_path)
+		_status(RoomAtlasI18n.t("Saved ") + config_path)
 
 
 func _status(text: String) -> void:

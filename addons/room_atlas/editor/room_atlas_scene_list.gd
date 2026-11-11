@@ -100,14 +100,15 @@ func _render() -> void:
 			loaded.append(p)
 
 	var top := create_item(root)
-	top.set_text(0, "未载入 (%d)" % unloaded.size())
+	top.set_text(0, RoomAtlasI18n.tf("Not loaded (%d)", [unloaded.size()]))
 	top.set_selectable(0, false)
 	top.set_custom_color(0, Color(1.0, 0.78, 0.42))
 	top.collapsed = false
 	top.set_metadata(0, SECTION_UNLOADED)
 	for p in unloaded:
-		_add_scene_item(top, p, "未拖入地图 · 拖到画布放置 · × 移出列表", icon,
-				String(changed.get(p, "")))
+		_add_scene_item(top, p,
+				RoomAtlasI18n.t("Not on the map · drag onto canvas to place · × removes from list"),
+				icon, String(changed.get(p, "")))
 
 	var bottom := create_item(root)
 	bottom.set_selectable(0, false)
@@ -138,8 +139,9 @@ func _render() -> void:
 		gi.set_text(0, "%s (%d)" % [gname, members.size()])
 		gi.set_metadata(0, GROUP_PREFIX + gname)
 		gi.set_custom_color(0, Color(0.75, 0.86, 1.0))
-		gi.set_tooltip_text(0, "虚拟组：" + gname
-				+ "\n双击组名改名 · 拖 tscn 到这里入组\n拖到「已载入」标题移出 · × 删除组")
+		gi.set_tooltip_text(0, RoomAtlasI18n.tf(
+				"Virtual group: %s\nDouble-click the name to rename · drag a tscn here to add it\nDrag onto \"Loaded\" to remove · × deletes the group",
+				[gname]))
 		gi.collapsed = false
 		if icon != null:
 			gi.add_button(0, icon, BTN_DELETE)
@@ -149,15 +151,17 @@ func _render() -> void:
 					loaded.append(p)
 		for p in members:
 			grouped[p] = true
-			_add_scene_item(gi, p, "组内 · 拖到画布放置 · × 移出列表", icon,
-					String(changed.get(p, "")))
+			_add_scene_item(gi, p,
+					RoomAtlasI18n.t("In group · drag onto canvas to place · × removes from list"),
+					icon, String(changed.get(p, "")))
 	for p in loaded:
 		if grouped.has(p):
 			continue
-		_add_scene_item(bottom, p, "已在地图中 · 可继续拖放 · × 从地图移除", icon,
-				String(changed.get(p, "")))
+		_add_scene_item(bottom, p,
+				RoomAtlasI18n.t("On the map · drag to place again · × removes from map"),
+				icon, String(changed.get(p, "")))
 	# 组名命中时成员已补进 loaded，统一在这里写分区计数。
-	bottom.set_text(0, "已载入 (%d)" % loaded.size())
+	bottom.set_text(0, RoomAtlasI18n.tf("Loaded (%d)", [loaded.size()]))
 
 
 func _matches(path: String) -> bool:
@@ -177,8 +181,9 @@ func _add_scene_item(parent: TreeItem, path: String, tip: String, icon: Texture2
 		# 场景 room_size 与地图占位/基线不一致：橙色 + ⚠ 标记。
 		it.set_text(0, path.get_file() + "  ⚠")
 		it.set_custom_color(0, Color(1.0, 0.72, 0.35))
-		it.set_tooltip_text(0, path + " · " + tip + "\n⚠ " + warn
-				+ "\n点行内同步按钮：按该 tscn 当前尺寸更新")
+		it.set_tooltip_text(0, path + " · " + tip + RoomAtlasI18n.tf(
+				"\n⚠ %s\nClick the inline sync button to update from the current tscn size",
+				[warn]))
 		var sync := _get_sync_icon()
 		if sync != null:
 			it.add_button(0, sync, BTN_SYNC)

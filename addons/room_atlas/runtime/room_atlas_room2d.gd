@@ -31,7 +31,7 @@ extends Node2D
 		camera_confine = value
 		queue_redraw()
 ## FOLLOW_CONFINED = 跟随但视图不越界；FIXED_CENTER = 相机固定房间中心。
-@export_enum("跟随并锁边界", "固定房间中心") var camera_lock_mode: int = LOCK_FOLLOW_CONFINED
+@export_enum("Follow & Confine", "Fixed Center") var camera_lock_mode: int = LOCK_FOLLOW_CONFINED
 ## 房间局部可视区；size <= 0 表示整间房。世界矩形由 configure() 从配置注入。
 @export var camera_bounds: Rect2 = Rect2(0, 0, 0, 0):
 	set(value):
@@ -44,7 +44,7 @@ extends Node2D
 @export var camera_zoom: Vector2 = Vector2.ONE
 ## ZOOM_TO_FIT = 视口大于房间时抬高 zoom；其余取值保持期望 zoom。
 ## 露出的房外区域由游戏层自行处理，基类只提供数据、不绘制任何遮罩。
-@export_enum("自动抬高缩放", "保持缩放", "仅居中") var camera_fit_mode: int = FIT_ZOOM_TO_FIT
+@export_enum("Auto Zoom", "Keep Zoom", "Center Only") var camera_fit_mode: int = FIT_ZOOM_TO_FIT
 ## 2D 编辑器里额外画相机约束区预览。
 @export var show_camera_bounds: bool = true:
 	set(value):
@@ -83,6 +83,17 @@ const CAMERA_BOUNDS_OFF_COLOR := Color(0.65, 0.65, 0.65, 0.7)
 
 var _camera_world_rect := Rect2()
 var _has_camera_world_rect := false
+
+
+## Inspector 枚举标签跟随编辑器语言；存盘值仍是 int，切换语言不会改变场景数据。
+func _validate_property(property: Dictionary) -> void:
+	match String(property.get("name", "")):
+		"camera_lock_mode":
+			property["hint_string"] = RoomAtlasI18n.t("Follow & Confine") + "," \
+					+ RoomAtlasI18n.t("Fixed Center")
+		"camera_fit_mode":
+			property["hint_string"] = RoomAtlasI18n.t("Auto Zoom") + "," \
+					+ RoomAtlasI18n.t("Keep Zoom") + "," + RoomAtlasI18n.t("Center Only")
 
 
 ## 运行时可选钩子：记录 id 与配置算出的权威世界矩形（不依赖房间实例是否进树）。
@@ -294,8 +305,10 @@ func _draw_camera_bounds() -> void:
 	var col := CAMERA_BOUNDS_COLOR if camera_confine else CAMERA_BOUNDS_OFF_COLOR
 	draw_rect(b, CAMERA_BOUNDS_FILL, true)
 	draw_rect(b.grow(-1.0), col, false, 2.0)
-	var mode := "跟随锁边" if camera_lock_mode == LOCK_FOLLOW_CONFINED else "固定中心"
-	var suffix := "" if camera_confine else "（已关闭）"
+	var mode := RoomAtlasI18n.t("Follow & Confine") \
+			if camera_lock_mode == LOCK_FOLLOW_CONFINED else RoomAtlasI18n.t("Fixed Center")
+	var suffix := "" if camera_confine else RoomAtlasI18n.t(" (disabled)")
 	draw_string(ThemeDB.fallback_font, b.position + Vector2(8, 24),
-			"相机 %s  %d × %d px%s" % [mode, roundi(b.size.x), roundi(b.size.y), suffix],
+			RoomAtlasI18n.tf("Camera %s  %d × %d px%s",
+					[mode, roundi(b.size.x), roundi(b.size.y), suffix]),
 			HORIZONTAL_ALIGNMENT_LEFT, -1, CAMERA_LABEL_SIZE, col)

@@ -12,60 +12,67 @@ static func validate(config: RoomAtlasConfig) -> Dictionary:
 	var warnings: Array[String] = []
 
 	if config == null:
-		errors.append("配置为空")
+		errors.append(RoomAtlasI18n.t("Config is empty"))
 		return { "errors": errors, "warnings": warnings }
 
 	if config.schema_version != RoomAtlasConfig.SCHEMA_VERSION:
-		warnings.append("schema_version=%d，当前实现为 %d，请确认是否需要迁移" % [
-			config.schema_version, RoomAtlasConfig.SCHEMA_VERSION
-		])
+		warnings.append(RoomAtlasI18n.tf(
+			"schema_version=%d, this build is %d; verify whether migration is required",
+			[config.schema_version, RoomAtlasConfig.SCHEMA_VERSION]))
 	if config.cell_size.x <= 0.0 or config.cell_size.y <= 0.0:
-		errors.append("cell_size 必须为正数")
+		errors.append(RoomAtlasI18n.t("cell_size must be positive"))
 
 	var s := config.streaming
 	if s == null:
-		errors.append("缺少 streaming 设置")
+		errors.append(RoomAtlasI18n.t("streaming settings are missing"))
 	else:
 		if s.mount_distance <= 0.0:
-			errors.append("mount_distance 必须大于 0")
+			errors.append(RoomAtlasI18n.t("mount_distance must be greater than 0"))
 		if not (s.mount_distance < s.sleep_distance and s.sleep_distance < s.unload_distance):
-			errors.append("需满足 mount_distance < sleep_distance < unload_distance")
+			errors.append(RoomAtlasI18n.t(
+				"Requires mount_distance < sleep_distance < unload_distance"))
 		# bucket_size <= 0 表示自动推导；NaN / INF 才是非法（NaN < INF 恒为 false）。
 		if not (s.bucket_size < INF):
-			errors.append("bucket_size 不能是 NaN / INF（<= 0 表示自动推导）")
+			errors.append(RoomAtlasI18n.t(
+				"bucket_size must not be NaN / INF (<= 0 means auto)"))
 		elif s.bucket_size > 0.0 \
 				and s.mount_distance > RoomAtlasLayout.max_query_radius(s.bucket_size):
-			warnings.append("mount_distance 超出单次邻域查询的桶预算，运行时会截断半径")
+			warnings.append(RoomAtlasI18n.t(
+				"mount_distance exceeds the bucket budget for a single neighborhood query; the radius will be clamped at runtime"))
 		# max_mounted <= 0 是「自动派生」的合法取值，只有负数才是错误。
 		if s.max_mounted < 0:
-			errors.append("max_mounted 不能为负数（<= 0 表示自动派生）")
+			errors.append(RoomAtlasI18n.t(
+				"max_mounted must not be negative (<= 0 means auto)"))
 		if s.tick <= 0.0:
-			errors.append("tick 必须大于 0")
+			errors.append(RoomAtlasI18n.t("tick must be greater than 0"))
 		if s.max_mounted > 0 and s.max_mounted < 3:
-			warnings.append("max_mounted 偏小，可能与 mount_distance 冲突导致反复休眠/唤醒")
+			warnings.append(RoomAtlasI18n.t(
+				"max_mounted is small and may conflict with mount_distance, causing repeated sleep/wake cycles"))
 
 	if config.rooms.is_empty():
-		errors.append("rooms 为空")
+		errors.append(RoomAtlasI18n.t("rooms is empty"))
 
 	var seen: Dictionary = {}
 	var rects: Array = []
 	for i in range(config.rooms.size()):
 		var r = config.rooms[i]
 		if not (r is RoomAtlasPlacement):
-			errors.append("rooms[%d] 不是 RoomAtlasPlacement" % i)
+			errors.append(RoomAtlasI18n.tf(
+				"rooms[%d] is not a RoomAtlasPlacement", [i]))
 			continue
 		var p: RoomAtlasPlacement = r
 		var tag := "rooms[%d]" % i
 		if p.id == &"":
-			errors.append("%s 缺少 id" % tag)
+			errors.append(RoomAtlasI18n.tf("%s is missing id", [tag]))
 		elif seen.has(p.id):
-			errors.append("id 重复：%s" % p.id)
+			errors.append(RoomAtlasI18n.tf("Duplicate id: %s", [p.id]))
 		else:
 			seen[p.id] = true
 		if p.scene == null:
-			errors.append("%s (%s) 未指定 scene" % [tag, p.id])
+			errors.append(RoomAtlasI18n.tf("%s (%s) has no scene", [tag, p.id]))
 		if p.cells.size.x <= 0 or p.cells.size.y <= 0:
-			errors.append("%s (%s) 的 cells.size 必须为正" % [tag, p.id])
+			errors.append(RoomAtlasI18n.tf(
+				"%s (%s) cells.size must be positive", [tag, p.id]))
 		rects.append(p.cells)
 
 	# 格区间两两不重叠。按 x 排序后扫描：后一个的左边界一旦越过当前右边界，
@@ -79,7 +86,8 @@ static func validate(config: RoomAtlasConfig) -> Dictionary:
 			if rb.position.x >= ra.end.x:
 				break
 			if ra.intersects(rb):
-				errors.append("房间格区间重叠：%s 与 %s" % [ra, rb])
+				errors.append(RoomAtlasI18n.tf(
+					"Room cells overlap: %s and %s", [ra, rb]))
 
 	return { "errors": errors, "warnings": warnings }
 
@@ -91,5 +99,5 @@ static func format(result: Dictionary) -> String:
 	for w in result.get("warnings", []):
 		lines.append("WARN   " + w)
 	if lines.is_empty():
-		lines.append("OK     配置有效")
+		lines.append("OK     " + RoomAtlasI18n.t("Config is valid"))
 	return "\n".join(PackedStringArray(lines))

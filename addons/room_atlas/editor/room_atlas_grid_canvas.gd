@@ -322,16 +322,16 @@ func _draw_drag_guides(target: RoomAtlasPlacement, cells: Rect2i) -> void:
 			_dashed_h(_world_to_canvas(Vector2(0, float(y))).y, GUIDE_ALIGN, 1.0)
 
 	var parts: Array[String] = []
-	_append_guides(parts, "X 贴合", seam_x)
-	_append_guides(parts, "Y 贴合", seam_y)
-	_append_guides(parts, "X 对齐", align_x)
-	_append_guides(parts, "Y 对齐", align_y)
+	_append_guides(parts, RoomAtlasI18n.t("X seam"), seam_x)
+	_append_guides(parts, RoomAtlasI18n.t("Y seam"), seam_y)
+	_append_guides(parts, RoomAtlasI18n.t("X align"), align_x)
+	_append_guides(parts, RoomAtlasI18n.t("Y align"), align_y)
 	if seam_x.is_empty() and near["x"] < INF:
 		_dashed_v(_world_to_canvas(Vector2(float(near["x_at"]), 0)).x, GUIDE_NEAR, 1.0)
-		parts.append("最近 X: Δ%d px" % int(round(near["x_d"])))
+		parts.append(RoomAtlasI18n.tf("Nearest X: Δ%d px", [int(round(near["x_d"]))]))
 	if seam_y.is_empty() and near["y"] < INF:
 		_dashed_h(_world_to_canvas(Vector2(0, float(near["y_at"]))).y, GUIDE_NEAR, 1.0)
-		parts.append("最近 Y: Δ%d px" % int(round(near["y_d"])))
+		parts.append(RoomAtlasI18n.tf("Nearest Y: Δ%d px", [int(round(near["y_d"]))]))
 	if parts.is_empty():
 		return
 

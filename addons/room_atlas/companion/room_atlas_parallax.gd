@@ -59,7 +59,8 @@ func _ready() -> void:
 ## 场景面板里给一个可见标记：确认编辑器确实把本节点当成 tool 实例在跑。
 func _get_configuration_warnings() -> PackedStringArray:
 	if Engine.is_editor_hint() and editor_preview:
-		return ["编辑器预览已启用：平移 2D 视图查看视差；保存时自动复位各层。"]
+		return [RoomAtlasI18n.t(
+				"Editor preview enabled: pan the 2D view to preview parallax; layers are restored when saving.")]
 	return PackedStringArray()
 
 

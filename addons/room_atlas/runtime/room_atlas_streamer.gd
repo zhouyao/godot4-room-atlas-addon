@@ -291,7 +291,9 @@ func _update_streaming() -> void:
 			far_d = d
 			far = id
 		if far == &"":
-			push_warning("挂载上限 %d 小于半径内房间数，已保留全部" % budget)
+			push_warning(RoomAtlasI18n.tf(
+					"Mount limit %d is smaller than the number of rooms in range; all rooms were kept",
+					[budget]))
 			break
 		_sleep(far)
 
