@@ -6,7 +6,7 @@
 ![Version](https://img.shields.io/badge/plugin-0.2.0-blue)
 ![Language](https://img.shields.io/badge/GDScript-2D-4b8bbe)
 
-![运行截图：r1 房间内的连续滚动相机、左侧调试面板与右上角小地图](https://raw.githubusercontent.com/zhouyao/godot4-room-atlas-addon/main/screenshot/0.png)
+![运行截图：r1 房间内的连续滚动相机、左侧调试面板与右上角小地图](screenshot/0.png)
 
 *示例 `example/main.tscn`：WASD 移动，Tab 显隐调试面板；右上角小地图实时显示玩家坐标与相机视野。*
 
@@ -151,7 +151,7 @@ r = \sqrt{(\tfrac{vw}{2}+|dz_x|+|off_x|)^2 + (\tfrac{vh}{2}+|dz_y|+|off_y|)^2}
 
 插件启用后，编辑器**底部 dock** 会出现 **Room Atlas · 地图**，分三栏：左侧 tscn 资源管理、中间网格画布、右侧属性与校验报告。两条 `HSplitContainer` 分隔条可拖动，位置保存在 `EditorSettings`（用户级，不进项目）。
 
-![Room Atlas 编辑器 dock：左栏 tscn 资源列表、中间 1px 网格画布、右侧房间属性与校验报告](https://raw.githubusercontent.com/zhouyao/godot4-room-atlas-addon/main/screenshot/editor.png)
+![Room Atlas 编辑器 dock：左栏 tscn 资源列表、中间 1px 网格画布、右侧房间属性与校验报告](screenshot/editor.png)
 
 *底部 dock：8 间房按 `world_config.tres` 排布，左栏「已载入」8 项，右栏校验报告显示「配置有效」。*
 
