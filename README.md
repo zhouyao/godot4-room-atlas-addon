@@ -151,7 +151,7 @@ r = \sqrt{(\tfrac{vw}{2}+|dz_x|+|off_x|)^2 + (\tfrac{vh}{2}+|dz_y|+|off_y|)^2}
 
 插件启用后，编辑器**底部 dock** 会出现 **Room Atlas · 地图**，分三栏：左侧 tscn 资源管理、中间网格画布、右侧属性与校验报告。两条 `HSplitContainer` 分隔条可拖动，位置保存在 `EditorSettings`（用户级，不进项目）。
 
-![Room Atlas 编辑器 dock：左栏 tscn 资源列表、中间 1px 网格画布、右侧房间属性与校验报告](screenshot/1.png)
+![Room Atlas 编辑器 dock：左栏 tscn 资源列表、中间 1px 网格画布、右侧房间属性与校验报告](screenshot/editor.png)
 
 *底部 dock：8 间房按 `world_config.tres` 排布，左栏「已载入」8 项，右栏校验报告显示「配置有效」。*
 
@@ -458,7 +458,7 @@ godot4-room-atlas/
 ├── world_config.tres                 # 运行期地图配置（8 间房，1px 网格）
 ├── room_library.tres                 # 编辑期资源库（导入列表 + 尺寸基线）
 ├── screenshot/0.png                  # 运行截图
-├── screenshot/1.png                  # 编辑器 dock 截图
+├── screenshot/editor.png             # 编辑器 dock 截图
 ├── addons/room_atlas/
 │   ├── plugin.cfg                    # 插件清单（v0.2.0）
 │   ├── plugin.gd                     # EditorPlugin：dock + 自动保存 + 运行前校验
