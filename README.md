@@ -153,7 +153,7 @@ r = \sqrt{(\tfrac{vw}{2}+|dz_x|+|off_x|)^2 + (\tfrac{vh}{2}+|dz_y|+|off_y|)^2}
 
 dock 文案中英双语，跟随「编辑器设置 → 界面 → 编辑器 → 编辑器语言」；切换语言并重开编辑器后自动生效。运行时组件的文案跟随项目当前 locale，非中文环境回退英文。
 
-![Seamless Rooms 编辑器 dock：左栏 tscn 资源列表、中间 1×1 px 网格画布、右侧房间属性与校验报告](screenshot/editor.webp)
+![Seamless Rooms 编辑器 dock：左栏 tscn 资源列表、中间 1×1 px 网格画布、右侧房间属性与校验报告](screenshot/1.webp)
 
 *底部 dock：8 间房按 `world_config.tres` 排布，状态行显示「格 1×1 px · 已加载 8 个房间」；左栏「已载入 (8)」，右栏「校验报告」显示「OK 配置有效」。*
 
@@ -460,7 +460,7 @@ godot4-seamless-rooms/
 ├── world_config.tres                 # 运行期地图配置（8 间房，1px 网格）
 ├── room_library.tres                 # 编辑期资源库（导入列表 + 尺寸基线）
 ├── screenshot/0.webp                  # 运行截图
-├── screenshot/editor.webp             # 编辑器 dock 截图
+├── screenshot/1.webp                 # 编辑器 dock 截图
 ├── addons/seamless_rooms/
 │   ├── plugin.cfg                    # 插件清单（v0.2.0）
 │   ├── plugin.gd                     # EditorPlugin：dock + 自动保存 + 运行前校验
