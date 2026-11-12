@@ -1,14 +1,12 @@
 [gd_scene format=3 uid="uid://b4yottikb527e"]
 
-[ext_resource type="Script" uid="uid://jm7mu2fu7tit" path="res://addons/seamless_rooms/runtime/seamless_rooms_room2d.gd" id="1_view"]
+[ext_resource type="PackedScene" path="res://example/rooms/room_template.tscn" id="1_base"]
 [ext_resource type="Texture2D" uid="uid://dgmykviu18pxo" path="res://example/assets/sprites/moss_hole/background/0.png" id="2_ve17x"]
 [ext_resource type="Texture2D" uid="uid://c83e6qmakuv63" path="res://example/assets/sprites/moss_hole/environment/fung_new_0089_a.png" id="6_ghxpe"]
 [ext_resource type="Texture2D" uid="uid://soi5cm7ea77o" path="res://example/assets/sprites/moss_hole/environment/mosshole_leaf_0.png" id="6_igwc8"]
 [ext_resource type="Texture2D" uid="uid://0ykqck6ibrss" path="res://example/assets/sprites/moss_hole/environment/fung_new_0084_c.png" id="7_jipa2"]
 [ext_resource type="Texture2D" uid="uid://hl5iv5vi7lp3" path="res://example/assets/sprites/moss_hole/environment/mosshole_leaf_1.png" id="7_lk2jk"]
 [ext_resource type="Texture2D" uid="uid://poiu2xfr0gxf" path="res://example/assets/sprites/moss_hole/environment/fung_new_0116_Layer-266.png" id="8_lk2jk"]
-[ext_resource type="Script" uid="uid://b3t5ampfdepg7" path="res://addons/seamless_rooms/companion/seamless_rooms_parallax.gd" id="8_parallax"]
-[ext_resource type="Script" uid="uid://buenddovpjw5g" path="res://addons/seamless_rooms/companion/seamless_rooms_parallax_layer.gd" id="9_layer"]
 [ext_resource type="Texture2D" uid="uid://bnuymscwuoxtb" path="res://example/assets/sprites/moss_hole/environment/moss_0.png" id="9_s2ypm"]
 [ext_resource type="Texture2D" uid="uid://b6wfrbvpgdqp4" path="res://example/assets/sprites/moss_hole/platform/mosshole_floor_1.png" id="11_k08c4"]
 [ext_resource type="Texture2D" uid="uid://xsa0m31kkfhb" path="res://example/assets/sprites/moss_hole/environment/moss_2.png" id="11_uv2fl"]
@@ -40,12 +38,12 @@
 [ext_resource type="Texture2D" uid="uid://1e1e6leo4hsv" path="res://example/assets/sprites/moss_hole/environment/fung_new_0141_Layer-226.png" id="tex_13"]
 [ext_resource type="Texture2D" uid="uid://0a15kwcym3yq" path="res://example/assets/sprites/moss_hole/environment/fung_new_0143_Layer-225.png" id="tex_14"]
 [ext_resource type="Texture2D" uid="uid://do2k87t32l0id" path="res://example/assets/sprites/moss_hole/environment/fung_new_0112_Layer-270.png" id="tex_15"]
-[ext_resource type="Script" path="res://example/actors/enemies/enemy_spawn.gd" id="x_enemy_spawn"]
-[ext_resource type="Script" path="res://example/actors/interactables/chest_spawn.gd" id="x_chest_spawn"]
-[ext_resource type="Script" path="res://example/actors/pickups/pickup_spawn.gd" id="x_pickup_spawn"]
-[ext_resource type="PackedScene" path="res://example/actors/enemies/enemy_slime.tscn" id="x_enemy_slime"]
 [ext_resource type="PackedScene" path="res://example/actors/interactables/chest.tscn" id="x_chest"]
+[ext_resource type="Script" uid="uid://dr0xadktqq5xg" path="res://example/actors/interactables/chest_spawn.gd" id="x_chest_spawn"]
+[ext_resource type="PackedScene" path="res://example/actors/enemies/enemy_slime.tscn" id="x_enemy_slime"]
+[ext_resource type="Script" uid="uid://cbtbx6qfij0rg" path="res://example/actors/enemies/enemy_spawn.gd" id="x_enemy_spawn"]
 [ext_resource type="PackedScene" path="res://example/actors/pickups/pickup.tscn" id="x_pickup"]
+[ext_resource type="Script" uid="uid://dn26ucw1cni33" path="res://example/actors/pickups/pickup_spawn.gd" id="x_pickup_spawn"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_j2abh"]
 resource_local_to_scene = true
@@ -63,26 +61,15 @@ size = Vector2(551, 161)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_rywq7"]
 size = Vector2(3150, 67.5)
 
-[node name="R1" type="Node2D" unique_id=1920193604]
-script = ExtResource("1_view")
+[node name="R1" unique_id=1920193604 instance=ExtResource("1_base")]
 room_id = &"r1"
 room_title = "R1"
 room_size = Vector2i(3000, 1080)
 
-[node name="BgParallax" type="Control" parent="." unique_id=1289870353]
-z_index = -100
-clip_contents = true
-layout_mode = 3
-anchors_preset = 0
+[node name="BgParallax" parent="." index="0" unique_id=1289870353]
 offset_right = 3000.0
-offset_bottom = 1080.0
-mouse_filter = 2
-script = ExtResource("8_parallax")
-fallback_size = Vector2(3000, 1080)
 
-[node name="Sky" type="Node2D" parent="BgParallax" unique_id=1245738637]
-
-[node name="Darkness" type="ColorRect" parent="BgParallax/Sky" unique_id=22349453]
+[node name="Darkness" type="ColorRect" parent="BgParallax/Backdrop" parent_id_path=PackedInt32Array(1245738637) index="0" unique_id=22349453]
 z_index = -100
 offset_left = -3991.0
 offset_top = -2015.0
@@ -91,355 +78,153 @@ offset_bottom = 2985.0
 mouse_filter = 2
 color = Color(0.015, 0.025, 0.02, 1)
 
-[node name="Far" type="Node2D" parent="BgParallax" unique_id=114069465]
-script = ExtResource("9_layer")
-scroll_scale = Vector2(0.55, 0.55)
-
-[node name="Bg_001" type="Sprite2D" parent="BgParallax/Far" unique_id=1296499313]
+[node name="Bg_001" type="Sprite2D" parent="BgParallax/Far" parent_id_path=PackedInt32Array(114069465) index="0" unique_id=1296499313]
 light_mask = 0
 z_index = -20
 position = Vector2(1665.0865, 537.6158)
 scale = Vector2(2.964875, 2.722839)
 texture = ExtResource("2_ve17x")
 
-[node name="Far2" type="Node2D" parent="BgParallax" unique_id=385278532]
-script = ExtResource("9_layer")
-scroll_scale = Vector2(0.75, 0.75)
-
-[node name="Bg_025" type="Sprite2D" parent="BgParallax/Far2" unique_id=2130664041]
+[node name="Bg_025" type="Sprite2D" parent="BgParallax/Far2" parent_id_path=PackedInt32Array(385278532) index="0" unique_id=2130664041]
 z_index = -5
 position = Vector2(1590.1055, 790.72833)
 texture = ExtResource("6_igwc8")
 
-[node name="Bg_026" type="Sprite2D" parent="BgParallax/Far2" unique_id=181886733]
+[node name="Bg_026" type="Sprite2D" parent="BgParallax/Far2" parent_id_path=PackedInt32Array(385278532) index="1" unique_id=181886733]
 light_mask = 0
 z_index = -8
 position = Vector2(1902.956, 808.6374)
 scale = Vector2(-1, 1)
 texture = ExtResource("6_igwc8")
 
-[node name="Bg_027" type="Sprite2D" parent="BgParallax/Far2" unique_id=1644453767]
+[node name="Bg_027" type="Sprite2D" parent="BgParallax/Far2" parent_id_path=PackedInt32Array(385278532) index="2" unique_id=1644453767]
 light_mask = 0
 z_index = -8
 position = Vector2(1641.7809, 756.40234)
 texture = ExtResource("7_lk2jk")
 
-[node name="Mid" type="Node2D" parent="BgParallax" unique_id=1203179596]
-script = ExtResource("9_layer")
-scroll_scale = Vector2(0.87, 0.87)
-
-[node name="Bg_007" type="Sprite2D" parent="BgParallax/Mid" unique_id=1906879504]
+[node name="Bg_007" type="Sprite2D" parent="BgParallax/Mid" parent_id_path=PackedInt32Array(1203179596) index="0" unique_id=1906879504]
 z_index = -5
 position = Vector2(1327.2324, 812.10895)
 texture = ExtResource("9_s2ypm")
 
-[node name="Bg_008" type="Sprite2D" parent="BgParallax/Mid" unique_id=1387607256]
+[node name="Bg_008" type="Sprite2D" parent="BgParallax/Mid" parent_id_path=PackedInt32Array(1203179596) index="1" unique_id=1387607256]
 z_index = -4
 position = Vector2(1469.7656, 859.62006)
 texture = ExtResource("14_d505y")
 
-[node name="Bg_022" type="Sprite2D" parent="BgParallax/Mid" unique_id=1071168984]
+[node name="Bg_022" type="Sprite2D" parent="BgParallax/Mid" parent_id_path=PackedInt32Array(1203179596) index="2" unique_id=1071168984]
 z_index = -3
 position = Vector2(1500, 375.8708)
 texture = ExtResource("8_lk2jk")
 
-[node name="Bg_023" type="Sprite2D" parent="BgParallax/Mid" unique_id=875914078]
+[node name="Bg_023" type="Sprite2D" parent="BgParallax/Mid" parent_id_path=PackedInt32Array(1203179596) index="3" unique_id=875914078]
 z_index = -4
 position = Vector2(2232.2048, 301.4164)
 texture = ExtResource("8_lk2jk")
 
-[node name="Bg_024" type="Sprite2D" parent="BgParallax/Mid" unique_id=1582242352]
+[node name="Bg_024" type="Sprite2D" parent="BgParallax/Mid" parent_id_path=PackedInt32Array(1203179596) index="4" unique_id=1582242352]
 z_index = -4
 position = Vector2(2322.702, 383.6866)
 texture = ExtResource("8_lk2jk")
 
-[node name="Bg_095" type="Sprite2D" parent="BgParallax/Mid" unique_id=160526069]
+[node name="Bg_095" type="Sprite2D" parent="BgParallax/Mid" parent_id_path=PackedInt32Array(1203179596) index="5" unique_id=160526069]
 z_index = -4
 position = Vector2(2463.1794, 829.38574)
 rotation = 1.570796
 texture = ExtResource("tex_1")
 
-[node name="Near" type="Node2D" parent="BgParallax" unique_id=561785814]
-script = ExtResource("9_layer")
-scroll_scale = Vector2(0.95, 0.95)
-
-[node name="Bg_002" type="Sprite2D" parent="BgParallax/Near" unique_id=1886245813]
+[node name="Bg_002" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="0" unique_id=1886245813]
 z_index = -3
 position = Vector2(1196.1453, 413.01593)
 texture = ExtResource("tex_0")
 
-[node name="Bg_003" type="Sprite2D" parent="BgParallax/Near" unique_id=252187011]
+[node name="Bg_003" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="1" unique_id=252187011]
 z_index = -4
 position = Vector2(1150.7938, 594.42175)
 texture = ExtResource("tex_1")
 
-[node name="Bg_004" type="Sprite2D" parent="BgParallax/Near" unique_id=68422290]
+[node name="Bg_004" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="2" unique_id=68422290]
 z_index = -2
 position = Vector2(1083.9498, 858.9718)
 texture = ExtResource("7_jipa2")
 
-[node name="Bg_005" type="Sprite2D" parent="BgParallax/Near" unique_id=936611829]
+[node name="Bg_005" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="3" unique_id=936611829]
 z_index = -3
 position = Vector2(908.2842, 729.534)
 texture = ExtResource("6_ghxpe")
 
-[node name="Bg_006" type="Sprite2D" parent="BgParallax/Near" unique_id=1305241706]
+[node name="Bg_006" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="4" unique_id=1305241706]
 z_index = -4
 position = Vector2(1717.687, 920.9522)
 texture = ExtResource("13_kb303")
 
-[node name="Bg_009" type="Sprite2D" parent="BgParallax/Near" unique_id=1056397684]
+[node name="Bg_009" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="5" unique_id=1056397684]
 z_index = -3
 position = Vector2(2347.6191, 901.9048)
 texture = ExtResource("11_k08c4")
 
-[node name="Bg_010" type="Sprite2D" parent="BgParallax/Near" unique_id=1695137672]
+[node name="Bg_010" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="6" unique_id=1695137672]
 z_index = -3
 position = Vector2(2157.1428, 911.4286)
 texture = ExtResource("tex_2")
 
-[node name="Bg_011" type="Sprite2D" parent="BgParallax/Near" unique_id=1930794894]
+[node name="Bg_011" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="7" unique_id=1930794894]
 z_index = -3
 position = Vector2(1966.6667, 906.6667)
 texture = ExtResource("13_kb303")
 
-[node name="Bg_012" type="Sprite2D" parent="BgParallax/Near" unique_id=680915477]
+[node name="Bg_012" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="8" unique_id=680915477]
 z_index = -3
 position = Vector2(1847.619, 906.6667)
 texture = ExtResource("11_k08c4")
 
-[node name="Bg_013" type="Sprite2D" parent="BgParallax/Near" unique_id=521130748]
+[node name="Bg_013" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="9" unique_id=521130748]
 z_index = -3
 position = Vector2(1585.7142, 916.1905)
 texture = ExtResource("11_k08c4")
 
-[node name="Bg_014" type="Sprite2D" parent="BgParallax/Near" unique_id=1585303691]
+[node name="Bg_014" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="10" unique_id=1585303691]
 z_index = -3
 position = Vector2(1419.0476, 914.2857)
 texture = ExtResource("tex_2")
 
-[node name="Bg_015" type="Sprite2D" parent="BgParallax/Near" unique_id=856889901]
+[node name="Bg_015" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="11" unique_id=856889901]
 z_index = -2
 position = Vector2(1085.7142, 906.6667)
 texture = ExtResource("11_k08c4")
 
-[node name="Bg_016" type="Sprite2D" parent="BgParallax/Near" unique_id=363276744]
+[node name="Bg_016" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="12" unique_id=363276744]
 z_index = -3
 position = Vector2(514.28564, 616.1905)
 texture = ExtResource("11_k08c4")
 
-[node name="Bg_017" type="Sprite2D" parent="BgParallax/Near" unique_id=1989991812]
+[node name="Bg_017" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="13" unique_id=1989991812]
 z_index = -2
 position = Vector2(276.19043, 625.7143)
 texture = ExtResource("13_kb303")
 
-[node name="Bg_018" type="Sprite2D" parent="BgParallax/Near" unique_id=1211930915]
+[node name="Bg_018" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="14" unique_id=1211930915]
 z_index = -3
 position = Vector2(204.76184, 168.57141)
 texture = ExtResource("tex_3")
 
-[node name="Bg_019" type="Sprite2D" parent="BgParallax/Near" unique_id=1784695270]
+[node name="Bg_019" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="15" unique_id=1784695270]
 z_index = -2
 position = Vector2(395.23804, 192.38094)
 texture = ExtResource("tex_4")
 
-[node name="Bg_020" type="Sprite2D" parent="BgParallax/Near" unique_id=1718520317]
+[node name="Bg_020" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="16" unique_id=1718520317]
 z_index = -2
 position = Vector2(728.5714, 139.99998)
 texture = ExtResource("tex_5")
 
-[node name="Bg_021" type="Sprite2D" parent="BgParallax/Near" unique_id=1905739934]
+[node name="Bg_021" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="17" unique_id=1905739934]
 z_index = -2
 position = Vector2(1581.6326, 231.61014)
 texture = ExtResource("8_lk2jk")
 
-[node name="World" type="Node2D" parent="." unique_id=1624328844]
-
-[node name="Water" type="Node2D" parent="World" unique_id=2019402331]
-
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="World/Water" unique_id=2114144499]
-modulate = Color(1, 1, 1, 0.3137255)
-position = Vector2(702.5, 598.125)
-scale = Vector2(0.5978258, 0.820978)
-sprite_frames = ExtResource("18_ejcfv")
-autoplay = "default"
-frame_progress = 0.60212654
-
-[node name="AnimatedSprite2D2" type="AnimatedSprite2D" parent="World/Water" unique_id=1860841230]
-self_modulate = Color(1, 1, 1, 0.3137255)
-position = Vector2(820.5, 448.81253)
-scale = Vector2(0.66304344, 1.5445583)
-sprite_frames = ExtResource("18_ejcfv")
-autoplay = "default"
-frame_progress = 0.5462245
-
-[node name="AnimatedSprite2D3" type="AnimatedSprite2D" parent="World/Water" unique_id=1792564459]
-modulate = Color(1, 1, 1, 0.3137255)
-position = Vector2(984, 683)
-scale = Vector2(0.9945649, 0.86159307)
-sprite_frames = ExtResource("18_ejcfv")
-autoplay = "default"
-frame_progress = 0.92803156
-
-[node name="AnimatedSprite2D4" type="AnimatedSprite2D" parent="World/Water" unique_id=1294522773]
-self_modulate = Color(1, 1, 1, 0.3137255)
-position = Vector2(1162, 407)
-scale = Vector2(0.9728254, 1.5445583)
-sprite_frames = ExtResource("18_ejcfv")
-autoplay = "default"
-frame_progress = 0.5462245
-
-[node name="Terrain" type="Node2D" parent="World" unique_id=921272668]
-
-[node name="Sprite2D7" type="Sprite2D" parent="World/Terrain" unique_id=640316775]
-position = Vector2(2530, 985)
-texture = ExtResource("11_k08c4")
-
-[node name="Sprite2D8" type="Sprite2D" parent="World/Terrain" unique_id=1291941171]
-position = Vector2(2262, 990)
-texture = ExtResource("11_k08c4")
-
-[node name="Sprite2D10" type="Sprite2D" parent="World/Terrain" unique_id=1164485313]
-position = Vector2(1731.488, 991)
-texture = ExtResource("11_k08c4")
-
-[node name="Sprite2D12" type="Sprite2D" parent="World/Terrain" unique_id=1516055570]
-position = Vector2(1209.6371, 996)
-texture = ExtResource("11_k08c4")
-
-[node name="Sprite2D13" type="Sprite2D" parent="World/Terrain" unique_id=1697491612]
-position = Vector2(975.637, 983)
-texture = ExtResource("11_k08c4")
-
-[node name="Sprite2D14" type="Sprite2D" parent="World/Terrain" unique_id=1179573696]
-position = Vector2(803.637, 872)
-texture = ExtResource("12_rm10a")
-
-[node name="Sprite2D15" type="Sprite2D" parent="World/Terrain" unique_id=1477899923]
-position = Vector2(2703, 992)
-texture = ExtResource("11_k08c4")
-
-[node name="Sprite2D16" type="Sprite2D" parent="World/Terrain" unique_id=1049133472]
-position = Vector2(721, 768)
-texture = ExtResource("13_kb303")
-
-[node name="Sprite2D17" type="Sprite2D" parent="World/Terrain" unique_id=1730782919]
-position = Vector2(550, 772)
-texture = ExtResource("11_k08c4")
-
-[node name="Sprite2D18" type="Sprite2D" parent="World/Terrain" unique_id=622834580]
-position = Vector2(412, 634)
-texture = ExtResource("11_k08c4")
-
-[node name="Sprite2D20" type="Sprite2D" parent="World/Terrain" unique_id=708477294]
-position = Vector2(131, 635)
-texture = ExtResource("13_kb303")
-
-[node name="Sprite2D19" type="Sprite2D" parent="World/Terrain" unique_id=523664853]
-position = Vector2(211, 641)
-texture = ExtResource("13_kb303")
-
-[node name="Sprite2D21" type="Sprite2D" parent="World/Terrain" unique_id=952172356]
-position = Vector2(509, 698)
-texture = ExtResource("14_d505y")
-
-[node name="MossholeGround0" type="Sprite2D" parent="World/Terrain" unique_id=21415950]
-position = Vector2(1685, 966)
-texture = ExtResource("15_7kjsn")
-
-[node name="Sprite2D11" type="Sprite2D" parent="World/Terrain" unique_id=558031100]
-position = Vector2(1463.6371, 991)
-texture = ExtResource("11_k08c4")
-
-[node name="Sprite2D9" type="Sprite2D" parent="World/Terrain" unique_id=503376100]
-position = Vector2(1991.6371, 993)
-texture = ExtResource("11_k08c4")
-
-[node name="MossholeGround1" type="Sprite2D" parent="World/Terrain" unique_id=2132597970]
-position = Vector2(1903, 986)
-texture = ExtResource("16_ejcfv")
-
-[node name="MossholeGround2" type="Sprite2D" parent="World/Terrain" unique_id=1268101247]
-position = Vector2(1622, 1017)
-texture = ExtResource("17_0dudo")
-
-[node name="Moss1" type="Sprite2D" parent="World/Terrain" unique_id=588486389]
-position = Vector2(2785, 909)
-texture = ExtResource("14_d505y")
-
-[node name="FungBigRoof0004A" type="Sprite2D" parent="World/Terrain" unique_id=649136797]
-position = Vector2(2669, 242)
-texture = ExtResource("25_7cteo")
-
-[node name="FungNew0089A" type="Sprite2D" parent="World/Terrain" unique_id=1101291499]
-position = Vector2(2905, 412)
-rotation = 1.5707964
-scale = Vector2(1, -1)
-texture = ExtResource("6_ghxpe")
-
-[node name="FungNew0084C" type="Sprite2D" parent="World/Terrain" unique_id=1696460442]
-position = Vector2(2793, 735)
-rotation = -1.5707964
-scale = Vector2(-1, 1)
-texture = ExtResource("7_jipa2")
-
-[node name="Moss0" type="Sprite2D" parent="World/Terrain" unique_id=183019278]
-position = Vector2(2700, 949)
-texture = ExtResource("9_s2ypm")
-
-[node name="FungBigRoof0004A2" type="Sprite2D" parent="World/Terrain" unique_id=1386251091]
-position = Vector2(1370, 170)
-texture = ExtResource("25_7cteo")
-
-[node name="FungBigRoof0000A" type="Sprite2D" parent="World/Terrain" unique_id=1718843728]
-position = Vector2(518, 153)
-texture = ExtResource("26_d5ouh")
-
-[node name="Cage" type="Sprite2D" parent="World/Terrain" unique_id=1049097013]
-position = Vector2(2301, 707)
-scale = Vector2(0.8, 0.8)
-texture = ExtResource("27_dy371")
-
-[node name="Obstacles" type="Node2D" parent="World" unique_id=673321080]
-
-[node name="StaticBody2D" type="StaticBody2D" parent="World/Obstacles" unique_id=1169140170]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Obstacles/StaticBody2D" unique_id=1361710618]
-position = Vector2(1515, 979)
-shape = SubResource("RectangleShape2D_j2abh")
-
-[node name="StaticBody2D2" type="StaticBody2D" parent="World/Obstacles" unique_id=1336462664]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Obstacles/StaticBody2D2" unique_id=1969588718]
-position = Vector2(2852, 483)
-shape = SubResource("RectangleShape2D_k08c4")
-
-[node name="StaticBody2D3" type="StaticBody2D" parent="World/Obstacles" unique_id=2094592953]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Obstacles/StaticBody2D3" unique_id=1050017004]
-position = Vector2(676, 850)
-shape = SubResource("RectangleShape2D_rm10a")
-
-[node name="StaticBody2D4" type="StaticBody2D" parent="World/Obstacles" unique_id=1067925534]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Obstacles/StaticBody2D4" unique_id=1150607020]
-position = Vector2(278, 696)
-shape = SubResource("RectangleShape2D_kb303")
-
-[node name="StaticBody2D5" type="StaticBody2D" parent="World/Obstacles" unique_id=869575104]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Obstacles/StaticBody2D5" unique_id=1428150830]
-position = Vector2(1502, 41)
-shape = SubResource("RectangleShape2D_rywq7")
-
-[node name="Decals" type="Node2D" parent="World"]
-z_index = -10
-
-[node name="Props" type="Node2D" parent="World"]
-
-[node name="Spawns" type="Node2D" parent="World"]
-
-[node name="EnemySpawn_01" type="Marker2D" parent="World/Spawns"]
+[node name="EnemySpawn_01" type="Marker2D" parent="World/Spawns" index="0" unique_id=1429042849]
 position = Vector2(1650, 700)
 script = ExtResource("x_enemy_spawn")
 enemy_scene = ExtResource("x_enemy_slime")
@@ -447,418 +232,565 @@ territory_radius = 260.0
 aggro_radius = 180.0
 leash_radius = 420.0
 
-[node name="EnemySpawn_02" type="Marker2D" parent="World/Spawns"]
+[node name="EnemySpawn_02" type="Marker2D" parent="World/Spawns" index="1" unique_id=2000913526]
 position = Vector2(900, 760)
 script = ExtResource("x_enemy_spawn")
 enemy_scene = ExtResource("x_enemy_slime")
-territory_radius = 320.0
-aggro_radius = 220.0
-leash_radius = 480.0
 
-[node name="ChestSpawn_01" type="Marker2D" parent="World/Spawns"]
+[node name="ChestSpawn_01" type="Marker2D" parent="World/Spawns" index="2" unique_id=1317766769]
 position = Vector2(2450, 900)
 script = ExtResource("x_chest_spawn")
 chest_scene = ExtResource("x_chest")
 
-[node name="PickupSpawn_01" type="Marker2D" parent="World/Spawns"]
+[node name="PickupSpawn_01" type="Marker2D" parent="World/Spawns" index="3" unique_id=1610200193]
 position = Vector2(2050, 780)
 script = ExtResource("x_pickup_spawn")
 pickup_scene = ExtResource("x_pickup")
 
-[node name="FgParallax" type="Control" parent="." unique_id=1845135029]
-z_index = 100
-clip_contents = true
-layout_mode = 3
-anchors_preset = 0
-offset_right = 3000.0
-offset_bottom = 1080.0
-mouse_filter = 2
-script = ExtResource("8_parallax")
-fallback_size = Vector2(3000, 1080)
+[node name="Water" type="Node2D" parent="World" parent_id_path=PackedInt32Array(1624328844) index="2" unique_id=2019402331]
 
-[node name="Occluders" type="Node2D" parent="FgParallax"]
-z_index = 20
-script = ExtResource("9_layer")
-scroll_scale = Vector2(1, 1)
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="World/Water" index="0" unique_id=2114144499]
+modulate = Color(1, 1, 1, 0.3137255)
+position = Vector2(702.5, 598.125)
+scale = Vector2(0.5978258, 0.820978)
+sprite_frames = ExtResource("18_ejcfv")
+autoplay = "default"
+frame_progress = 0.60212654
 
-[node name="OccluderTest" type="Sprite2D" parent="FgParallax/Occluders"]
-position = Vector2(2300, 900)
+[node name="AnimatedSprite2D2" type="AnimatedSprite2D" parent="World/Water" index="1" unique_id=1860841230]
+self_modulate = Color(1, 1, 1, 0.3137255)
+position = Vector2(820.5, 448.81253)
+scale = Vector2(0.66304344, 1.5445583)
+sprite_frames = ExtResource("18_ejcfv")
+autoplay = "default"
+frame_progress = 0.5462245
+
+[node name="AnimatedSprite2D3" type="AnimatedSprite2D" parent="World/Water" index="2" unique_id=1792564459]
+modulate = Color(1, 1, 1, 0.3137255)
+position = Vector2(984, 683)
+scale = Vector2(0.9945649, 0.86159307)
+sprite_frames = ExtResource("18_ejcfv")
+autoplay = "default"
+frame_progress = 0.92803156
+
+[node name="AnimatedSprite2D4" type="AnimatedSprite2D" parent="World/Water" index="3" unique_id=1294522773]
+self_modulate = Color(1, 1, 1, 0.3137255)
+position = Vector2(1162, 407)
+scale = Vector2(0.9728254, 1.5445583)
+sprite_frames = ExtResource("18_ejcfv")
+autoplay = "default"
+frame_progress = 0.5462245
+
+[node name="Terrain" type="Node2D" parent="World" parent_id_path=PackedInt32Array(1624328844) index="3" unique_id=921272668]
+
+[node name="Sprite2D7" type="Sprite2D" parent="World/Terrain" index="0" unique_id=640316775]
+position = Vector2(2530, 985)
+texture = ExtResource("11_k08c4")
+
+[node name="Sprite2D8" type="Sprite2D" parent="World/Terrain" index="1" unique_id=1291941171]
+position = Vector2(2262, 990)
+texture = ExtResource("11_k08c4")
+
+[node name="Sprite2D10" type="Sprite2D" parent="World/Terrain" index="2" unique_id=1164485313]
+position = Vector2(1731.488, 991)
+texture = ExtResource("11_k08c4")
+
+[node name="Sprite2D12" type="Sprite2D" parent="World/Terrain" index="3" unique_id=1516055570]
+position = Vector2(1209.6371, 996)
+texture = ExtResource("11_k08c4")
+
+[node name="Sprite2D13" type="Sprite2D" parent="World/Terrain" index="4" unique_id=1697491612]
+position = Vector2(975.637, 983)
+texture = ExtResource("11_k08c4")
+
+[node name="Sprite2D14" type="Sprite2D" parent="World/Terrain" index="5" unique_id=1179573696]
+position = Vector2(803.637, 872)
+texture = ExtResource("12_rm10a")
+
+[node name="Sprite2D15" type="Sprite2D" parent="World/Terrain" index="6" unique_id=1477899923]
+position = Vector2(2703, 992)
+texture = ExtResource("11_k08c4")
+
+[node name="Sprite2D16" type="Sprite2D" parent="World/Terrain" index="7" unique_id=1049133472]
+position = Vector2(721, 768)
+texture = ExtResource("13_kb303")
+
+[node name="Sprite2D17" type="Sprite2D" parent="World/Terrain" index="8" unique_id=1730782919]
+position = Vector2(550, 772)
+texture = ExtResource("11_k08c4")
+
+[node name="Sprite2D18" type="Sprite2D" parent="World/Terrain" index="9" unique_id=622834580]
+position = Vector2(412, 634)
+texture = ExtResource("11_k08c4")
+
+[node name="Sprite2D20" type="Sprite2D" parent="World/Terrain" index="10" unique_id=708477294]
+position = Vector2(131, 635)
+texture = ExtResource("13_kb303")
+
+[node name="Sprite2D19" type="Sprite2D" parent="World/Terrain" index="11" unique_id=523664853]
+position = Vector2(211, 641)
+texture = ExtResource("13_kb303")
+
+[node name="Sprite2D21" type="Sprite2D" parent="World/Terrain" index="12" unique_id=952172356]
+position = Vector2(509, 698)
+texture = ExtResource("14_d505y")
+
+[node name="MossholeGround0" type="Sprite2D" parent="World/Terrain" index="13" unique_id=21415950]
+position = Vector2(1685, 966)
+texture = ExtResource("15_7kjsn")
+
+[node name="Sprite2D11" type="Sprite2D" parent="World/Terrain" index="14" unique_id=558031100]
+position = Vector2(1463.6371, 991)
+texture = ExtResource("11_k08c4")
+
+[node name="Sprite2D9" type="Sprite2D" parent="World/Terrain" index="15" unique_id=503376100]
+position = Vector2(1991.6371, 993)
+texture = ExtResource("11_k08c4")
+
+[node name="MossholeGround1" type="Sprite2D" parent="World/Terrain" index="16" unique_id=2132597970]
+position = Vector2(1903, 986)
+texture = ExtResource("16_ejcfv")
+
+[node name="MossholeGround2" type="Sprite2D" parent="World/Terrain" index="17" unique_id=1268101247]
+position = Vector2(1622, 1017)
+texture = ExtResource("17_0dudo")
+
+[node name="Moss1" type="Sprite2D" parent="World/Terrain" index="18" unique_id=588486389]
+position = Vector2(2785, 909)
+texture = ExtResource("14_d505y")
+
+[node name="FungBigRoof0004A" type="Sprite2D" parent="World/Terrain" index="19" unique_id=649136797]
+position = Vector2(2669, 242)
+texture = ExtResource("25_7cteo")
+
+[node name="FungNew0089A" type="Sprite2D" parent="World/Terrain" index="20" unique_id=1101291499]
+position = Vector2(2905, 412)
+rotation = 1.5707964
+scale = Vector2(1, -1)
+texture = ExtResource("6_ghxpe")
+
+[node name="FungNew0084C" type="Sprite2D" parent="World/Terrain" index="21" unique_id=1696460442]
+position = Vector2(2793, 735)
+rotation = -1.5707964
+scale = Vector2(-1, 1)
+texture = ExtResource("7_jipa2")
+
+[node name="Moss0" type="Sprite2D" parent="World/Terrain" index="22" unique_id=183019278]
+position = Vector2(2700, 949)
 texture = ExtResource("9_s2ypm")
 
-[node name="Foreground" type="Node2D" parent="FgParallax" unique_id=251785931]
-script = ExtResource("9_layer")
-scroll_scale = Vector2(1.06, 1.06)
+[node name="FungBigRoof0004A2" type="Sprite2D" parent="World/Terrain" index="23" unique_id=1386251091]
+position = Vector2(1370, 170)
+texture = ExtResource("25_7cteo")
 
-[node name="Bg_028" type="Sprite2D" parent="FgParallax/Foreground" unique_id=1645118038]
+[node name="FungBigRoof0000A" type="Sprite2D" parent="World/Terrain" index="24" unique_id=1718843728]
+position = Vector2(518, 153)
+texture = ExtResource("26_d5ouh")
+
+[node name="Cage" type="Sprite2D" parent="World/Terrain" index="25" unique_id=1049097013]
+position = Vector2(2301, 707)
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("27_dy371")
+
+[node name="Obstacles" type="Node2D" parent="World" parent_id_path=PackedInt32Array(1624328844) index="4" unique_id=673321080]
+
+[node name="StaticBody2D" type="StaticBody2D" parent="World/Obstacles" index="0" unique_id=1169140170]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Obstacles/StaticBody2D" index="0" unique_id=1361710618]
+position = Vector2(1515, 979)
+shape = SubResource("RectangleShape2D_j2abh")
+
+[node name="StaticBody2D2" type="StaticBody2D" parent="World/Obstacles" index="1" unique_id=1336462664]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Obstacles/StaticBody2D2" index="0" unique_id=1969588718]
+position = Vector2(2852, 483)
+shape = SubResource("RectangleShape2D_k08c4")
+
+[node name="StaticBody2D3" type="StaticBody2D" parent="World/Obstacles" index="2" unique_id=2094592953]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Obstacles/StaticBody2D3" index="0" unique_id=1050017004]
+position = Vector2(676, 850)
+shape = SubResource("RectangleShape2D_rm10a")
+
+[node name="StaticBody2D4" type="StaticBody2D" parent="World/Obstacles" index="3" unique_id=1067925534]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Obstacles/StaticBody2D4" index="0" unique_id=1150607020]
+position = Vector2(278, 696)
+shape = SubResource("RectangleShape2D_kb303")
+
+[node name="StaticBody2D5" type="StaticBody2D" parent="World/Obstacles" index="4" unique_id=869575104]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Obstacles/StaticBody2D5" index="0" unique_id=1428150830]
+position = Vector2(1502, 41)
+shape = SubResource("RectangleShape2D_rywq7")
+
+[node name="Props" type="Node2D" parent="World" parent_id_path=PackedInt32Array(1624328844) index="5" unique_id=29502770]
+
+[node name="FgParallax" parent="." index="2" unique_id=1845135029]
+offset_right = 3000.0
+
+[node name="Bg_028" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="0" unique_id=1645118038]
 z_index = 6
 position = Vector2(837, 835.8)
 texture = ExtResource("9_s2ypm")
 
-[node name="Bg_029" type="Sprite2D" parent="FgParallax/Foreground" unique_id=310545036]
+[node name="Bg_029" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="1" unique_id=310545036]
 z_index = 6
 position = Vector2(699.3, 846)
 scale = Vector2(-1, 1)
 texture = ExtResource("14_d505y")
 
-[node name="Bg_030" type="Sprite2D" parent="FgParallax/Foreground" unique_id=1999360495]
+[node name="Bg_030" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="2" unique_id=1999360495]
 z_index = 7
 position = Vector2(754.5, 865.5)
 texture = ExtResource("9_s2ypm")
 
-[node name="Bg_031" type="Sprite2D" parent="FgParallax/Foreground" unique_id=130512588]
+[node name="Bg_031" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="3" unique_id=130512588]
 z_index = 7
 position = Vector2(576, 834)
 texture = ExtResource("14_d505y")
 
-[node name="Bg_032" type="Sprite2D" parent="FgParallax/Foreground" unique_id=1919548797]
+[node name="Bg_032" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="4" unique_id=1919548797]
 z_index = 7
 position = Vector2(849, 918)
 texture = ExtResource("14_d505y")
 
-[node name="Bg_033" type="Sprite2D" parent="FgParallax/Foreground" unique_id=1961208135]
+[node name="Bg_033" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="5" unique_id=1961208135]
 z_index = 5
 position = Vector2(2408.25, 996.75)
 texture = ExtResource("14_d505y")
 
-[node name="Bg_034" type="Sprite2D" parent="FgParallax/Foreground" unique_id=346653022]
+[node name="Bg_034" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="6" unique_id=346653022]
 z_index = 5
 position = Vector2(2308.5, 1007.25)
 texture = ExtResource("9_s2ypm")
 
-[node name="Bg_035" type="Sprite2D" parent="FgParallax/Foreground" unique_id=124536716]
+[node name="Bg_035" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="7" unique_id=124536716]
 z_index = 5
 position = Vector2(2175.8809, 990.1137)
 texture = ExtResource("14_d505y")
 
-[node name="Bg_036" type="Sprite2D" parent="FgParallax/Foreground" unique_id=1708432445]
+[node name="Bg_036" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="8" unique_id=1708432445]
 z_index = 7
 position = Vector2(980.25, 954.75)
 scale = Vector2(-0.9, 0.9)
 texture = ExtResource("14_d505y")
 
-[node name="Bg_037" type="Sprite2D" parent="FgParallax/Foreground" unique_id=897487954]
+[node name="Bg_037" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="9" unique_id=897487954]
 z_index = 8
 position = Vector2(2260.725, 1008.5625)
 texture = ExtResource("9_s2ypm")
 
-[node name="Bg_038" type="Sprite2D" parent="FgParallax/Foreground" unique_id=1942465315]
+[node name="Bg_038" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="10" unique_id=1942465315]
 z_index = 8
 position = Vector2(2067.7876, 1030.6125)
 texture = ExtResource("9_s2ypm")
 
-[node name="Bg_039" type="Sprite2D" parent="FgParallax/Foreground" unique_id=1833344104]
+[node name="Bg_039" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="11" unique_id=1833344104]
 z_index = 8
 position = Vector2(1957.5375, 1025.1)
 scale = Vector2(-1, 1)
 texture = ExtResource("14_d505y")
 
-[node name="Bg_040" type="Sprite2D" parent="FgParallax/Foreground" unique_id=959086192]
+[node name="Bg_040" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="12" unique_id=959086192]
 z_index = 8
 position = Vector2(2635.575, 964.4625)
 texture = ExtResource("9_s2ypm")
 
-[node name="Bg_041" type="Sprite2D" parent="FgParallax/Foreground" unique_id=1557890858]
+[node name="Bg_041" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="13" unique_id=1557890858]
 z_index = 8
 position = Vector2(1378.725, 992.025)
 texture = ExtResource("9_s2ypm")
 
-[node name="Bg_042" type="Sprite2D" parent="FgParallax/Foreground" unique_id=787447693]
+[node name="Bg_042" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="14" unique_id=787447693]
 z_index = 8
 position = Vector2(1296.0375, 1003.05)
 texture = ExtResource("9_s2ypm")
 
-[node name="Bg_043" type="Sprite2D" parent="FgParallax/Foreground" unique_id=615400097]
+[node name="Bg_043" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="15" unique_id=615400097]
 z_index = 8
 position = Vector2(1185.7875, 986.5125)
 scale = Vector2(-1, 1)
 texture = ExtResource("14_d505y")
 
-[node name="Bg_058" type="Sprite2D" parent="FgParallax/Foreground" unique_id=2050521428]
+[node name="Bg_058" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="16" unique_id=2050521428]
 z_index = 7
 position = Vector2(387, 708)
 scale = Vector2(-1, 1)
 texture = ExtResource("9_s2ypm")
 
-[node name="Bg_059" type="Sprite2D" parent="FgParallax/Foreground" unique_id=1801983115]
+[node name="Bg_059" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="17" unique_id=1801983115]
 z_index = 9
 position = Vector2(468.78946, 773.55133)
 texture = ExtResource("12_xuxdd")
 
-[node name="Bg_060" type="Sprite2D" parent="FgParallax/Foreground" unique_id=514288378]
+[node name="Bg_060" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="18" unique_id=514288378]
 z_index = 10
 position = Vector2(545.2219, 889.23883)
 scale = Vector2(1.186174, 1.117802)
 texture = ExtResource("12_xuxdd")
 
-[node name="Bg_061" type="Sprite2D" parent="FgParallax/Foreground" unique_id=1414813766]
+[node name="Bg_061" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="19" unique_id=1414813766]
 z_index = 8
 position = Vector2(282, 692.25)
 texture = ExtResource("9_s2ypm")
 
-[node name="Bg_062" type="Sprite2D" parent="FgParallax/Foreground" unique_id=1326854275]
+[node name="Bg_062" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="20" unique_id=1326854275]
 z_index = 8
 position = Vector2(182.25, 708)
 texture = ExtResource("14_d505y")
 
-[node name="Bg_063" type="Sprite2D" parent="FgParallax/Foreground" unique_id=707836063]
+[node name="Bg_063" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="21" unique_id=707836063]
 z_index = 7
 position = Vector2(98.25, 671.25)
 texture = ExtResource("14_d505y")
 
-[node name="Bg_064" type="Sprite2D" parent="FgParallax/Foreground" unique_id=62039693]
+[node name="Bg_064" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="22" unique_id=62039693]
 z_index = 7
 position = Vector2(19.5, 681.75)
 texture = ExtResource("9_s2ypm")
 
-[node name="Bg_065" type="Sprite2D" parent="FgParallax/Foreground" unique_id=394926856]
+[node name="Bg_065" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="23" unique_id=394926856]
 z_index = 9
 position = Vector2(0.6, 727.425)
 texture = ExtResource("11_uv2fl")
 
-[node name="Bg_066" type="Sprite2D" parent="FgParallax/Foreground" unique_id=102637413]
+[node name="Bg_066" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="24" unique_id=102637413]
 z_index = 9
 position = Vector2(193.5375, 743.9625)
 texture = ExtResource("11_uv2fl")
 
-[node name="FG2" type="Node2D" parent="FgParallax" unique_id=693908343]
-script = ExtResource("9_layer")
-scroll_scale = Vector2(1.18, 1.18)
-
-[node name="Bg_044" type="Sprite2D" parent="FgParallax/FG2" unique_id=596806492]
+[node name="Bg_044" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="0" unique_id=596806492]
 z_index = 10
 position = Vector2(2559.2268, 1008.83813)
 texture = ExtResource("11_uv2fl")
 
-[node name="Bg_045" type="Sprite2D" parent="FgParallax/FG2" unique_id=1133640851]
+[node name="Bg_045" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="1" unique_id=1133640851]
 z_index = 11
 position = Vector2(2518.5334, 1056.9785)
 scale = Vector2(1.321053, 1)
 texture = ExtResource("12_xuxdd")
 
-[node name="Bg_046" type="Sprite2D" parent="FgParallax/FG2" unique_id=783431560]
+[node name="Bg_046" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="2" unique_id=783431560]
 z_index = 11
 position = Vector2(2308.3115, 1062.6676)
 scale = Vector2(-1, 1)
 texture = ExtResource("12_xuxdd")
 
-[node name="Bg_048" type="Sprite2D" parent="FgParallax/FG2" unique_id=2137213332]
+[node name="Bg_048" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="3" unique_id=2137213332]
 z_index = 11
 position = Vector2(2186.761, 1044.4349)
 scale = Vector2(-1, 1)
 texture = ExtResource("12_xuxdd")
 
-[node name="Bg_049" type="Sprite2D" parent="FgParallax/FG2" unique_id=1442151763]
+[node name="Bg_049" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="4" unique_id=1442151763]
 z_index = 10
 position = Vector2(2009.355, 1055.1431)
 texture = ExtResource("12_xuxdd")
 
-[node name="Bg_050" type="Sprite2D" parent="FgParallax/FG2" unique_id=1639249719]
+[node name="Bg_050" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="5" unique_id=1639249719]
 z_index = 10
 position = Vector2(1845.1085, 1028.6256)
 scale = Vector2(1.098918, 1.174992)
 texture = ExtResource("11_uv2fl")
 
-[node name="Bg_051" type="Sprite2D" parent="FgParallax/FG2" unique_id=787918338]
+[node name="Bg_051" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="6" unique_id=787918338]
 z_index = 10
 position = Vector2(1691.0082, 1072.5074)
 texture = ExtResource("11_uv2fl")
 
-[node name="Bg_052" type="Sprite2D" parent="FgParallax/FG2" unique_id=1247003832]
+[node name="Bg_052" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="7" unique_id=1247003832]
 z_index = 11
 position = Vector2(1579.0079, 1068.7451)
 texture = ExtResource("12_xuxdd")
 
-[node name="Bg_053" type="Sprite2D" parent="FgParallax/FG2" unique_id=1456178141]
+[node name="Bg_053" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="8" unique_id=1456178141]
 z_index = 12
 position = Vector2(1457.4573, 1038.3574)
 texture = ExtResource("11_uv2fl")
 
-[node name="Bg_054" type="Sprite2D" parent="FgParallax/FG2" unique_id=1714776734]
+[node name="Bg_054" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="9" unique_id=1714776734]
 z_index = 12
 position = Vector2(1264.9906, 1051.605)
 scale = Vector2(-1.106745, 1.138283)
 texture = ExtResource("11_uv2fl")
 
-[node name="Bg_055" type="Sprite2D" parent="FgParallax/FG2" unique_id=948150501]
+[node name="Bg_055" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="10" unique_id=948150501]
 z_index = 11
 position = Vector2(1374.6709, 1024.78)
 scale = Vector2(1.088175, 1.210127)
 texture = ExtResource("11_uv2fl")
 
-[node name="Bg_056" type="Sprite2D" parent="FgParallax/FG2" unique_id=205844092]
+[node name="Bg_056" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="11" unique_id=205844092]
 z_index = 10
 position = Vector2(1170.0769, 1043.5669)
 texture = ExtResource("11_uv2fl")
 
-[node name="Bg_057" type="Sprite2D" parent="FgParallax/FG2" unique_id=925352955]
+[node name="Bg_057" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="12" unique_id=925352955]
 z_index = 10
 position = Vector2(1094.4849, 1045.1699)
 scale = Vector2(1.544702, 1.291242)
 texture = ExtResource("12_xuxdd")
 
-[node name="Bg_072" type="Sprite2D" parent="FgParallax/FG2" unique_id=459988043]
+[node name="Bg_072" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="13" unique_id=459988043]
 z_index = 12
 position = Vector2(932.57025, 1036.5137)
 scale = Vector2(-2.341923, 2.307971)
 texture = ExtResource("13_knxvq")
 
-[node name="Bg_079" type="Sprite2D" parent="FgParallax/FG2" unique_id=1501651058]
+[node name="Bg_079" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="14" unique_id=1501651058]
 z_index = 12
 position = Vector2(756.2596, 1101.6407)
 scale = Vector2(4.192306, 3.872728)
 texture = ExtResource("13_knxvq")
 
-[node name="Bg_080" type="Sprite2D" parent="FgParallax/FG2" unique_id=1918344263]
+[node name="Bg_080" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="15" unique_id=1918344263]
 z_index = 12
 position = Vector2(729.1426, 977.3322)
 scale = Vector2(1.804527, 1.874916)
 texture = ExtResource("13_knxvq")
 
-[node name="Bg_081" type="Sprite2D" parent="FgParallax/FG2" unique_id=1224871545]
+[node name="Bg_081" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="16" unique_id=1224871545]
 z_index = 12
 position = Vector2(616.13153, 1033.7452)
 scale = Vector2(4.205128, 3.709091)
 texture = ExtResource("13_knxvq")
 
-[node name="Bg_082" type="Sprite2D" parent="FgParallax/FG2" unique_id=778323214]
+[node name="Bg_082" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="17" unique_id=778323214]
 z_index = 12
 position = Vector2(578.62683, 967.36707)
 scale = Vector2(1.996835, 2.838552)
 texture = ExtResource("13_knxvq")
 
-[node name="Bg_083" type="Sprite2D" parent="FgParallax/FG2" unique_id=177578974]
+[node name="Bg_083" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="18" unique_id=177578974]
 z_index = 12
 position = Vector2(396.48392, 1036.2495)
 scale = Vector2(4.937873, 4.513307)
 texture = ExtResource("13_knxvq")
 
-[node name="Bg_084" type="Sprite2D" parent="FgParallax/FG2" unique_id=914663996]
+[node name="Bg_084" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="19" unique_id=914663996]
 z_index = 12
 position = Vector2(128.83209, 935.42365)
 scale = Vector2(4.269623, 5.113307)
 texture = ExtResource("13_knxvq")
 
-[node name="Bg_085" type="Sprite2D" parent="FgParallax/FG2" unique_id=1798803854]
+[node name="Bg_085" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="20" unique_id=1798803854]
 z_index = 12
 position = Vector2(-72.6721, 814.37665)
 scale = Vector2(4.782051, 4.236362)
 texture = ExtResource("13_knxvq")
 
-[node name="Bg_086" type="Sprite2D" parent="FgParallax/FG2" unique_id=555251185]
+[node name="Bg_086" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="21" unique_id=555251185]
 z_index = 12
 position = Vector2(-55.20298, 1002.4051)
 scale = Vector2(4.409465, 4.007365)
 texture = ExtResource("13_knxvq")
 
-[node name="Bg_087" type="Sprite2D" parent="FgParallax/FG2" unique_id=1634291940]
+[node name="Bg_087" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="22" unique_id=1634291940]
 z_index = 12
 position = Vector2(252.33208, 798.9854)
 scale = Vector2(1.911369, 2.046089)
 texture = ExtResource("tex_11")
 
-[node name="Bg_088" type="Sprite2D" parent="FgParallax/FG2" unique_id=560459233]
+[node name="Bg_088" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="23" unique_id=560459233]
 z_index = 12
 position = Vector2(572.5689, 276.2352)
 scale = Vector2(2, 2)
 texture = ExtResource("tex_12")
 
-[node name="Bg_089" type="Sprite2D" parent="FgParallax/FG2" unique_id=917328157]
+[node name="Bg_089" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="24" unique_id=917328157]
 z_index = 12
 position = Vector2(595.6635, 322.42444)
 scale = Vector2(2, 2)
 texture = ExtResource("tex_13")
 
-[node name="Bg_090" type="Sprite2D" parent="FgParallax/FG2" unique_id=2085023616]
+[node name="Bg_090" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="25" unique_id=2085023616]
 z_index = 12
 position = Vector2(272.33893, 187.50327)
 scale = Vector2(2, 2)
 texture = ExtResource("tex_14")
 
-[node name="Bg_091" type="Sprite2D" parent="FgParallax/FG2" unique_id=2076697698]
+[node name="Bg_091" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="26" unique_id=2076697698]
 z_index = 12
 position = Vector2(1305.519, 5.17736)
 texture = ExtResource("tex_15")
 
-[node name="Bg_093" type="Sprite2D" parent="FgParallax/FG2" unique_id=43350492]
+[node name="Bg_093" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="27" unique_id=43350492]
 z_index = 12
 position = Vector2(819.31665, 65.95266)
 scale = Vector2(1.2, 1.1)
 texture = ExtResource("tex_15")
 
-[node name="FG3" type="Node2D" parent="FgParallax" unique_id=945516656]
-script = ExtResource("9_layer")
-scroll_scale = Vector2(1.3, 1.3)
-
-[node name="Bg_047" type="Sprite2D" parent="FgParallax/FG3" unique_id=1240274787]
+[node name="Bg_047" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="0" unique_id=1240274787]
 z_index = 12
 position = Vector2(2412.5417, 1063.2756)
 texture = ExtResource("12_xuxdd")
 
-[node name="Bg_067" type="Sprite2D" parent="FgParallax/FG3" unique_id=1485624188]
+[node name="Bg_067" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="1" unique_id=1485624188]
 z_index = 13
 position = Vector2(2963.1108, 1048.1047)
 scale = Vector2(5.192309, 3.545456)
 texture = ExtResource("13_knxvq")
 
-[node name="Bg_068" type="Sprite2D" parent="FgParallax/FG3" unique_id=895235770]
+[node name="Bg_068" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="2" unique_id=895235770]
 z_index = 13
 position = Vector2(2718.957, 1080.8676)
 scale = Vector2(2.871451, 2.800001)
 texture = ExtResource("13_knxvq")
 
-[node name="Bg_069" type="Sprite2D" parent="FgParallax/FG3" unique_id=71775243]
+[node name="Bg_069" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="3" unique_id=71775243]
 z_index = 13
 position = Vector2(2093.4712, 1101.5641)
 texture = ExtResource("13_knxvq")
 
-[node name="Bg_070" type="Sprite2D" parent="FgParallax/FG3" unique_id=2082153962]
+[node name="Bg_070" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="4" unique_id=2082153962]
 z_index = 13
 position = Vector2(1519.1443, 1107.9454)
 texture = ExtResource("13_knxvq")
 
-[node name="Bg_071" type="Sprite2D" parent="FgParallax/FG3" unique_id=1881789610]
+[node name="Bg_071" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="5" unique_id=1881789610]
 z_index = 13
 position = Vector2(1321.3206, 1095.1826)
 texture = ExtResource("13_knxvq")
 
-[node name="Bg_073" type="Sprite2D" parent="FgParallax/FG3" unique_id=927328279]
+[node name="Bg_073" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="6" unique_id=927328279]
 z_index = 13
 position = Vector2(1285.5846, 1022.4346)
 texture = ExtResource("tex_6")
 
-[node name="Bg_074" type="Sprite2D" parent="FgParallax/FG3" unique_id=625625100]
+[node name="Bg_074" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="7" unique_id=625625100]
 z_index = 13
 position = Vector2(1955.6327, 1022.4346)
 texture = ExtResource("tex_7")
 
-[node name="Bg_075" type="Sprite2D" parent="FgParallax/FG3" unique_id=447629703]
+[node name="Bg_075" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="8" unique_id=447629703]
 z_index = 13
 position = Vector2(2675.777, 1022.4346)
 scale = Vector2(-1.33188, 1)
 texture = ExtResource("tex_8")
 
-[node name="Bg_076" type="Sprite2D" parent="FgParallax/FG3" unique_id=815985625]
+[node name="Bg_076" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="9" unique_id=815985625]
 z_index = 13
 position = Vector2(2444.4487, 922.8846)
 texture = ExtResource("tex_9")
 
-[node name="Bg_077" type="Sprite2D" parent="FgParallax/FG3" unique_id=791130679]
+[node name="Bg_077" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="10" unique_id=791130679]
 z_index = 13
 position = Vector2(1774.4006, 986.6987)
 texture = ExtResource("tex_10")
 
-[node name="Bg_078" type="Sprite2D" parent="FgParallax/FG3" unique_id=1481425613]
+[node name="Bg_078" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="11" unique_id=1481425613]
 z_index = 13
 position = Vector2(1687.6134, 928.62787)
 scale = Vector2(-1.1, 1.1)
 texture = ExtResource("tex_9")
 
-[node name="Bg_092" type="Sprite2D" parent="FgParallax/FG3" unique_id=1420129173]
+[node name="Bg_092" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="12" unique_id=1420129173]
 z_index = 12
 position = Vector2(1084.5702, 17.36256)
 texture = ExtResource("tex_15")
 
-[node name="Bg_094" type="Sprite2D" parent="FgParallax/FG3" unique_id=29045668]
+[node name="Bg_094" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="13" unique_id=29045668]
 z_index = 12
 position = Vector2(-88.01376, -289.5194)
 texture = ExtResource("tex_15")

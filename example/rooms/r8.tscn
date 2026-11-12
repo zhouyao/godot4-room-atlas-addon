@@ -1,9 +1,8 @@
 [gd_scene format=3 uid="uid://crvkbthobwvgt"]
 
-[ext_resource type="Script" uid="uid://jm7mu2fu7tit" path="res://addons/seamless_rooms/runtime/seamless_rooms_room2d.gd" id="1_view"]
+[ext_resource type="PackedScene" path="res://example/rooms/room_template.tscn" id="1_base"]
 
-[node name="R8" type="Node2D" unique_id=463975975]
-script = ExtResource("1_view")
+[node name="R8" instance=ExtResource("1_base") unique_id=463975975]
 room_id = &"r8"
 room_title = "R8"
 room_size = Vector2i(1920, 2160)

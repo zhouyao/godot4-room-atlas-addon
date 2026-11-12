@@ -63,29 +63,30 @@ Main (Node2D)
 ```
 
 ```text
-R1 (SeamlessRoom2D)
+RoomTemplate (SeamlessRoom2D，由 r1–r8 继承；只含空层)
 ├─ BgParallax (Control, z = -100, clip_to_room = true)
-│  ├─ Sky (Node2D)                   # Darkness 静态背景，不参与视差
+│  ├─ Backdrop (Node2D)              # 房间固定静态背景，不参与视差
 │  ├─ Far (0.55)
 │  ├─ Far2 (0.75)
 │  ├─ Mid (0.87)
 │  └─ Near (0.95)
 ├─ World (Node2D)
-│  ├─ Water
-│  ├─ Terrain
-│  ├─ Obstacles                      # 碰撞
-│  ├─ Decals (Node2D, z = -10)       # 影子、水渍、血迹
-│  ├─ Props (Node2D)                 # 永远在角色后的静态物
-│  └─ Spawns (Node2D)                # 出生点，不是实体
-│     ├─ EnemySpawn_01 / 02
+│  ├─ Underlay (Node2D, z = -10)     # 世界后景 band
+│  └─ Spawns (Node2D)                # 出生点分组，模板里为空
+│     ├─ EnemySpawn_01 / 02          ← 以下出生点由 r1 自行新增
 │     ├─ ChestSpawn_01
 │     └─ PickupSpawn_01
 └─ FgParallax (Control, z = 100, clip_to_room = true)
-   ├─ Occluders (1.0, z = 20)        # 前景遮片；OccluderTest 为演示占位
+   ├─ Occluders (1.0, z = 20)        # 前景遮片；r1 挂了 OccluderTest
    ├─ Foreground (1.06)
    ├─ FG2 (1.18)
    └─ FG3 (1.30)
+
+r1 自建（不属于模板）
+└─ World/Water / Terrain / Obstacles / Props
 ```
+
+层结构（含同名同路径的 `World/Spawns` `Node2D` 分组）来自 `example/rooms/room_template.tscn`，准入标准见 [视差约定 §5](parallax-convention.md)：模板只放结构性契约节点，不放内容分类分组。`Water / Terrain / Obstacles / Props` 是 `r1` 的构图分组，由 r1 在自己的派生场景里新增，节点路径与改造前一致。模板不放出生点或任何房间内容，出生点由各房间在继承的 `World/Spawns` 下自行新增（目前只有 `r1` 放了 4 个）。因此 `RoomEntityDirector` 的 `get_node_or_null("World/Spawns")` 对 8 间房都成立。
 
 `World` 下的分组节点必须是 `Node2D`。Godot 的 transform / modulate / visibility 只向**直接** `CanvasItem` 子节点传播；中间夹普通 `Node` 会切断链路，`Marker2D.global_position` 和物理体都会算错。
 

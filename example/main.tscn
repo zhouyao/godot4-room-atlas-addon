@@ -1,6 +1,55 @@
 [gd_scene format=3 uid="uid://de7xygmtrxxqw"]
 
 [ext_resource type="Script" uid="uid://b4yvo7dvc3jit" path="res://example/main.gd" id="1_main"]
+[ext_resource type="Script" uid="uid://h80mffsqtt7v" path="res://example/world/world_grid.gd" id="2_grid"]
+[ext_resource type="Script" uid="uid://g25mf4036mws" path="res://example/actors/player/player.gd" id="3_player"]
+[ext_resource type="Script" uid="uid://p2x9k7m4n3qb" path="res://example/actors/player/player2.gd" id="4_player2"]
+[ext_resource type="Script" uid="uid://teqxpeivswds" path="res://example/ui/debug_overlay.gd" id="5_debug_overlay"]
+[ext_resource type="Script" uid="uid://cknly7yxypgvf" path="res://example/ui/camera_debug_panel.gd" id="6_panel"]
+[ext_resource type="Script" uid="uid://ceravjn4b5ksp" path="res://addons/seamless_rooms/runtime/seamless_rooms_minimap.gd" id="7_minimap"]
+[ext_resource type="Resource" uid="uid://corryvd6gywef" path="res://world_config.tres" id="8_config"]
 
 [node name="Main" type="Node2D" unique_id=730944224]
 script = ExtResource("1_main")
+
+[node name="WorldGrid" type="Node2D" parent="."]
+z_index = -100
+script = ExtResource("2_grid")
+
+[node name="Actors" type="Node2D" parent="."]
+y_sort_enabled = true
+z_index = 10
+
+[node name="Player" type="CharacterBody2D" parent="Actors"]
+script = ExtResource("3_player")
+
+[node name="Player2" type="CharacterBody2D" parent="Actors"]
+script = ExtResource("4_player2")
+
+[node name="Overlays" type="Node2D" parent="."]
+z_index = 15
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position_smoothing_enabled = false
+
+[node name="DebugLayer" type="CanvasLayer" parent="."]
+layer = 1
+
+[node name="DebugOverlay" type="Node2D" parent="DebugLayer"]
+script = ExtResource("5_debug_overlay")
+
+[node name="CameraDebugPanel" type="CanvasLayer" parent="."]
+script = ExtResource("6_panel")
+
+[node name="MinimapLayer" type="CanvasLayer" parent="."]
+layer = 2
+
+[node name="Minimap" type="Control" parent="MinimapLayer"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -336.0
+offset_right = -16.0
+offset_top = 16.0
+offset_bottom = 156.0
+script = ExtResource("7_minimap")
+config = ExtResource("8_config")

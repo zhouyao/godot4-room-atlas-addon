@@ -118,7 +118,7 @@ main.tscn: Main/Actors/r1_EnemySpawn_01  ← 与 Player 同容器，按 Y 排序
 
 ### 小地图 demo
 
-`SeamlessRoomMinimap` 是一个纯显示 `Control`：外部每帧把玩家世界坐标与相机视野推给它，它只负责按配置里的房间几何绘制。示例在 `main.gd` 的 `_build_minimap()` 里创建 `CanvasLayer`、设置锚点，然后：
+`SeamlessRoomMinimap` 是一个纯显示 `Control`：外部每帧把玩家世界坐标与相机视野推给它，它只负责按配置里的房间几何绘制。示例把 `MinimapLayer`（`layer = 2`）与右上角锚定的 `Minimap` 放在 `example/main.tscn` 里（`@tool`，编辑器可直接预览）；`main.gd` 的 `_build_minimap()` 只注入配置与调试开关，运行时：
 
 ```gdscript
 minimap.configure(config)
@@ -130,17 +130,17 @@ minimap.set_camera_view(Rect2(center - view * 0.5, view))
 
 ### 视差 demo
 
-`r1.tscn` 用 `SeamlessRoomParallax` 把房间内容拆成背景 / 世界 / 前景三组：
+层骨架来自 `example/rooms/room_template.tscn`：它用 `SeamlessRoomParallax` 把房间分成背景 / 世界 / 前景三组，只有空层；`r1`–`r8` 全部继承它。模板只放结构性契约节点（`Backdrop` / 8 个视差 band / `Underlay` / `Spawns`），准入标准见 [docs/parallax-convention.md](docs/parallax-convention.md)；`r1.tscn` 提供苔藓洞窟的内容并自建 `World/Water / Terrain / Obstacles / Props` 4 个分组，其余 7 间房只有房间身份覆写：
 
 ```text
-R1（SeamlessRoom2D）
+RoomTemplate（SeamlessRoom2D，由 r1–r8 继承）
 ├─ BgParallax（z = -100，clip_to_room = true，Room Center）
-│  ├─ Sky（Darkness 背景，不参与视差）
+│  ├─ Backdrop（房间固定静态背景，不参与视差）
 │  ├─ Far（scroll_scale = 0.55）
 │  ├─ Far2（0.75）
 │  ├─ Mid（0.87）
 │  └─ Near（0.95）
-├─ World（地面 / 平台 / 水 / 碰撞 / 出生点）
+├─ World（Underlay z = -10 / Spawns；模板为空）
 └─ FgParallax（z = 100，clip_to_room = true，Room Center）
    ├─ Occluders（1.0，z = 20）
    ├─ Foreground（1.06）
@@ -148,7 +148,7 @@ R1（SeamlessRoom2D）
    └─ FG3（1.30）
 ```
 
-`r1.tscn` 把 95 个原 `Bg_XXX` 合并为 band 下的 `Sprite2D`，视差参数只保留在 band 上；相机在房间中心时构图与旧版一致。之后加素材只需要选中 band，把贴图拖进 2D 视图，`scroll_scale` 都不用碰。
+`r1.tscn` 把 95 个原 `Bg_XXX` 合并为 band 下的 `Sprite2D`，`Darkness` 挂在 `BgParallax/Backdrop` 下，视差参数只保留在 band 上；相机在房间中心时构图与旧版一致。比例是模板默认值，单房可在继承节点上覆写 `scroll_scale`；以后加层、改 z band 一律改模板。之后加素材只需要选中 band，把贴图拖进 2D 视图，`scroll_scale` 都不用碰。
 
 组件的 `scroll_scale` 语义、参照系、位移钳制与迁移映射见 **[插件 README 的视差章节](addons/seamless_rooms/README.md#可选配套房间局部视差seamlessroomparallax)** 和 **[docs/parallax-convention.md](docs/parallax-convention.md)**。
 
@@ -171,7 +171,8 @@ godot4-seamless-rooms/
 	├── assets/                       # 按资源类型 / 主题组织
 	│   ├── sprites/moss_hole/        # r1 使用的贴图
 	│   └── effects/                  # 水面等 SpriteFrames
-	├── rooms/                        # 房间场景；根节点直接挂插件基类 SeamlessRoom2D
+	├── rooms/                        # 房间场景；根节点继承 room_template.tscn
+	│   ├── room_template.tscn        # 层骨架模板（不是房间，不入库 room_library / world_config）
 	│   └── r1.tscn … r8.tscn         # r1 为苔藓洞窟场景，其余为空白房间
 	├── actors/                       # 按实体类型分；场景 + 脚本 + 出生点同目录
 	│   ├── player/                   # player.gd / player2.gd
@@ -188,10 +189,11 @@ godot4-seamless-rooms/
 	├── world/                        # 世界级辅助
 	│   └── world_grid.gd
 	└── tests/                        # headless 自检
-		└── camera_rules_probe.gd
+		├── camera_rules_probe.gd      # 相机规则 / 视差组件
+		└── room_template_probe.gd     # 8 房继承模板 / 身份覆写 / 层默认值
 ```
 
-`example/rooms/` 只保留房间场景：根节点直接挂 `addons/seamless_rooms/runtime/seamless_rooms_room2d.gd`，示例层不再维护自己的房间脚本；需要自定义房间行为时，按 [插件 README](addons/seamless_rooms/README.md) 的「房间基类与相机规则」继承 `SeamlessRoom2D` 即可。
+`example/rooms/` 里 `room_template.tscn` 是层骨架模板（根节点挂 `addons/seamless_rooms/runtime/seamless_rooms_room2d.gd`），不是房间，不加入 `room_library.tres` / `world_config.tres`；`r1`–`r8` 的根节点都继承模板（模板根节点挂 `SeamlessRoom2D`），派生场景必须显式覆写 `room_id / room_title / room_size`（dock 只读 `PackedScene.get_state()` 的根节点属性）。示例层不再维护自己的房间脚本；需要自定义房间行为时，按 [插件 README](addons/seamless_rooms/README.md) 的「房间基类与相机规则」继承 `SeamlessRoom2D` 即可。
 
 插件自身的目录结构见 [addons/seamless_rooms/README.md](addons/seamless_rooms/README.md)。
 
@@ -218,7 +220,10 @@ done
 # 4) 相机规则自检（limit / zoom / 桶边界 / 半径注入 / 覆盖区签名 / 200 房大地图 / 视差组件）
 $GODOT --headless --path "$PROJ" --script res://example/tests/camera_rules_probe.gd
 
-# 5) 启动编辑器若干帧，确认 dock 构建 / 资源库加载无报错
+# 5) 房间模板自检（8 房身份覆写 / 18 条继承层 / 视差默认值 / r1 内容）
+$GODOT --headless --path "$PROJ" --script res://example/tests/room_template_probe.gd
+
+# 6) 启动编辑器若干帧，确认 dock 构建 / 资源库加载无报错
 $GODOT --headless --path "$PROJ" --editor --quit-after 90
 ```
 

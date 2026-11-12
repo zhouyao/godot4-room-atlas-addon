@@ -134,7 +134,7 @@ ParallaxPlane（SeamlessRoomParallaxLayer，Node2D）
 | Foreground | `1.1 ~ 1.4` | 前景草、树叶、暗角 | 更深、更饱和 |
 | UI | 独立 `CanvasLayer` | HUD、小地图 | 不参与世界视差 |
 
-这些比例是美术起点，不是硬性标准。关键是**相邻层的比例要拉开**：`0.1 / 0.2` 这种差距在 1080 px 的相机行程里只有 108 px 的屏幕位移差，很难看出层次。
+这些比例是美术起点，不是硬性标准。关键是**相邻层的比例要拉开**：`0.1 / 0.2` 这种差距在 1080 px 的相机行程里只有 108 px 的屏幕位移差，很难看出层次。表里的层名是构图角色示例，不是模板节点名；模板只定义 §5 的 `Backdrop` 与 8 个视差 band，内容分组由房间自建。
 
 ### z band
 
@@ -157,21 +157,19 @@ ParallaxPlane（SeamlessRoomParallaxLayer，Node2D）
 
 ## 5. 场景结构
 
-推荐把背景和前景拆成两个 rig，把世界夹在中间。当前 `example/rooms/r1.tscn` 的实际结构：
+推荐把背景和前景拆成两个 rig，把世界夹在中间。层骨架由 `example/rooms/room_template.tscn` 统一定义，`r1`–`r8` 全部以场景继承（`instance=ExtResource("1_base")`）复用它；模板只有空层，不含任何房间内容：
 
 ```text
-Room（SeamlessRoom2D）
+RoomTemplate（SeamlessRoom2D，由 r1–r8 继承）
 ├─ BgParallax（SeamlessRoomParallax，z = -100，clip_to_room = true）
-│  ├─ Sky        # 静态背景：Darkness ColorRect，不参与视差
+│  ├─ Backdrop   # Node2D，房间固定静态背景，不挂 layer 脚本
 │  ├─ Far        scroll_scale = (0.55, 0.55)
 │  ├─ Far2       scroll_scale = (0.75, 0.75)
 │  ├─ Mid        scroll_scale = (0.87, 0.87)
 │  └─ Near       scroll_scale = (0.95, 0.95)
 ├─ World（Node2D）
-│  ├─ Water / Terrain / Obstacles（地面、平台、墙体、碰撞）
-│  ├─ Decals（z = -10）
-│  ├─ Props（永远在角色后的静态物）
-│  └─ Spawns（EnemySpawn / ChestSpawn / PickupSpawn，只放标记）
+│  ├─ Underlay（z = -10）  # 世界后景 band
+│  └─ Spawns（只放标记，出生点由各房间自行新增）
 └─ FgParallax（SeamlessRoomParallax，z = 100，clip_to_room = true）
    ├─ Occluders   scroll_scale = (1.0, 1.0)   # 前景遮片，z = 20
    ├─ Foreground  scroll_scale = (1.06, 1.06)
@@ -179,11 +177,29 @@ Room（SeamlessRoom2D）
    └─ FG3         scroll_scale = (1.30, 1.30)
 ```
 
-`scroll_scale = (1, 1)` 放在前景 rig 里是合法的“前景遮片”：它不产生视差，但能保证苔藓、草丛盖在角色前面。当前 `r1` 的 `FgParallax/Occluders` 就是这一层（`z_index = 20`；`OccluderTest` 是演示占位，可替换成树冠 / 草叶）。校验不会对这种情况报警。
+`Backdrop` 是「房间固定」而非「钉屏」：它不挂 `SeamlessRoomParallaxLayer`，相对房间静止、随相机滚出画面；真正钉屏需要 `scroll_scale = (0, 0)`（§4），本项目不用。它也不设 `z_index`，保证挂在它下面的 `Darkness` 有效 z 不变。
 
-`example/rooms/r1.tscn` 现在是 8 个视差 band：背景 `Far / Far2 / Mid / Near`，前景 `Occluders / Foreground / FG2 / FG3`；`Sky/Darkness` 是静态背景，不计入视差 band。95 个原 `Bg_XXX` 已合并为 band 下的 `Sprite2D`（位置 / 缩放 / `z_index` 都合并进 Sprite）。r1 已按 `position = reference + scroll_scale * (position - reference)` 一次性重投影到 `Room Center`，相机在房间中心时构图与旧版一致。新增素材时选中 band，把贴图拖进 2D 视图即可，不需要给每个素材配 `scroll_scale`。
+### 模板节点准入标准
 
-当前比例是 r1 的构图选择，不是通用规范：`Far 0.55 / Far2 0.75 / Mid 0.87 / Near 0.95`，`Occluders 1.0 / Foreground 1.06 / FG2 1.18 / FG3 1.30`。
+模板只描述**房间怎么画 / 怎么动**（结构、绘制 band、运动参数），不描述**房间里有什么**（题材、物件分类）。一个节点需同时满足全部条款才能进模板：
+
+| # | 条款 | 判据 |
+|---|---|---|
+| S1 | 机制依赖 | 被运行时代码按路径或脚本类型引用：`example/actors/room_entity_director.gd` 的 `World/Spawns`；`SeamlessRoomParallax` 按 `SeamlessRoomParallaxLayer` 类型扫描并组播；`_setup_rect()` 认 rig 脚本 |
+| S2 | 规范承载 | 承载跨房一致的参数：z band、`scroll_scale` 默认值、参照系、clip、`Node2D` 变换链；兄弟顺序影响绘制，顺序本身也是契约 |
+| S3 | 命名可承诺 | 名字是与题材无关的结构术语（层 / band / 容器），不是内容分类（水、天空、地形）；要能承诺在洞窟、城镇、室内、Boss 房里都成立 |
+| S4 | 差异可表达 | 单房特例只能靠属性覆写或**新增**子节点表达；凡需要「删掉 / 改名」才能表达的东西不能进模板 |
+| S5 | 最小集合 | 模板节点是 8+N 间房永久背负的公共 API。新增节点永远允许、删基础节点永远不允许，宁可少放 |
+
+**否决线**：命中内容分类名即否，即使空 `Node2D` 零成本——成本在于名字永久占坑。`Water / Terrain / Obstacles / Props` 属于 r1 的构图分组，由 `r1.tscn` 自行新增；`Sky` → `Backdrop`、`Decals` → `Underlay` 是把内容分类名改成结构术语后才纳入规范。按此标准模板共 15 个节点（根 + 14 层/分组），8 个视差 band 的名称、数量与默认比例属于 S2 的规范承载，由模板统一定义。
+
+比例是模板默认值，单房可在继承节点上覆写 `scroll_scale`。以后加层、改 z band、改默认比例一律改模板；派生场景不能删除 / 重命名 / 调整基础节点顺序。两个 rig 的 `offset_right / offset_bottom` 与 `fallback_size` 在模板里统一写 2400×1080，只是编辑期占位，运行时由父房间的 `camera_world_rect()` 自动覆写。
+
+`scroll_scale = (1, 1)` 放在前景 rig 里是合法的“前景遮片”：它不产生视差，但能保证苔藓、草丛盖在角色前面。`r1` 在继承的 `FgParallax/Occluders` 下挂了 `OccluderTest`（`z_index = 20`，演示占位，可替换成树冠 / 草叶）。校验不会对这种情况报警。
+
+模板定义 8 个视差 band：背景 `Far / Far2 / Mid / Near`，前景 `Occluders / Foreground / FG2 / FG3`；`Backdrop` 是房间固定静态背景，不计入视差 band。`r1` 的内容（95 个原 `Bg_XXX` 合并成的 `Sprite2D`、`Backdrop/Darkness`、自建的 `Water / Terrain / Obstacles / Props` 下的地形 / 碰撞、4 个出生点）挂在继承层与自建分组下，节点路径与改造前一致；r1 已按 `position = reference + scroll_scale * (position - reference)` 一次性重投影到 `Room Center`，相机在房间中心时构图与旧版一致。`r2`–`r8` 只覆写 `room_id / room_title / room_size`，自然获得同一套空层。新增素材时选中 band，把贴图拖进 2D 视图即可，不需要给每个素材配 `scroll_scale`。
+
+模板默认比例沿用 r1 的构图选择，不是 §4 的推荐比例：`Far 0.55 / Far2 0.75 / Mid 0.87 / Near 0.95`，`Occluders 1.0 / Foreground 1.06 / FG2 1.18 / FG3 1.30`。
 
 旧 `ParallaxBg` 关卡在导入前完成一次重投影即可；运行期不再有逐层锚定模式。
 

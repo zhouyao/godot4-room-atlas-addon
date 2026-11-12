@@ -1,0 +1,77 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://jm7mu2fu7tit" path="res://addons/seamless_rooms/runtime/seamless_rooms_room2d.gd" id="1_view"]
+[ext_resource type="Script" uid="uid://b3t5ampfdepg7" path="res://addons/seamless_rooms/companion/seamless_rooms_parallax.gd" id="2_parallax"]
+[ext_resource type="Script" uid="uid://buenddovpjw5g" path="res://addons/seamless_rooms/companion/seamless_rooms_parallax_layer.gd" id="3_layer"]
+
+[node name="RoomTemplate" type="Node2D"]
+script = ExtResource("1_view")
+room_id = &""
+room_title = "Room Template"
+room_size = Vector2i(2400, 1080)
+
+[node name="BgParallax" type="Control" parent="." unique_id=1289870353]
+z_index = -100
+clip_contents = true
+clip_to_room = true
+layout_mode = 3
+anchors_preset = 0
+offset_right = 2400.0
+offset_bottom = 1080.0
+mouse_filter = 2
+script = ExtResource("2_parallax")
+fallback_size = Vector2(2400, 1080)
+
+[node name="Backdrop" type="Node2D" parent="BgParallax" unique_id=1245738637]
+
+[node name="Far" type="Node2D" parent="BgParallax" unique_id=114069465]
+script = ExtResource("3_layer")
+scroll_scale = Vector2(0.55, 0.55)
+
+[node name="Far2" type="Node2D" parent="BgParallax" unique_id=385278532]
+script = ExtResource("3_layer")
+scroll_scale = Vector2(0.75, 0.75)
+
+[node name="Mid" type="Node2D" parent="BgParallax" unique_id=1203179596]
+script = ExtResource("3_layer")
+scroll_scale = Vector2(0.87, 0.87)
+
+[node name="Near" type="Node2D" parent="BgParallax" unique_id=561785814]
+script = ExtResource("3_layer")
+scroll_scale = Vector2(0.95, 0.95)
+
+[node name="World" type="Node2D" parent="." unique_id=1624328844]
+
+[node name="Underlay" type="Node2D" parent="World"]
+z_index = -10
+
+[node name="Spawns" type="Node2D" parent="World"]
+
+[node name="FgParallax" type="Control" parent="." unique_id=1845135029]
+z_index = 100
+clip_contents = true
+clip_to_room = true
+layout_mode = 3
+anchors_preset = 0
+offset_right = 2400.0
+offset_bottom = 1080.0
+mouse_filter = 2
+script = ExtResource("2_parallax")
+fallback_size = Vector2(2400, 1080)
+
+[node name="Occluders" type="Node2D" parent="FgParallax"]
+z_index = 20
+script = ExtResource("3_layer")
+scroll_scale = Vector2(1, 1)
+
+[node name="Foreground" type="Node2D" parent="FgParallax" unique_id=251785931]
+script = ExtResource("3_layer")
+scroll_scale = Vector2(1.06, 1.06)
+
+[node name="FG2" type="Node2D" parent="FgParallax" unique_id=693908343]
+script = ExtResource("3_layer")
+scroll_scale = Vector2(1.18, 1.18)
+
+[node name="FG3" type="Node2D" parent="FgParallax" unique_id=945516656]
+script = ExtResource("3_layer")
+scroll_scale = Vector2(1.3, 1.3)
