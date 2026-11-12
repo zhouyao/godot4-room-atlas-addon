@@ -105,7 +105,7 @@ godot --path .
 r1.tscn: World/Spawns/EnemySpawn_01 (领地/仇恨/leash)
                 │ room_mounted
                 ▼
-main.tscn: Main/Actors/EnemySlime_01  ← 与 Player 同容器，按 Y 排序
+main.tscn: Main/Actors/r1_EnemySpawn_01  ← 与 Player 同容器，按 Y 排序
                 │ room_sleeping
                 ▼
               queue_free

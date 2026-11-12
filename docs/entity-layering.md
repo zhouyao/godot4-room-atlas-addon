@@ -1,17 +1,18 @@
 # 实体分层与房间怪物
 
+> 相关文档：[根 README](../README.md) · [插件 README](../addons/seamless_rooms/README.md) · [视差约定](parallax-convention.md)
+
 本文约定房间里“谁归谁管、谁画在谁前面、谁和谁碰撞”。核心原则：
 
 > **房间负责内容与出生点，运行实例统一挂在 `Main/Actors`。**
 
-`Main` 里只有 y-sort 容器和供给器，不手摆 100 间房的怪；怪物、宝箱、掉落物的定义仍然写在各自的房间场景里。
+`Main` 里只有运行期容器和供给器，不手摆 100 间房的怪；怪物、宝箱、掉落物的定义仍然写在各自的房间场景里。
 
 ## 1. 绘制 band
 
 | `z_index` | 层 | 内容 |
 |---|---|---|
-| -1000 | 调试 | `WorldGrid` |
-| -100 | 背景 | `BgParallax` |
+| -100 | 调试 / 背景 | `WorldGrid` 与 `BgParallax`（同 z 时按树顺序，背景后画覆盖网格） |
 | -99 ~ -1 | 世界后景 | 地面、水、墙、影子、贴地装饰 |
 | 0 ~ 9 | 静态物件 | 默认 props；永远在角色后 |
 | **10** | **`Actors`（y-sort）** | **玩家、怪物、宝箱、掉落物** |
@@ -43,31 +44,44 @@ streamer 的休眠 / 卸载行为：
 
 ```text
 Main (Node2D)
-├─ WorldGrid                 z = -1000
+├─ WorldGrid                 z = -100
 ├─ SeamlessRoomStreamer
 ├─ Actors (Node2D)           z = 10, y_sort_enabled = true
 │  ├─ Player
 │  ├─ Player2
-│  ├─ EnemySlime_*           ← RoomEntityDirector 生成
-│  ├─ Chest_*                ← RoomEntityDirector 生成
-│  └─ Pickup_*               ← RoomEntityDirector 生成
+│  ├─ r1_EnemySpawn_01       ← RoomEntityDirector 生成
+│  ├─ r1_EnemySpawn_02
+│  ├─ r1_ChestSpawn_01
+│  ├─ r1_PickupSpawn_01
+│  └─ r1_drop_0              ← 怪物死亡掉落
+├─ RoomEntityDirector (Node)
 ├─ Overlays (Node2D)         z = 15
 ├─ Camera2D
-└─ UI (CanvasLayer)          # 调试面板 / 小地图
+├─ CanvasLayer              layer = 1   # debug_overlay（房内/房外标记）
+├─ CameraDebugPanel         CanvasLayer # 调试面板（Tab 显隐）
+└─ MinimapLayer             layer = 2   # Minimap
 ```
 
 ```text
-R1 (SeamlessRoom2D)
-├─ BgParallax (Control, z = -100)
-├─ World (Node2D, z = 0)
-│  ├─ Terrain
+R1 (SeamlessRoom2D / room_view.gd)
+├─ BgParallax (Control, z = -100, clip_to_room = true)
+│  ├─ Sky (Node2D)                   # Darkness 静态背景，不参与视差
+│  ├─ Far (0.55)
+│  ├─ Far2 (0.75)
+│  ├─ Mid (0.87)
+│  └─ Near (0.95)
+├─ World (Node2D)
 │  ├─ Water
-│  ├─ Decals (Node2D, z = -10)
-│  ├─ Props (Node2D, z = 0)          # 永远在角色后的静态物
-│  ├─ Obstacles (Node2D)             # 碰撞
-│  └─ Spawns (Node2D)                # EnemySpawn / ChestSpawn / PickupSpawn
-└─ FgParallax (Control, z = 100)
-   ├─ Occluders (1.0, z = 20)        # 遮住角色的树冠/草叶
+│  ├─ Terrain
+│  ├─ Obstacles                      # 碰撞
+│  ├─ Decals (Node2D, z = -10)       # 影子、水渍、血迹
+│  ├─ Props (Node2D)                 # 永远在角色后的静态物
+│  └─ Spawns (Node2D)                # 出生点，不是实体
+│     ├─ EnemySpawn_01 / 02
+│     ├─ ChestSpawn_01
+│     └─ PickupSpawn_01
+└─ FgParallax (Control, z = 100, clip_to_room = true)
+   ├─ Occluders (1.0, z = 20)        # 前景遮片；OccluderTest 为演示占位
    ├─ Foreground (1.06)
    ├─ FG2 (1.18)
    └─ FG3 (1.30)
@@ -86,18 +100,28 @@ R1 (SeamlessRoom2D)
 
 `example/actors/room_entity_director.gd`：
 
+- `main.gd` 在 `controller.setup()` **之前**创建 director，并注入 `streamer` / `actors` / `player` / `pickup_scene`；
 - `room_mounted(id)`：读该房间 `World/Spawns`，按标记类型生成实例到 `Actors`；
 - `room_sleeping(id)`：回收 `home_room == id` 的实例；
 - `_ready()` 扫一遍 `streamer.mounted_ids()`，补开局已经挂载的房间（`controller.setup()` 里已经 `ensure_room(start_room)`）；
-- key 统一为 `"room_id/出生点节点名"`，用于存活表、宝箱状态、掉落物已拾取、精英怪死亡。
+- key 统一为 `"room_id/出生点节点名"`，用于存活表、宝箱状态、掉落物已拾取、精英怪死亡；怪物死亡动态掉落用 `"room_id/drop_N"`。
 
 支持三种出生点：
 
 | 节点 | 脚本 | 生成 |
 |---|---|---|
-| `EnemySpawn` | `enemy_spawn.gd` | 怪物，带领地 / 仇恨 / leash |
-| `ChestSpawn` | `chest_spawn.gd` | 宝箱，开合状态持久化 |
-| `PickupSpawn` | `pickup_spawn.gd` | 固定掉落物 |
+| `EnemySpawn` | `example/actors/enemies/enemy_spawn.gd` | 怪物，带领地 / 仇恨 / leash |
+| `ChestSpawn` | `example/actors/interactables/chest_spawn.gd` | 宝箱，开合状态持久化 |
+| `PickupSpawn` | `example/actors/pickups/pickup_spawn.gd` | 固定掉落物 |
+
+当前 `r1.tscn/World/Spawns` 的实际配置：
+
+| 节点 | 位置 | 参数 |
+|---|---|---|
+| `EnemySpawn_01` | `(1650, 700)` | territory 260 / aggro 180 / leash 420 |
+| `EnemySpawn_02` | `(900, 760)` | territory 320 / aggro 220 / leash 480 |
+| `ChestSpawn_01` | `(2450, 900)` | 使用 `chest.tscn` |
+| `PickupSpawn_01` | `(2050, 780)` | 使用 `pickup.tscn` |
 
 新增房间内容时，只改该房间场景：在 `World/Spawns` 下放一个标记，拖入对应的 `PackedScene` 即可，不需要改 `main.tscn`。
 
@@ -139,7 +163,7 @@ R1 (SeamlessRoom2D)
 
 - 编辑期：每间房一个场景，自己摆 `World/Spawns`；加房间不碰 `main.tscn`。
 - 运行期：streamer 只挂载玩家附近 `max_mounted` 间房，director 只遍历 `mounted_ids()`。
-- 100 间 × 每房 5 个出生点 = 编辑期 500 个轻量 `Marker2D`；运行期同时最多 8 间房的实体。
+- 100 间 × 每房 4~5 个出生点 = 编辑期 400~500 个轻量 `Marker2D`；运行期同时最多 8 间房的实体。
 - 嫌多再加一层“玩家离房间 < 900 才生成”的激活半径，或调小 `max_mounted`。
 
 ## 10. demo 操作

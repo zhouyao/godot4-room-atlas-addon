@@ -1,5 +1,7 @@
 # 2D 视差约定（Seamless Rooms）
 
+> 相关文档：[根 README](../README.md) · [插件 README](../addons/seamless_rooms/README.md) · [实体分层](entity-layering.md)
+
 本文定义 `addons/seamless_rooms/companion/` 中视差组件对外承诺的语义、参照系、分层、绘制顺序与校验规则。
 
 它不是某个具体关卡（例如 `moss_hole`）的复刻说明：具体比值由美术按房间构图决定，组件只保证同一套参数在不同房间、不同窗口尺寸下行为一致。
@@ -142,7 +144,7 @@ ParallaxPlane（SeamlessRoomParallaxLayer，Node2D）
 -100  BgParallax（背景 rig）
  -80  Far
  -40  Mid
- -10  NearBack
+ -10  Near
    0  World（地面、平台、碰撞、水）
  100  FgParallax（前景 rig）
 1000  UI（独立 CanvasLayer）
@@ -155,27 +157,33 @@ ParallaxPlane（SeamlessRoomParallaxLayer，Node2D）
 
 ## 5. 场景结构
 
-推荐把背景和前景拆成两个 rig，把世界夹在中间：
+推荐把背景和前景拆成两个 rig，把世界夹在中间。当前 `example/rooms/r1.tscn` 的实际结构：
 
 ```text
 Room（SeamlessRoom2D）
 ├─ BgParallax（SeamlessRoomParallax，z = -100，clip_to_room = true）
-│  ├─ Sky        scroll_scale = (0.05, 1)
-│  ├─ Far        scroll_scale = (0.15, 1)
-│  ├─ Mid        scroll_scale = (0.4, 1)
-│  └─ NearBack   scroll_scale = (0.75, 1)   # 可选
-├─ World（Node2D，z = 0）
-│  ├─ 地面 / 平台 / 墙体
-│  ├─ 水、粒子、装饰
-│  └─ Obstacles（碰撞）
+│  ├─ Sky        # 静态背景：Darkness ColorRect，不参与视差
+│  ├─ Far        scroll_scale = (0.55, 0.55)
+│  ├─ Far2       scroll_scale = (0.75, 0.75)
+│  ├─ Mid        scroll_scale = (0.87, 0.87)
+│  └─ Near       scroll_scale = (0.95, 0.95)
+├─ World（Node2D）
+│  ├─ Water / Terrain / Obstacles（地面、平台、墙体、碰撞）
+│  ├─ Decals（z = -10）
+│  ├─ Props（永远在角色后的静态物）
+│  └─ Spawns（EnemySpawn / ChestSpawn / PickupSpawn，只放标记）
 └─ FgParallax（SeamlessRoomParallax，z = 100，clip_to_room = true）
-   ├─ GroundMoss  scroll_scale = (1.0, 1)   # 贴地前景，只借 z 顺序
-   └─ Foreground  scroll_scale = (1.2, 1)   # 真正的前景视差
+   ├─ Occluders   scroll_scale = (1.0, 1.0)   # 前景遮片，z = 20
+   ├─ Foreground  scroll_scale = (1.06, 1.06)
+   ├─ FG2         scroll_scale = (1.18, 1.18)
+   └─ FG3         scroll_scale = (1.30, 1.30)
 ```
 
-`scroll_scale = (1, 1)` 放在前景 rig 里是合法的“前景遮片”：它不产生视差，但能保证苔藓、草丛盖在角色前面。校验不会对这种情况报警。
+`scroll_scale = (1, 1)` 放在前景 rig 里是合法的“前景遮片”：它不产生视差，但能保证苔藓、草丛盖在角色前面。当前 `r1` 的 `FgParallax/Occluders` 就是这一层（`z_index = 20`；`OccluderTest` 是演示占位，可替换成树冠 / 草叶）。校验不会对这种情况报警。
 
-`r1.tscn` 现在是 7 个 band：`Far / Far2 / Mid / Near / Foreground / FG2 / FG3`，每个 band 一个 `scroll_scale`；95 个原 `Bg_XXX` 已合并为 band 下的 `Sprite2D`（位置 / 缩放 / `z_index` 都合并进 Sprite）。r1 已按 `position = reference + scroll_scale * (position - reference)` 一次性重投影到 `Room Center`，相机在房间中心时构图与旧版一致。新增素材时选中 band，把贴图拖进 2D 视图即可，不需要给每个素材配 `scroll_scale`。
+`example/rooms/r1.tscn` 现在是 8 个视差 band：背景 `Far / Far2 / Mid / Near`，前景 `Occluders / Foreground / FG2 / FG3`；`Sky/Darkness` 是静态背景，不计入视差 band。95 个原 `Bg_XXX` 已合并为 band 下的 `Sprite2D`（位置 / 缩放 / `z_index` 都合并进 Sprite）。r1 已按 `position = reference + scroll_scale * (position - reference)` 一次性重投影到 `Room Center`，相机在房间中心时构图与旧版一致。新增素材时选中 band，把贴图拖进 2D 视图即可，不需要给每个素材配 `scroll_scale`。
+
+当前比例是 r1 的构图选择，不是通用规范：`Far 0.55 / Far2 0.75 / Mid 0.87 / Near 0.95`，`Occluders 1.0 / Foreground 1.06 / FG2 1.18 / FG3 1.30`。
 
 旧 `ParallaxBg` 关卡在导入前完成一次重投影即可；运行期不再有逐层锚定模式。
 
