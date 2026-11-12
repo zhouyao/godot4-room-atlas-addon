@@ -15,13 +15,32 @@ var spawn_point := Vector2.ZERO
 func _ready() -> void:
 	collision_layer = 2
 	collision_mask = 1
-	z_index = 2
+	# z 由 Main/Actors 统一控制；实体自身保持 0 才能参与 y-sort。
+	z_index = 0
 	var cs := CollisionShape2D.new()
 	var shape := CapsuleShape2D.new()
 	shape.radius = 14.0
 	shape.height = 48.0
 	cs.shape = shape
 	add_child(cs)
+
+	# 拾取扫描：mask 16 = 物理层 5（Pickup）。
+	var pickup := Area2D.new()
+	pickup.name = "PickupArea"
+	pickup.collision_layer = 0
+	pickup.collision_mask = 16
+	var pickup_shape := CollisionShape2D.new()
+	var pickup_circle := CircleShape2D.new()
+	pickup_circle.radius = 36.0
+	pickup_shape.shape = pickup_circle
+	pickup.add_child(pickup_shape)
+	pickup.area_entered.connect(_on_pickup_area_entered)
+	add_child(pickup)
+
+
+func _on_pickup_area_entered(area: Area2D) -> void:
+	if area.has_method(&"collect"):
+		area.call(&"collect")
 
 
 func _physics_process(_delta: float) -> void:

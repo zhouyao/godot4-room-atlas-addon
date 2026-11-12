@@ -24,7 +24,8 @@ func _ready() -> void:
 	# 碰撞层 1，与房间平台（StaticBody2D，默认 layer 1）对齐，才能踩在上面。
 	collision_layer = 1
 	collision_mask = 1
-	z_index = 3
+	# z 由 Main/Actors 统一控制；实体自身保持 0 才能参与 y-sort。
+	z_index = 0
 	var cs := CollisionShape2D.new()
 	var shape := CapsuleShape2D.new()
 	shape.radius = 14.0

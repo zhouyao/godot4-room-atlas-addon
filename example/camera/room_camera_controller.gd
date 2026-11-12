@@ -10,7 +10,7 @@ extends Node
 ## 预算出相机中心的合法区域并缓存；运行期只查表 + 精确投影，没有逐帧覆盖检测、
 ## 没有二分、没有切屏。硬切一屏把约束区切回单间房，保留供对比。
 
-const CameraPolicy = preload("res://example/camera_policy.gd")
+const CameraPolicy = preload("res://example/camera/camera_policy.gd")
 
 const UNLIMITED := 10000000
 ## 窗口尺寸稳定这么久之后才重算预计算区域：拖拽 resize 期间尺寸每帧都在变，
@@ -474,9 +474,14 @@ func _update_status() -> void:
 	# 视口大于覆盖区时 region.rects 为空，旧判定会漏报。
 	var covered := SeamlessRoomLayout.view_covered(view, _cover_rects)
 	_out_of_bounds = confining and not covered
+	# 「玩家在不在房间里」按这一帧真正要画的位置现算，不能沿用帧初的 _inside：
+	# 出房策略会在本帧内把玩家送回起点（HOLD_AND_RESPAWN / respawn），
+	# 用旧值会让面板与标记在回起点后仍显示「房外」。
+	var player_room: StringName = streamer.room_at(player.global_position)
 	# 复用同一个字典，避免每帧重新分配键。
-	_status["room"] = _active_room_id
-	_status["inside"] = _inside
+	_status["room"] = _active_room_id        # 相机当前生效的房间（可能还在切换中）
+	_status["player_room"] = player_room     # 玩家实际所在房间，空 = 房外
+	_status["inside"] = player_room != &""
 	_status["confine"] = confining
 	_status["bounds"] = _confine_rect
 	_status["room_rect"] = _bounds

@@ -7,13 +7,17 @@ const CONFIG_PATH := "res://world_config.tres"
 const START_ROOM := &"r1"
 const START_LOCAL := Vector2(2300, 600)
 
-const CameraPolicy = preload("res://example/camera_policy.gd")
-const RoomCameraController = preload("res://example/room_camera_controller.gd")
-const CameraDebugPanel = preload("res://example/camera_debug_panel.gd")
+const CameraPolicy = preload("res://example/camera/camera_policy.gd")
+const RoomCameraController = preload("res://example/camera/room_camera_controller.gd")
+const CameraDebugPanel = preload("res://example/ui/camera_debug_panel.gd")
+const RoomEntityDirector = preload("res://example/actors/room_entity_director.gd")
 
 var streamer: SeamlessRoomStreamer
 var player: CharacterBody2D
 var player2: CharacterBody2D
+var actors: Node2D
+var overlays: Node2D
+var director: Node
 var cam: Camera2D
 var minimap: SeamlessRoomMinimap
 var policy: RefCounted
@@ -36,7 +40,7 @@ func _ready() -> void:
 	var grid := Node2D.new()
 	grid.name = "WorldGrid"
 	grid.z_index = -100
-	grid.set_script(load("res://example/world_grid.gd"))
+	grid.set_script(load("res://example/world/world_grid.gd"))
 	grid.set("config", config)
 	add_child(grid)
 
@@ -45,16 +49,38 @@ func _ready() -> void:
 	add_child(streamer)
 	streamer.configure(config)
 
+	# 世界实体统一挂在这个 y-sort 容器下；房间只负责背景、静态装饰、碰撞和出生点。
+	actors = Node2D.new()
+	actors.name = "Actors"
+	actors.y_sort_enabled = true
+	actors.z_index = 10
+	add_child(actors)
+
 	player = CharacterBody2D.new()
 	player.name = "Player"
-	player.set_script(load("res://example/player.gd"))
-	add_child(player)
+	player.set_script(load("res://example/actors/player/player.gd"))
+	actors.add_child(player)
 
 	# 与 player 同样的加入方式：动态建节点、挂脚本、挂到场景树。
 	player2 = CharacterBody2D.new()
 	player2.name = "Player2"
-	player2.set_script(load("res://example/player2.gd"))
-	add_child(player2)
+	player2.set_script(load("res://example/actors/player/player2.gd"))
+	actors.add_child(player2)
+
+	# 房间实体供给器：房间里的 Spawns 只提供出生点，实例统一挂到 Actors。
+	director = RoomEntityDirector.new()
+	director.name = "RoomEntityDirector"
+	director.streamer = streamer
+	director.actors = actors
+	director.player = player
+	director.pickup_scene = load("res://example/actors/pickups/pickup.tscn")
+	add_child(director)
+
+	# 血条 / 伤害数字等不参与世界 y-sort 的附属层。
+	overlays = Node2D.new()
+	overlays.name = "Overlays"
+	overlays.z_index = 15
+	add_child(overlays)
 
 	cam = Camera2D.new()
 	# 不开平滑：死区跟随已经保证连续移动，平滑会让画面自己漂、掩盖真实位移。
@@ -80,7 +106,7 @@ func _ready() -> void:
 	layer.layer = 1
 	add_child(layer)
 	var overlay := Node2D.new()
-	overlay.set_script(load("res://example/debug_overlay.gd"))
+	overlay.set_script(load("res://example/ui/debug_overlay.gd"))
 	overlay.set("player", player)
 	overlay.set("controller", controller)
 	overlay.set("policy", policy)
@@ -94,7 +120,18 @@ func _ready() -> void:
 	_build_minimap(config)
 	minimap.show_room_ids = policy.show_minimap_ids
 
-	print("[Seamless Rooms] 已就绪：WASD 移动 ｜ Tab 显隐调试面板")
+	print("[Seamless Rooms] 已就绪：WASD 移动 ｜ K 攻击最近的怪 ｜ E 开宝箱 ｜ Tab 显隐调试面板")
+
+
+## demo：K 键对最近的怪造成伤害，用于验证死亡掉落。
+func _unhandled_key_input(event: InputEvent) -> void:
+	var key_event := event as InputEventKey
+	if key_event == null or not key_event.pressed or key_event.echo:
+		return
+	if key_event.keycode != KEY_K:
+		return
+	if is_instance_valid(director) and is_instance_valid(player):
+		director.damage_nearest_enemy(player.global_position, 15.0, 700.0)
 
 
 ## 视差组件不认识相机：每帧把真实相机中心推给所有 SeamlessRoomParallax 实例。

@@ -28,11 +28,13 @@ func _draw_camera_debug(st: Dictionary) -> void:
 	var xf := get_viewport().get_canvas_transform()
 	if policy.show_player_room and player != null:
 		var p := xf * player.global_position
+		# 房内 / 房外只按玩家位置判定（与面板同一份 status），并带上房间 id：
+		# 相机房间因冷却 / 进入缓冲可能还没跟上，标 id 才不会和面板对不上。
 		var inside := bool(st.get("inside", true))
 		var col := Color(0.35, 1.0, 0.55, 0.95) if inside \
 				else Color(1.0, 0.4, 0.35, 0.95)
 		draw_line(p + Vector2(-10, 0), p + Vector2(10, 0), col, 2.0)
 		draw_line(p + Vector2(0, -10), p + Vector2(0, 10), col, 2.0)
 		draw_string(ThemeDB.fallback_font, p + Vector2(14, -12),
-				"房内" if inside else "房外",
+				("房内 " + String(st.get("player_room", &""))) if inside else "房外",
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 13, col)

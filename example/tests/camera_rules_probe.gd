@@ -1,9 +1,9 @@
 extends SceneTree
 
 ## headless 自检：验证相机规则的纯几何计算，不需要进入场景树。
-## 运行：Godot --headless --path <proj> --script res://example/camera_rules_probe.gd
+## 运行：Godot --headless --path <proj> --script res://example/tests/camera_rules_probe.gd
 
-const RoomCameraController = preload("res://example/room_camera_controller.gd")
+const RoomCameraController = preload("res://example/camera/room_camera_controller.gd")
 
 var _failed := 0
 
@@ -314,6 +314,76 @@ func _initialize() -> void:
 	px_far.position = Vector2(999, 999)
 	px_far.reset_to_home()
 	_check("reset_to_home 回到作者位置", px_far.position == Vector2.ZERO)
+
+	# 非对称钳制：min_shift 取正值；0 保持旧的对称语义。
+	px_far.max_shift = Vector2(300, 100)
+	px_far.min_shift = Vector2(40, 0)
+	px.set_camera_center(Vector2(2400, 540))
+	_check("max_shift 限制正向位移", is_equal_approx(px_far.position.x, 300.0))
+	px.set_camera_center(Vector2(-600, 540))
+	_check("min_shift 限制负向位移", is_equal_approx(px_far.position.x, -40.0))
+	px_far.min_shift = Vector2.ZERO
+	px.set_camera_center(Vector2(-600, 540))
+	_check("min_shift 为 0 时下限镜像 max_shift",
+			is_equal_approx(px_far.position.x, -300.0))
+
+	# 钳制自检：上限覆盖房间内全部行程时提示「永远不会触发」。
+	px_far.max_shift = Vector2(10, 10)
+	_check("钳制上限有效时不提示", px_far._get_configuration_warnings().is_empty())
+	px_far.max_shift = Vector2(2000, 2000)
+	_check("钳制永远不会触发时给出提示",
+			px_far._get_configuration_warnings().size() == 1)
+	px_far.max_shift = Vector2(400, 200)
+
+	# 参照系二选一：Room Center 默认，Custom 用房间局部点（固定机位 Boss 房 / 过场）。
+	px_far.clamp_shift = false
+	px_near.reset_to_home()
+	px.reference_mode = SeamlessRoomParallax.REFERENCE_CUSTOM
+	px.reference_local = Vector2(1200, 540)
+	px.set_camera_center(Vector2(1200, 540))
+	_check("Custom 参照与相机重合时层不偏移",
+			is_zero_approx(px_far.position.x) and is_zero_approx(px_near.position.x))
+
+	px.reference_local = Vector2.ZERO
+	px.set_camera_center(Vector2(1200, 540))
+	_check("Custom 参照在房间左上角时按相机位移偏移",
+			is_equal_approx(px_far.position.x, 960.0)
+					and is_equal_approx(px_near.position.x, 720.0))
+
+	px.reference_mode = SeamlessRoomParallax.REFERENCE_ROOM_CENTER
+	var ref_local_prop := {"name": "reference_local", "usage": PROPERTY_USAGE_DEFAULT}
+	px._validate_property(ref_local_prop)
+	_check("Room Center 下 reference_local 隐藏",
+			ref_local_prop["usage"] == PROPERTY_USAGE_NONE)
+	px.reference_mode = SeamlessRoomParallax.REFERENCE_CUSTOM
+	ref_local_prop = {"name": "reference_local", "usage": PROPERTY_USAGE_DEFAULT}
+	px._validate_property(ref_local_prop)
+	_check("Custom 下 reference_local 显示",
+			ref_local_prop["usage"] != PROPERTY_USAGE_NONE)
+	px.reference_mode = SeamlessRoomParallax.REFERENCE_ROOM_CENTER
+
+	px_far.scroll_scale = Vector2(0.2, 1.0)
+	px_far.position = Vector2.ZERO
+	px.set_camera_center(Vector2(1200.0, 540.0))
+
+	px.clip_to_room = false
+	_check("clip_to_room 关闭时同步 clip_contents", not px.clip_contents)
+	px.clip_to_room = true
+	_check("clip_to_room 开启时同步 clip_contents", px.clip_contents)
+
+	# 校验：世界同速放在前景 rig 是合法的遮片；放在世界后面则提示没视差；
+	# 背景速度画在前景则提示会相对地面滑动。
+	px_near.scroll_scale = Vector2.ONE
+	px_near.z_index = 10
+	_check("世界同速的前景遮片不告警",
+			px_near._get_configuration_warnings().is_empty())
+	px_near.z_index = 0
+	_check("世界同速的背景层提示没有视差",
+			not px_near._get_configuration_warnings().is_empty())
+	px_near.scroll_scale = Vector2(0.3, 1.0)
+	px_near.z_index = 10
+	_check("背景速度画在前景时提示滑动",
+			not px_near._get_configuration_warnings().is_empty())
 	px_room.free()
 
 	print("[Seamless Rooms] 相机规则自检：%s" % ("全部通过" if _failed == 0 else "%d 项失败" % _failed))

@@ -355,12 +355,16 @@ func _process(delta: float) -> void:
 	var out_names := ["保持上一房", "回起点", "解除约束", "最近房间"]
 	var tr_names := ["连续滚动", "硬切一屏"]
 	var fit_names := ["抬缩放", "保持缩放", "仅居中"]
-	_hud.text = ("房间 %s ｜ %s ｜ 约束 %s ｜ 覆盖 %s\n"
+	# 玩家位置显式带上房间 id：相机因冷却 / 进入缓冲还没换房时，
+	# 「房间 r1 ｜ 房内」会被读成「在 r1 房内」，其实人在另一间房。
+	var inside := bool(st.get("inside", true))
+	var where := "房外" if not inside else "房内 " + String(st.get("player_room", &""))
+	_hud.text = ("房间 %s ｜ 玩家 %s ｜ 约束 %s ｜ 覆盖 %s\n"
 			+ "盒 %d,%d → %d,%d ｜ %d 间房 %d 块 ｜ zoom %.2f×%.2f\n"
-			+ "房间外 %s ｜ 跨房 %s ｜ 适配 %s\n"
+			+ "出房策略 %s ｜ 跨房 %s ｜ 适配 %s\n"
 			+ "冷却 %.2fs ｜ 缓冲 %.0f ｜ 速度 %.0f%s") % [
 		String(st.get("room", &"")),
-		"房内" if bool(st.get("inside", true)) else "房外",
+		where,
 		"开" if bool(st.get("confine", false)) else "关",
 		"开" if policy.override_room_rules else "关",
 		roundi(b.position.x), roundi(b.position.y), roundi(b.end.x), roundi(b.end.y),

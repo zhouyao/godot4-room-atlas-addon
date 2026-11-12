@@ -122,9 +122,32 @@ const ZH := {
 	"Nearest X: Δ%d px": "最近 X: Δ%d px",
 	"Nearest Y: Δ%d px": "最近 Y: Δ%d px",
 
-	# seamless_rooms_parallax.gd
+	# seamless_rooms_parallax.gd / seamless_rooms_parallax_layer.gd
+	# reference_mode 的 Inspector 枚举标签（存盘值仍是 int）
+	"Room Center": "房间中心",
+	"Custom": "自定义",
 	"Editor preview enabled: pan the 2D view to preview parallax; layers are restored when saving.":
 			"编辑器预览已启用：平移 2D 视图查看视差；保存时自动复位各层。",
+	"Parent is not a SeamlessRoomParallax; this layer will not receive camera updates.":
+			"父节点不是 SeamlessRoomParallax：本层收不到相机更新。",
+	"scroll_scale is (1, 1); this layer moves with the world and has no parallax effect.":
+			"scroll_scale 为 (1, 1)：本层与世界同速，没有视差效果。",
+	"scroll_scale > 1 is a foreground layer; set a positive z_index to draw above the world.":
+			"scroll_scale > 1 是前景层；请设置正 z_index，让它画在世界内容之上。",
+	"scroll_scale < 1 with z_index > 0: this layer slides against the world; use scroll_scale ≈ 1 for ground-attached foreground art.":
+			"scroll_scale < 1 且 z_index > 0：该层会相对世界滑动；贴地的前景美术请用 scroll_scale ≈ 1。",
+	"Parallax layers should not contain collision shapes; keep physics in the world layer.":
+			"视差层里不应放碰撞体；物理留在世界层，否则视觉和碰撞会分离。",
+	"clamp_shift is on but max_shift is <= 0 on %s: those axes cannot move in the positive direction.":
+			"clamp_shift 已打开，但 max_shift 在 %s 轴上 <= 0：该轴无法往正方向位移。",
+	"min_shift is a positive magnitude; negative values fall back to symmetric -max_shift.":
+			"min_shift 是取正值的量级：负值会被忽略，回退到与 max_shift 对称。",
+	"clamp_shift limits the screen-pinned %s axis (scroll_scale = 0); the layer drifts once the camera passes the limit.":
+			"clamp_shift 会限制 %s 轴的钉屏层（scroll_scale = 0）：相机越过上限后该层会开始漂移。",
+	"clamp_shift never triggers on %s: the limits are >= the largest shift the camera can produce inside the room.":
+			"clamp_shift 在 %s 轴上不会触发：上限不小于相机在房间内能产生的最大位移。",
+	"clip_to_room is off; parallax layers may draw into neighbouring rooms.":
+			"clip_to_room 已关闭：视差层可能画进相邻房间。",
 
 	# seamless_rooms_layout.gd / seamless_rooms_streamer.gd
 	"query_near: radius %.1f exceeds the bucket budget; clamped to %.1f":
