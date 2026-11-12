@@ -64,12 +64,12 @@
 
 ```text
 room_library.tres ──(编辑器 dock)──> world_config.tres
-                                          │
-                             SeamlessRoomStreamer.configure(config)
-                                          │  track(target)
-                                    每 tick 按距离判定
-                                          │
-                    request / instantiate / sleep / unload
+										  │
+							 SeamlessRoomStreamer.configure(config)
+										  │  track(target)
+									每 tick 按距离判定
+										  │
+					request / instantiate / sleep / unload
 ```
 
 ### 1. 格坐标，不是世界坐标
@@ -114,7 +114,7 @@ room_library.tres ──(编辑器 dock)──> world_config.tres
 
 \[
 r = \sqrt{(\tfrac{vw}{2}+|dz_x|+|off_x|)^2 + (\tfrac{vh}{2}+|dz_y|+|off_y|)^2}
-    \;+\; v_{player}\cdot \text{tick} \;+\; \text{load\_latency\_margin}
+	\;+\; v_{player}\cdot \text{tick} \;+\; \text{load\_latency\_margin}
 \]
 
 | 量 | 来源 |
@@ -277,7 +277,7 @@ func _draw() -> void:
 
 几何的**唯一权威来源是配置**（`streamer.world_rect(id)`），不是场景声明的 `room_size`——编辑器允许两者暂时不一致（⚠ 同步机制），以配置为准才不会尺寸漂移。`Camera2D.limit_*` 是世界坐标，同一份 `PackedScene` 被多个 placement 复用时，每个实例都由 `configure()` 注入自己的世界矩形；在 `.tscn` 里写死 limit 是错的。
 
-房间场景根节点可选实现 `configure(id, placement, cell_size)` 钩子；继承 `SeamlessRoom2D` 时基类已有默认实现，子类 `super()` 后处理自己的内容即可（示例见 `example/rooms/room_view.gd`）。
+房间场景根节点可选实现 `configure(id, placement, cell_size)` 钩子；继承 `SeamlessRoom2D` 时基类已有默认实现，子类 `super()` 后处理自己的内容即可。示例项目的 `example/rooms/r1.tscn`～`r8.tscn` 根节点直接挂载基类脚本，没有自定义子类；需要扩展时按上文片段新建子类脚本即可。
 
 ---
 
@@ -414,8 +414,8 @@ addons/seamless_rooms/
 │   ├── seamless_rooms_minimap.gd       # SeamlessRoomMinimap：缩略图 + 光标
 │   └── seamless_rooms_i18n.gd          # SeamlessRoomI18n：插件文案中英双语
 └── companion/                          # 可选表现层，整个目录可以删
-    ├── seamless_rooms_parallax.gd
-    └── seamless_rooms_parallax_layer.gd
+	├── seamless_rooms_parallax.gd
+	└── seamless_rooms_parallax_layer.gd
 ```
 
 `class_name` 是 Godot 全局注册的，所以 `SeamlessRoom*` 前缀不能省，避免和其它插件撞名。

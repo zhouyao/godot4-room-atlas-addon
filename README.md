@@ -103,12 +103,12 @@ godot --path .
 
 ```text
 r1.tscn: World/Spawns/EnemySpawn_01 (领地/仇恨/leash)
-                │ room_mounted
-                ▼
+				│ room_mounted
+				▼
 main.tscn: Main/Actors/r1_EnemySpawn_01  ← 与 Player 同容器，按 Y 排序
-                │ room_sleeping
-                ▼
-              queue_free
+				│ room_sleeping
+				▼
+			  queue_free
 ```
 
 - 怪物用 `EnemySpawn` 标记，宝箱用 `ChestSpawn`，固定掉落用 `PickupSpawn`；加房间只改房间场景，不改 `main.tscn`。
@@ -167,32 +167,31 @@ godot4-seamless-rooms/
 │   └── entity-layering.md            # 实体分层与房间怪物
 ├── addons/seamless_rooms/            # 插件本体；文档见 addons/seamless_rooms/README.md
 └── example/                          # 最小可运行示例，不属于插件本体
-    ├── main.tscn / main.gd           # 装配序列
-    ├── assets/                       # 按资源类型 / 主题组织
-    │   ├── sprites/moss_hole/        # r1 使用的贴图
-    │   └── effects/                  # 水面等 SpriteFrames
-    ├── rooms/                        # 房间场景 + 房间基类脚本
-    │   ├── r1.tscn … r8.tscn         # r1 为苔藓洞窟场景，其余为空白房间
-    │   ├── room_view.gd              # 继承 SeamlessRoom2D
-    │   ├── room_decor.gd
-    │   └── room_platform.gd
-    ├── actors/                       # 按实体类型分；场景 + 脚本 + 出生点同目录
-    │   ├── player/                   # player.gd / player2.gd
-    │   ├── enemies/                  # enemy_slime.gd/.tscn / enemy_spawn.gd
-    │   ├── interactables/            # chest.gd/.tscn / chest_spawn.gd
-    │   ├── pickups/                  # pickup.gd/.tscn / pickup_spawn.gd
-    │   └── room_entity_director.gd   # 房间实体供给器
-    ├── camera/                       # 相机策略与控制器
-    │   ├── camera_policy.gd
-    │   └── room_camera_controller.gd
-    ├── ui/                           # 调试 UI / 覆盖层
-    │   ├── camera_debug_panel.gd
-    │   └── debug_overlay.gd
-    ├── world/                        # 世界级辅助
-    │   └── world_grid.gd
-    └── tests/                        # headless 自检
-        └── camera_rules_probe.gd
+	├── main.tscn / main.gd           # 装配序列
+	├── assets/                       # 按资源类型 / 主题组织
+	│   ├── sprites/moss_hole/        # r1 使用的贴图
+	│   └── effects/                  # 水面等 SpriteFrames
+	├── rooms/                        # 房间场景；根节点直接挂插件基类 SeamlessRoom2D
+	│   └── r1.tscn … r8.tscn         # r1 为苔藓洞窟场景，其余为空白房间
+	├── actors/                       # 按实体类型分；场景 + 脚本 + 出生点同目录
+	│   ├── player/                   # player.gd / player2.gd
+	│   ├── enemies/                  # enemy_slime.gd/.tscn / enemy_spawn.gd
+	│   ├── interactables/            # chest.gd/.tscn / chest_spawn.gd
+	│   ├── pickups/                  # pickup.gd/.tscn / pickup_spawn.gd
+	│   └── room_entity_director.gd   # 房间实体供给器
+	├── camera/                       # 相机策略与控制器
+	│   ├── camera_policy.gd
+	│   └── room_camera_controller.gd
+	├── ui/                           # 调试 UI / 覆盖层
+	│   ├── camera_debug_panel.gd
+	│   └── debug_overlay.gd
+	├── world/                        # 世界级辅助
+	│   └── world_grid.gd
+	└── tests/                        # headless 自检
+		└── camera_rules_probe.gd
 ```
+
+`example/rooms/` 只保留房间场景：根节点直接挂 `addons/seamless_rooms/runtime/seamless_rooms_room2d.gd`，示例层不再维护自己的房间脚本；需要自定义房间行为时，按 [插件 README](addons/seamless_rooms/README.md) 的「房间基类与相机规则」继承 `SeamlessRoom2D` 即可。
 
 插件自身的目录结构见 [addons/seamless_rooms/README.md](addons/seamless_rooms/README.md)。
 

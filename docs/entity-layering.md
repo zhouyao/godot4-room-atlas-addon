@@ -63,7 +63,7 @@ Main (Node2D)
 ```
 
 ```text
-R1 (SeamlessRoom2D / room_view.gd)
+R1 (SeamlessRoom2D)
 ├─ BgParallax (Control, z = -100, clip_to_room = true)
 │  ├─ Sky (Node2D)                   # Darkness 静态背景，不参与视差
 │  ├─ Far (0.55)
