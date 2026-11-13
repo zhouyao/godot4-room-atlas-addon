@@ -23,7 +23,7 @@ const LAYERS: Array[String] = [
 	"FgParallax/FG3",
 ]
 
-## 内容分类分组不属于模板，由需要的房间自行新增（目前只有 r1）。
+## 内容分类分组不属于模板，由需要的房间自行新增（r1 自建 4 组，r2 自建 World/Decor）。
 const ROOM_GROUPS: Array[String] = [
 	"World/Water",
 	"World/Terrain",
@@ -31,15 +31,26 @@ const ROOM_GROUPS: Array[String] = [
 	"World/Props",
 ]
 
+## r2 的 102 个 moss_hole 背景层落在 7 个视差 band 上。
+const R2_BANDS: Array[String] = [
+	"BgParallax/Far",
+	"BgParallax/Far2",
+	"BgParallax/Mid",
+	"BgParallax/Near",
+	"FgParallax/Foreground",
+	"FgParallax/FG2",
+	"FgParallax/FG3",
+]
+
 const ROOMS := [
 	{"id": &"r1", "title": "R1", "size": Vector2i(3000, 1080)},
-	{"id": &"r2", "title": "R2", "size": Vector2i(2400, 1080)},
+	{"id": &"r2", "title": "R2", "size": Vector2i(7000, 1080)},
 	{"id": &"r3", "title": "R3", "size": Vector2i(2400, 1080)},
 	{"id": &"r4", "title": "R4", "size": Vector2i(2400, 1080)},
 	{"id": &"r5", "title": "R5", "size": Vector2i(2400, 2160)},
 	{"id": &"r6", "title": "R6", "size": Vector2i(5400, 1080)},
-	{"id": &"r7", "title": "R7", "size": Vector2i(4000, 1080)},
-	{"id": &"r8", "title": "R8", "size": Vector2i(1920, 2160)},
+	{"id": &"r7", "title": "R7", "size": Vector2i(7000, 1080)},
+	{"id": &"r8", "title": "R8", "size": Vector2i(1920, 3200)},
 ]
 
 var _failed := 0
@@ -151,12 +162,33 @@ func _check_room(info: Dictionary) -> void:
 		var obstacles: Node = inst.get_node_or_null("World/Obstacles")
 		_check("r1 World/Obstacles 5 组碰撞体仍在",
 				obstacles != null and obstacles.get_child_count() == 5)
+	elif id == "r2":
+		_check("r2 的 102 个背景 Sprite2D 挂在 7 个 band 上",
+				_count_band_sprites(inst) == 102)
+		_check("r2 BgParallax/Backdrop/Darkness 保留",
+				inst.get_node_or_null("BgParallax/Backdrop/Darkness") != null)
+		var decor: Node = inst.get_node_or_null("World/Decor")
+		_check("r2 World/Decor 61 个静态美术仍在",
+				decor != null and decor.get_child_count() == 61)
+		var r2_spawns: Node = inst.get_node_or_null("World/Spawns")
+		_check("r2 World/Spawns 为空",
+				r2_spawns != null and r2_spawns.get_child_count() == 0)
+		_check("r2 不含 r1 的内容分组", _no_room_groups(inst))
 	else:
 		var spawns: Node = inst.get_node_or_null("World/Spawns")
 		_check(id + " 无房间内容（Spawns 为空）",
 				spawns != null and spawns.get_child_count() == 0)
 		_check(id + " 不含 r1 的内容分组", _no_room_groups(inst))
 	inst.free()
+
+
+func _count_band_sprites(inst: Node) -> int:
+	var total := 0
+	for path in R2_BANDS:
+		var layer: Node = inst.get_node_or_null(NodePath(path))
+		if layer != null:
+			total += layer.get_child_count()
+	return total
 
 
 func _no_room_groups(inst: Node) -> bool:

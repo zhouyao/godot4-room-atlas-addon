@@ -38,6 +38,16 @@ var _h_label: Label = null
 var _tint_picker: ColorPickerButton = null
 var _editable_row_controls: Array[Control] = []
 var _inspected_scene_path := ""
+# 接缝模式（P2）：画布只发信号，配置与 undo 仍由本面板统一提交。
+var _seam_mode_button: Button = null
+var _seam_inspector: VBoxContainer = null
+var _seam_title: Label = null
+var _seam_enable: Button = null
+var _seam_props: VBoxContainer = null
+var _seam_controls: Dictionary = {}
+var _selected_seam_key := ""
+var _mode_hint: Label = null
+var _room_hint_text := ""
 var _last_library_state := PackedStringArray()
 ## 场景声明缓存：path → { room_id, room_title, room_size }；文件系统变化时整体清空。
 var _scene_props_cache: Dictionary = {}
@@ -90,6 +100,11 @@ func _build_ui() -> void:
 	_add_button(bar, SeamlessRoomI18n.t("Import .tscn"), _on_import)
 	_add_button(bar, SeamlessRoomI18n.t("Fit View"), _on_fit)
 	_add_button(bar, SeamlessRoomI18n.t("Save Config"), _on_save)
+	_seam_mode_button = Button.new()
+	_seam_mode_button.text = SeamlessRoomI18n.t("Seam Mode")
+	_seam_mode_button.toggle_mode = true
+	_seam_mode_button.toggled.connect(_on_seam_mode_toggled)
+	bar.add_child(_seam_mode_button)
 	_status_label = Label.new()
 	_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -169,6 +184,7 @@ func _build_ui() -> void:
 	_canvas.connect("selection_changed", _on_selection_changed)
 	_canvas.connect("cells_committed", _on_cells_committed)
 	_canvas.connect("scene_dropped", _on_scene_dropped)
+	_canvas.connect("seam_selection_changed", _on_seam_selection_changed)
 
 	var right := VBoxContainer.new()
 	right.custom_minimum_size = Vector2(170, 0)
@@ -183,6 +199,46 @@ func _build_ui() -> void:
 	right.add_child(_right_title)
 	_inspector = VBoxContainer.new()
 	right.add_child(_inspector)
+
+	# 接缝模式：与房间属性面板互斥显示，改值仍走 _set_property 的 undo 通道。
+	_seam_inspector = VBoxContainer.new()
+	_seam_inspector.visible = false
+	right.add_child(_seam_inspector)
+	_seam_title = Label.new()
+	_seam_title.clip_text = true
+	_seam_title.text = SeamlessRoomI18n.t("Select a shared edge on the canvas")
+	_seam_inspector.add_child(_seam_title)
+	_seam_enable = Button.new()
+	_seam_enable.pressed.connect(_on_seam_enable_pressed)
+	_seam_inspector.add_child(_seam_enable)
+	_seam_props = VBoxContainer.new()
+	_seam_inspector.add_child(_seam_props)
+	var sgrid := GridContainer.new()
+	sgrid.columns = 2
+	_seam_props.add_child(sgrid)
+	var chk := CheckButton.new()
+	chk.text = "enabled"
+	_bind_seam_check(chk, &"enabled")
+	_add_row(sgrid, "enabled", chk)
+	_seam_controls["enabled"] = chk
+	for spec in [
+			["width_ratio", 0.01, 1.0, 0.01],
+			["width_max", 0.0, 100000.0, 1.0],
+			["core", 0.0, 0.9, 0.01],
+			["feather_min", 0.1, 4.0, 0.05],
+			["feather_max", 0.1, 4.0, 0.05],
+		]:
+		var spin := SpinBox.new()
+		spin.min_value = float(spec[1])
+		spin.max_value = float(spec[2])
+		spin.step = float(spec[3])
+		_bind_seam_spin(spin, StringName(spec[0]))
+		_add_row(sgrid, String(spec[0]), spin)
+		_seam_controls[String(spec[0])] = spin
+	var picker := ColorPickerButton.new()
+	_bind_seam_color(picker, &"color")
+	_add_row(sgrid, "color", picker)
+	_seam_controls["color"] = picker
 
 	var grid := GridContainer.new()
 	grid.columns = 2
@@ -230,6 +286,8 @@ func _build_ui() -> void:
 	hint.modulate.a = 0.6
 	hint.clip_text = true
 	add_child(hint)
+	_mode_hint = hint
+	_room_hint_text = hint.text
 
 
 # ---------------------------------------------------------------- 分隔条状态
@@ -319,6 +377,16 @@ func _reload() -> void:
 		return
 	selected = &""
 	_inspected_scene_path = ""
+	_selected_seam_key = ""
+	# 重载配置时复位接缝模式，避免按钮状态与画布状态不一致。
+	if _seam_mode_button != null:
+		_seam_mode_button.set_pressed_no_signal(false)
+	if _canvas != null:
+		_canvas.seam_mode = false
+		_canvas.selected_seam = ""
+		_canvas.hovered_seam = ""
+	if _mode_hint != null:
+		_mode_hint.text = _room_hint_text
 	_canvas.set_config(config)
 	_load_library()
 	_refresh_library()
@@ -344,6 +412,14 @@ func _selected_placement() -> SeamlessRoomPlacement:
 func _refresh_inspector() -> void:
 	if _inspector == null:
 		return
+	if _canvas != null and _canvas.seam_mode:
+		_inspector.visible = false
+		if _seam_inspector != null:
+			_seam_inspector.visible = true
+		_refresh_seam_inspector()
+		return
+	if _seam_inspector != null:
+		_seam_inspector.visible = false
 	var p := _selected_placement()
 	var info := {}
 	if p == null and not _inspected_scene_path.is_empty():
@@ -381,6 +457,143 @@ func _refresh_inspector() -> void:
 	_w_label.tooltip_text = _w_label.text
 	_h_label.tooltip_text = _h_label.text
 	_updating = false
+
+
+# ---------------------------------------------------------------- 接缝模式（P2）
+
+func _on_seam_mode_toggled(on: bool) -> void:
+	if _canvas == null:
+		return
+	_canvas.set_seam_mode(on)
+	_selected_seam_key = ""
+	if _mode_hint != null:
+		_mode_hint.text = SeamlessRoomI18n.t(
+				"Seam mode: click a shared edge to configure · drag empty space to pan · wheel to zoom") if on \
+				else _room_hint_text
+	_refresh_inspector()
+
+
+func _on_seam_selection_changed(key: String) -> void:
+	_selected_seam_key = key
+	_refresh_inspector()
+
+
+func _seam_edge_by_key(key: String) -> Dictionary:
+	if key.is_empty() or config == null:
+		return {}
+	for e in SeamlessRoomLayout.new(config).seams():
+		if String(e["key"]) == key:
+			return e
+	return {}
+
+
+func _seam_by_key(key: String) -> SeamlessRoomSeam:
+	if key.is_empty() or config == null:
+		return null
+	for s in config.seam_configs():
+		if s.key() == key:
+			return s
+	return null
+
+
+func _refresh_seam_inspector() -> void:
+	if _seam_inspector == null:
+		return
+	_seam_inspector.visible = true
+	var edge := _seam_edge_by_key(_selected_seam_key)
+	if edge.is_empty():
+		var has_edges := config != null and not SeamlessRoomLayout.new(config).seams().is_empty()
+		_seam_title.text = SeamlessRoomI18n.t("Select a shared edge on the canvas") if has_edges \
+				else SeamlessRoomI18n.t("No shared edges")
+		_seam_enable.visible = false
+		_seam_props.visible = false
+		return
+	var s := _seam_by_key(_selected_seam_key)
+	_seam_enable.visible = true
+	_seam_props.visible = s != null
+	var state := ""
+	if _canvas != null and _canvas.invalid_seams.has(_selected_seam_key):
+		state = "  ·  " + SeamlessRoomI18n.t("Invalid seam (rooms moved or resized)")
+	_seam_title.text = SeamlessRoomI18n.tf("Seam: %s · span %d px",
+			[_selected_seam_key, int(edge["span"])]) + state
+	_seam_enable.text = SeamlessRoomI18n.t("Remove Seam Config") if s != null \
+			else SeamlessRoomI18n.t("Enable Transition")
+	if s == null:
+		return
+	_updating = true
+	for prop in _seam_controls.keys():
+		var c: Control = _seam_controls[prop]
+		var v: Variant = s.get(prop)
+		if c is SpinBox:
+			(c as SpinBox).set_value_no_signal(float(v))
+		elif c is CheckButton:
+			(c as CheckButton).set_pressed_no_signal(bool(v))
+		elif c is ColorPickerButton:
+			(c as ColorPickerButton).color = v
+	_updating = false
+
+
+func _on_seam_enable_pressed() -> void:
+	if config == null or _selected_seam_key.is_empty():
+		return
+	var seams := config.seams.duplicate()
+	var existing := _seam_by_key(_selected_seam_key)
+	if existing != null:
+		seams.erase(existing)
+		_set_property(config, "seams", seams,
+				SeamlessRoomI18n.t("Remove seam transition"))
+		return
+	# 稳定键 "id|id|axis" 只在创建记录时反解；坐标仍由 seams() 派生。
+	var parts := _selected_seam_key.split("|")
+	if parts.size() != 3:
+		return
+	var s := SeamlessRoomSeam.new()
+	s.left = StringName(parts[0])
+	s.right = StringName(parts[1])
+	s.axis = int(parts[2])
+	s.enabled = true
+	seams.append(s)
+	_set_property(config, "seams", seams,
+			SeamlessRoomI18n.t("Enable seam transition"))
+
+
+func _on_seam_prop_changed(value: Variant, prop: StringName) -> void:
+	if _updating:
+		return
+	var s := _seam_by_key(_selected_seam_key)
+	if s == null:
+		return
+	_set_property(s, prop, value, SeamlessRoomI18n.t("Change seam blend"))
+
+
+func _bind_seam_spin(spin: SpinBox, prop: StringName) -> void:
+	spin.value_changed.connect(func(v: float) -> void:
+			_on_seam_prop_changed(v, prop))
+
+
+func _bind_seam_check(chk: CheckButton, prop: StringName) -> void:
+	chk.toggled.connect(func(v: bool) -> void:
+			_on_seam_prop_changed(v, prop))
+
+
+func _bind_seam_color(picker: ColorPickerButton, prop: StringName) -> void:
+	picker.color_changed.connect(func(c: Color) -> void:
+			_on_seam_prop_changed(c, prop))
+
+
+## 失效边：enabled 但共享边已不存在（房间被移动 / 改尺寸 / 删除）。
+## 与 locale 无关，直接把 key 交给画布标红。
+func _invalid_seam_keys() -> Array[String]:
+	var out: Array[String] = []
+	if config == null:
+		return out
+	var keys := {}
+	for e in SeamlessRoomLayout.new(config).seams():
+		keys[e["key"]] = true
+	for s in config.seam_configs():
+		if s.enabled and not keys.has(s.key()):
+			out.append(s.key())
+	return out
 
 
 func _set_property(obj: Object, prop: StringName, value: Variant, label: String) -> void:
@@ -1059,6 +1272,9 @@ func _on_cells_value_changed(_v: float) -> void:
 ## SpinBox 自身不处理上下键，这里在 _input 阶段接管：
 ## 只在 x / y 的输入框拥有焦点时生效，长按（echo）可连续调整。
 func _input(event: InputEvent) -> void:
+	# 接缝模式隐藏了房间 x/y 控件，方向键不应再改房间坐标。
+	if _canvas != null and _canvas.seam_mode:
+		return
 	var key := event as InputEventKey
 	if key == null or not key.pressed:
 		return
@@ -1135,6 +1351,9 @@ func _validate() -> void:
 				+ SeamlessRoomI18n.t("Config not loaded") + "[/color]")
 		return
 	var result := SeamlessRoomValidator.validate(config)
+	# 失效边标红：每次校验按实时几何重算，房间拖动后 _after_change() 会自动触发。
+	if _canvas != null:
+		_canvas.set_invalid_seams(_invalid_seam_keys())
 	var lines: Array[String] = []
 	for e in result.errors:
 		lines.append("[color=#ff6b6b]ERROR[/color] " + e)

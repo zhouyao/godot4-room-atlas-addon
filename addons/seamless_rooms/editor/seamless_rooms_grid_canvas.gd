@@ -7,6 +7,7 @@ extends Control
 signal selection_changed(id: StringName)
 signal cells_committed(placement: SeamlessRoomPlacement, old_cells: Rect2i, new_cells: Rect2i)
 signal scene_dropped(path: String, grid_pos: Vector2i)
+signal seam_selection_changed(key: String)
 
 const DRAG_TYPE := "seamless_rooms_scene"
 
@@ -21,8 +22,20 @@ const GUIDE_GAP := 6.0
 # 拖动时的边界吸附阈值（屏幕像素）：缩放变化时手感保持一致。
 const SNAP_PX := 10.0
 
+# 共享边常驻绘制：未配置细虚线、已启用实线、选中/悬停高亮、失效标红。
+const SEAM_IDLE := Color(0.42, 1.0, 0.6, 0.22)
+const SEAM_ENABLED := Color(0.42, 1.0, 0.6, 0.9)
+const SEAM_SELECTED := Color(1.0, 0.85, 0.42, 1.0)
+const SEAM_INVALID := Color(1.0, 0.36, 0.36, 0.95)
+const SEAM_HIT_PX := 10.0
+
 var config: SeamlessRoomConfig = null
 var selected: StringName = &""
+## 接缝模式：禁用房间拖动，左键改为选中共享边。
+var seam_mode := false
+var selected_seam := ""
+var hovered_seam := ""
+var invalid_seams: Array[String] = []
 
 var _zoom := 0.12
 var _pan := Vector2.ZERO
@@ -63,6 +76,59 @@ func select(id: StringName) -> void:
 	selected = id
 	selection_changed.emit(id)
 	queue_redraw()
+
+
+func set_seam_mode(on: bool) -> void:
+	seam_mode = on
+	selected_seam = ""
+	hovered_seam = ""
+	select(&"")
+	seam_selection_changed.emit("")
+	queue_redraw()
+
+
+func select_seam(key: String) -> void:
+	selected_seam = key
+	seam_selection_changed.emit(key)
+	queue_redraw()
+
+
+func set_invalid_seams(keys: Array[String]) -> void:
+	invalid_seams = keys
+	queue_redraw()
+
+
+## 每次现算：房间拖动 / 撤销后不会留下失效缓存，房间数不大时开销可忽略。
+func _seam_edges() -> Array[Dictionary]:
+	if config == null:
+		var empty: Array[Dictionary] = []
+		return empty
+	return SeamlessRoomLayout.new(config).seams()
+
+
+## 屏幕 → 世界，命中共享边的重叠区间；10 屏幕 px 的容差随缩放换算。
+func _hit_seam(cpos: Vector2) -> Dictionary:
+	if config == null:
+		return {}
+	var w := _canvas_to_world(cpos)
+	var tol := SEAM_HIT_PX / maxf(_zoom, 0.0001)
+	var best := {}
+	var best_d := INF
+	for e in _seam_edges():
+		var along: float
+		var perp: float
+		if e["axis"] == 0:
+			along = w.y
+			perp = absf(w.x - e["at"])
+		else:
+			along = w.x
+			perp = absf(w.y - e["at"])
+		if along < e["from"] or along > e["to"] or perp > tol:
+			continue
+		if perp < best_d:
+			best_d = perp
+			best = e
+	return best
 
 
 func fit_view() -> void:
@@ -217,6 +283,9 @@ func _draw() -> void:
 	# 拖拽期间叠加 x/y 轴辅助线，松手即消失；只提示，不改变落点。
 	if _drag_room and _drag_placement != null:
 		_draw_drag_guides(_drag_placement, _drag_preview_cells)
+
+	# 共享边常驻绘制（含已启用接缝的渐变预览），两种模式都可见。
+	_draw_shared_edges()
 
 
 ## 把标签坐标限制在画布内，避免放大后文字溢出到编辑器其它区域。
@@ -386,6 +455,102 @@ func _dashed_h(y: float, col: Color, width: float) -> void:
 		x += GUIDE_DASH + GUIDE_GAP
 
 
+# ---------------------------------------------------------------- 共享边（P2）
+
+func _draw_shared_edges() -> void:
+	if config == null:
+		return
+	var by_key := {}
+	for s in config.seam_configs():
+		by_key[s.key()] = s
+	for e in _seam_edges():
+		var key := String(e["key"])
+		var s: SeamlessRoomSeam = by_key.get(key, null)
+		var invalid := invalid_seams.has(key)
+		if s != null and s.enabled and not invalid:
+			_draw_seam_preview(e, s)
+		var col := SEAM_IDLE
+		var width := 1.0
+		var dashed := true
+		if invalid:
+			col = SEAM_INVALID
+			width = 2.0
+		elif s != null and s.enabled:
+			col = SEAM_ENABLED
+			width = 2.5
+			dashed = false
+		if key == hovered_seam:
+			col = SEAM_SELECTED
+			width = 3.0
+			dashed = false
+		if key == selected_seam:
+			col = SEAM_SELECTED
+			width = 4.0
+			dashed = false
+		_draw_seam_segment(e, col, width, dashed)
+
+
+func _draw_seam_segment(e: Dictionary, col: Color, width: float, dashed: bool) -> void:
+	var a: Vector2
+	var b: Vector2
+	if e["axis"] == 0:
+		a = _world_to_canvas(Vector2(e["at"], e["from"]))
+		b = _world_to_canvas(Vector2(e["at"], e["to"]))
+	else:
+		a = _world_to_canvas(Vector2(e["from"], e["at"]))
+		b = _world_to_canvas(Vector2(e["to"], e["at"]))
+	if dashed:
+		_draw_dashed_segment(a, b, col, width)
+	else:
+		draw_line(a, b, col, width)
+
+
+func _draw_dashed_segment(a: Vector2, b: Vector2, col: Color, width: float) -> void:
+	var length := a.distance_to(b)
+	if length <= 0.0:
+		return
+	var dir := (b - a) / length
+	var t := 0.0
+	while t < length:
+		var t1 := minf(t + GUIDE_DASH, length)
+		draw_line(a + dir * t, a + dir * t1, col, width)
+		t += GUIDE_DASH + GUIDE_GAP
+
+
+## 渐变预览：按羽化曲线离散成 24 段，与 shader 共用 feather_alpha()。
+## 0.55 是编辑器显示系数，避免预览盖住房间底色；不参与运行时计算。
+func _draw_seam_preview(e: Dictionary, s: SeamlessRoomSeam) -> void:
+	var span: float = e["span"]
+	var w := span * s.width_ratio
+	if s.width_max > 0.0:
+		w = minf(w, s.width_max)
+	if w <= 0.0:
+		return
+	var steps := 24
+	for i in range(steps):
+		var u0 := -1.0 + 2.0 * float(i) / float(steps)
+		var u1 := -1.0 + 2.0 * float(i + 1) / float(steps)
+		var um := (u0 + u1) * 0.5
+		var feather := s.feather_min if um < 0.0 else s.feather_max
+		var a := SeamlessRoomSeam.feather_alpha(um, s.core, feather) * s.color.a * 0.55
+		var p0: Vector2
+		var p1: Vector2
+		if e["axis"] == 0:
+			p0 = _world_to_canvas(Vector2(e["at"] + u0 * w, e["from"]))
+			p1 = _world_to_canvas(Vector2(e["at"] + u1 * w, e["to"]))
+		else:
+			p0 = _world_to_canvas(Vector2(e["from"], e["at"] + u0 * w))
+			p1 = _world_to_canvas(Vector2(e["to"], e["at"] + u1 * w))
+		var r := Rect2(p0, p1 - p0)
+		if r.size.x < 0.0:
+			r.position.x += r.size.x
+			r.size.x = -r.size.x
+		if r.size.y < 0.0:
+			r.position.y += r.size.y
+			r.size.y = -r.size.y
+		draw_rect(r, Color(s.color.r, s.color.g, s.color.b, a), true)
+
+
 func _hit_room(cpos: Vector2) -> SeamlessRoomPlacement:
 	var w := _canvas_to_world(cpos)
 	var ps := config.placements()
@@ -422,17 +587,26 @@ func _gui_input(event: InputEvent) -> void:
 			return
 		if mb.pressed:
 			if mb.button_index == MOUSE_BUTTON_LEFT:
-				var hit := _hit_room(mb.position)
-				if hit != null:
-					select(hit.id)
-					_drag_room = true
-					_drag_placement = hit
-					_drag_start_cells = hit.cells
-					_drag_preview_cells = hit.cells
-					_drag_grab_world = _canvas_to_world(mb.position) - _rect(hit).position
+				if seam_mode:
+					# 接缝模式禁用房间拖动；命中边是单击选中，空白处仍平移。
+					var edge := _hit_seam(mb.position)
+					if edge.is_empty():
+						select_seam("")
+						_drag_pan = true
+					else:
+						select_seam(String(edge["key"]))
 				else:
-					select(&"")
-					_drag_pan = true
+					var hit := _hit_room(mb.position)
+					if hit != null:
+						select(hit.id)
+						_drag_room = true
+						_drag_placement = hit
+						_drag_start_cells = hit.cells
+						_drag_preview_cells = hit.cells
+						_drag_grab_world = _canvas_to_world(mb.position) - _rect(hit).position
+					else:
+						select(&"")
+						_drag_pan = true
 			else:
 				_drag_pan = true
 			_drag_start_mouse = mb.position
@@ -464,6 +638,12 @@ func _gui_input(event: InputEvent) -> void:
 			_drag_placement.cells = _drag_preview_cells
 			queue_redraw()
 			accept_event()
+		elif seam_mode:
+			var edge := _hit_seam(mm.position)
+			var key := String(edge.get("key", ""))
+			if key != hovered_seam:
+				hovered_seam = key
+				queue_redraw()
 
 
 ## 兜底：个别环境下手势不会经鼠标焦点控件进入 _gui_input。

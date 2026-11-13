@@ -18,6 +18,17 @@ const SCHEMA_VERSION := 1
 ## 用无类型 Array 存储，让 .tres 可手写、可 diff；访问请走 placements()。
 @export var rooms: Array = []
 @export var streaming: SeamlessRoomStreamingSettings = null
+## 接缝过渡的实现方式：OVERLAY = 独立遮罩层；FADE = 背景层按共享边自行渐隐。
+## 默认 OVERLAY，旧配置行为不变；FADE 需要 SeamlessRoomParallax 配合。
+const SEAM_MODE_OVERLAY := 0
+const SEAM_MODE_FADE := 1
+@export_enum("Overlay", "Fade") var seam_mode: int = SEAM_MODE_OVERLAY
+
+## 相邻房间共享边的过渡配置。可选追加字段：旧 .tres 加载后为空数组，
+## 行为与旧版完全一致，因此不需要提升 SCHEMA_VERSION。
+## 只存「关系 + 美术参数」，坐标由 SeamlessRoomLayout.seams() 派生。
+## 详见 docs/seam-blending.md。
+@export var seams: Array = []
 
 ## 取出经过类型过滤的房间列表。配置来源（手写 .tres / 编辑器 / JSON）都可能
 ## 混入无效元素，统一在这里收敛。
@@ -26,4 +37,13 @@ func placements() -> Array[SeamlessRoomPlacement]:
 	for r in rooms:
 		if r is SeamlessRoomPlacement:
 			out.append(r)
+	return out
+
+
+## 同上：过滤出合法的接缝配置，避免每个调用方重复判类型。
+func seam_configs() -> Array[SeamlessRoomSeam]:
+	var out: Array[SeamlessRoomSeam] = []
+	for s in seams:
+		if s is SeamlessRoomSeam:
+			out.append(s)
 	return out

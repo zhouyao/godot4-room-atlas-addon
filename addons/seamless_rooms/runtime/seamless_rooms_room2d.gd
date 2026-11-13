@@ -83,6 +83,9 @@ const CAMERA_BOUNDS_OFF_COLOR := Color(0.65, 0.65, 0.65, 0.7)
 
 var _camera_world_rect := Rect2()
 var _has_camera_world_rect := false
+## FADE 模式下由 streamer 注入的共享边（含 width/core/feather 与 room_side）。
+## OVERLAY 模式保持为空，SeamlessRoomParallax 据此决定是否做背景渐隐。
+var seam_edges: Array = []
 
 
 ## Inspector 枚举标签跟随编辑器语言；存盘值仍是 int，切换语言不会改变场景数据。
@@ -97,8 +100,11 @@ func _validate_property(property: Dictionary) -> void:
 
 
 ## 运行时可选钩子：记录 id 与配置算出的权威世界矩形（不依赖房间实例是否进树）。
-func configure(p_id: StringName, p_placement: Resource, p_cell_size: Vector2) -> void:
+## p_seams 是 FADE 模式下与该房间相关的共享边；默认空，旧的 3 参数调用保持兼容。
+func configure(p_id: StringName, p_placement: Resource, p_cell_size: Vector2,
+		p_seams: Array = []) -> void:
 	room_id = p_id
+	seam_edges = p_seams
 	_has_camera_world_rect = false
 	if p_placement != null:
 		var cells: Variant = p_placement.get("cells")

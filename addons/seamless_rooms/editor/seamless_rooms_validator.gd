@@ -6,6 +6,7 @@ extends RefCounted
 ##
 ## 只校验"几何与资源是否自洽"，不校验连通性、可达性、缝隙或门 ——
 ## 房间之间怎么来往是游戏层的事，插件不做判断。
+## 接缝过渡配置同理：只校验关系 / 参数是否自洽，不判断美术效果。
 
 static func validate(config: SeamlessRoomConfig) -> Dictionary:
 	var errors: Array[String] = []
@@ -89,7 +90,65 @@ static func validate(config: SeamlessRoomConfig) -> Dictionary:
 				errors.append(SeamlessRoomI18n.tf(
 					"Room cells overlap: %s and %s", [ra, rb]))
 
+	_validate_seams(config, errors, warnings)
+
 	return { "errors": errors, "warnings": warnings }
+
+
+## 接缝过渡配置校验：只校验关系与参数是否自洽，不判断美术是否合适。
+## 失效的共享边只报 WARN —— 地图编辑时房间会短暂不对齐，不应阻断运行。
+static func _validate_seams(config: SeamlessRoomConfig,
+		errors: Array[String], warnings: Array[String]) -> void:
+	var seams: Array = []
+	if config.get("seams") is Array:
+		seams = config.seams
+	if seams.is_empty():
+		return
+	var layout := SeamlessRoomLayout.new(config)
+	var by_key := {}
+	for e in layout.seams():
+		by_key[e["key"]] = e
+	var seen := {}
+	for i in range(seams.size()):
+		var raw = seams[i]
+		var tag := "seams[%d]" % i
+		if not (raw is SeamlessRoomSeam):
+			errors.append(SeamlessRoomI18n.tf(
+					"seams[%d] is not a SeamlessRoomSeam", [i]))
+			continue
+		var s: SeamlessRoomSeam = raw
+		if s.left == &"" or s.right == &"" or s.left == s.right:
+			errors.append(SeamlessRoomI18n.tf(
+					"%s has missing or identical room ids", [tag]))
+		if s.axis != SeamlessRoomSeam.AXIS_X and s.axis != SeamlessRoomSeam.AXIS_Y:
+			errors.append(SeamlessRoomI18n.tf("%s has an invalid axis", [tag]))
+		if s.width_ratio <= 0.0 or s.core < 0.0 \
+				or s.feather_min <= 0.0 or s.feather_max <= 0.0:
+			errors.append(SeamlessRoomI18n.tf(
+					"%s has invalid width/core/feather parameters", [tag]))
+		var key := s.key()
+		if seen.has(key):
+			errors.append(SeamlessRoomI18n.tf("Duplicate seam key: %s", [key]))
+		else:
+			seen[key] = true
+		if s.material_override != null:
+			if s.material_override.shader == null:
+				warnings.append(SeamlessRoomI18n.tf(
+						"%s material_override has no shader; default shader will be used", [tag]))
+			elif s.material_override.shader.code.find("blend_premul_alpha") == -1:
+				warnings.append(SeamlessRoomI18n.tf(
+						"%s material_override does not use blend_premul_alpha; corner blending will differ", [tag]))
+		if not s.enabled:
+			continue
+		if not layout.has_room(s.left) or not layout.has_room(s.right):
+			warnings.append(SeamlessRoomI18n.tf(
+					"%s references a room that is not on the map", [tag]))
+		elif not by_key.has(key):
+			warnings.append(SeamlessRoomI18n.tf(
+					"%s no longer matches a shared edge (rooms moved or resized)", [tag]))
+		elif by_key[key]["span"] <= 0.0:
+			warnings.append(SeamlessRoomI18n.tf(
+					"%s shared edge has zero span", [tag]))
 
 
 static func format(result: Dictionary) -> String:

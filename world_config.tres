@@ -11,26 +11,27 @@
 [ext_resource type="PackedScene" uid="uid://k3egym3juyo8" path="res://example/rooms/r6.tscn" id="7_l8yc8"]
 [ext_resource type="PackedScene" uid="uid://crvkbthobwvgt" path="res://example/rooms/r8.tscn" id="8_nvsud"]
 [ext_resource type="PackedScene" uid="uid://brc1npxm2fc8o" path="res://example/rooms/r7.tscn" id="9_hl8xf"]
+[ext_resource type="Script" uid="uid://lx0ubpa8q0v5" path="res://addons/seamless_rooms/runtime/seamless_rooms_seam.gd" id="10_seam"]
 
-[sub_resource type="Resource" id="Resource_r2"]
+[sub_resource type="Resource" id="Resource_kwnus"]
 script = ExtResource("2_plc")
 id = &"r2"
 scene = ExtResource("4_r2")
-cells = Rect2i(7741, -1080, 2400, 1080)
+cells = Rect2i(3141, -1080, 7000, 1080)
 tint = Color(0.16, 0.18, 0.27, 1)
 
 [sub_resource type="Resource" id="Resource_r3"]
 script = ExtResource("2_plc")
 id = &"r3"
 scene = ExtResource("4_r3")
-cells = Rect2i(5341, -1080, 2400, 1080)
+cells = Rect2i(741, -1080, 2400, 1080)
 tint = Color(0.25, 0.17, 0.15, 1)
 
 [sub_resource type="Resource" id="Resource_r4"]
 script = ExtResource("2_plc")
 id = &"r4"
 scene = ExtResource("4_r4")
-cells = Rect2i(2941, -1080, 2400, 1080)
+cells = Rect2i(-1659, -1080, 2400, 1080)
 tint = Color(0.15, 0.22, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_76xdk"]
@@ -44,29 +45,39 @@ tint = Color(0.2, 0.24, 0.3, 1)
 script = ExtResource("2_plc")
 id = &"r5"
 scene = ExtResource("6_cxpqk")
-cells = Rect2i(2941, -3240, 2400, 2160)
+cells = Rect2i(-1659, -3240, 2400, 2160)
 tint = Color(0.2, 0.24, 0.3, 1)
 
 [sub_resource type="Resource" id="Resource_ilu8h"]
 script = ExtResource("2_plc")
 id = &"r6"
 scene = ExtResource("7_l8yc8")
-cells = Rect2i(2941, -4320, 5400, 1080)
+cells = Rect2i(-1659, -4320, 5400, 1080)
 tint = Color(0.2, 0.24, 0.3, 1)
 
-[sub_resource type="Resource" id="Resource_nvsud"]
+[sub_resource type="Resource" id="Resource_qka8b"]
 script = ExtResource("2_plc")
 id = &"r8"
 scene = ExtResource("8_nvsud")
-cells = Rect2i(10141, -3240, 1920, 2160)
+cells = Rect2i(10741, -4320, 1920, 3220)
 tint = Color(0.2, 0.24, 0.3, 1)
 
 [sub_resource type="Resource" id="Resource_hl8xf"]
 script = ExtResource("2_plc")
 id = &"r7"
 scene = ExtResource("9_hl8xf")
-cells = Rect2i(8341, -4320, 4000, 1080)
+cells = Rect2i(3741, -4320, 7000, 1080)
 tint = Color(0.2, 0.24, 0.3, 1)
+
+[sub_resource type="Resource" id="Resource_seam_r2r1"]
+script = ExtResource("10_seam")
+left = &"r2"
+right = &"r1"
+enabled = true
+width_ratio = 0.3333333
+core = 0.0
+feather_min = 1.35
+color = Color(0.024377698, 0.21434534, 0.030528637, 1)
 
 [sub_resource type="Resource" id="Resource_stream"]
 script = ExtResource("3_str")
@@ -78,5 +89,6 @@ bucket_size = 1080.0
 
 [resource]
 script = ExtResource("1_cfg")
-rooms = [SubResource("Resource_r2"), SubResource("Resource_r3"), SubResource("Resource_r4"), SubResource("Resource_76xdk"), SubResource("Resource_l8yc8"), SubResource("Resource_ilu8h"), SubResource("Resource_nvsud"), SubResource("Resource_hl8xf")]
+rooms = [SubResource("Resource_kwnus"), SubResource("Resource_r3"), SubResource("Resource_r4"), SubResource("Resource_76xdk"), SubResource("Resource_l8yc8"), SubResource("Resource_ilu8h"), SubResource("Resource_qka8b"), SubResource("Resource_hl8xf")]
 streaming = SubResource("Resource_stream")
+seams = [SubResource("Resource_seam_r2r1")]

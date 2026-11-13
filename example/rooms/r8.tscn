@@ -2,7 +2,15 @@
 
 [ext_resource type="PackedScene" path="res://example/rooms/room_template.tscn" id="1_base"]
 
-[node name="R8" instance=ExtResource("1_base") unique_id=463975975]
+[node name="R8" unique_id=463975975 instance=ExtResource("1_base")]
 room_id = &"r8"
 room_title = "R8"
-room_size = Vector2i(1920, 2160)
+room_size = Vector2i(1920, 3220)
+
+[node name="BgParallax" parent="." index="0" unique_id=1289870353]
+offset_right = 1920.0
+offset_bottom = 3220.0
+
+[node name="FgParallax" parent="." index="2" unique_id=1845135029]
+offset_right = 1920.0
+offset_bottom = 3220.0

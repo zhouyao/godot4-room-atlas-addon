@@ -155,6 +155,111 @@ func world_rect(id: StringName) -> Rect2:
 	return Rect2(_v2(p.cells.position) * _cell_size, _v2(p.cells.size) * _cell_size)
 
 
+## 所有相邻房间的共享边（纯几何派生，不读 config.seams，不含渲染语义）。
+##
+## 竖直：左右贴边 + y 区间重叠；水平：上下贴边 + x 区间重叠。
+## 只取重叠区间，不取两房并集 —— L 形拼接时并集会把空白也算成接缝。
+## 走 _nearby_ids() 桶候选，避免全表 O(N²)；同一条边按 key 去重。
+## 详见 docs/seam-blending.md §5。
+func seams() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var seen: Dictionary = {}
+	for id in ids():
+		var r := world_rect(id)
+		for other in _nearby_ids(r):
+			if other == id or str(id) >= str(other):
+				continue   # 每对房间只处理一次
+			_add_seam(out, seen, id, other, r, world_rect(other), SeamlessRoomSeam.AXIS_X)
+			_add_seam(out, seen, id, other, r, world_rect(other), SeamlessRoomSeam.AXIS_Y)
+	return out
+
+
+func _add_seam(out: Array[Dictionary], seen: Dictionary,
+		a: StringName, b: StringName, ra: Rect2, rb: Rect2, axis: int) -> void:
+	# 按几何方位规范化：low = 较小 x / 较小 y 的一侧。
+	var low := ra
+	var high := rb
+	var low_id := a
+	var high_id := b
+	if axis == SeamlessRoomSeam.AXIS_X and ra.position.x > rb.position.x:
+		low = rb
+		high = ra
+		low_id = b
+		high_id = a
+	elif axis == SeamlessRoomSeam.AXIS_Y and ra.position.y > rb.position.y:
+		low = rb
+		high = ra
+		low_id = b
+		high_id = a
+
+	var at := 0.0
+	var from := 0.0
+	var to := 0.0
+	if axis == SeamlessRoomSeam.AXIS_X:
+		if not is_equal_approx(low.end.x, high.position.x):
+			return
+		at = low.end.x
+		from = maxf(low.position.y, high.position.y)
+		to = minf(low.end.y, high.end.y)
+	else:
+		if not is_equal_approx(low.end.y, high.position.y):
+			return
+		at = low.end.y
+		from = maxf(low.position.x, high.position.x)
+		to = minf(low.end.x, high.end.x)
+	if not (to - from > 0.001):   # 角接触不算共享边
+		return
+
+	var key := SeamlessRoomSeam.make_key(a, b, axis)
+	if seen.has(key):
+		return
+	seen[key] = true
+	out.append({
+		"key": key, "axis": axis, "at": at, "from": from, "to": to,
+		"span": to - from, "low_id": low_id, "high_id": high_id,
+	})
+
+
+## 与某间房相关的共享边，并附带本房间在边上的方向：
+## room_side = +1 表示本房间在 low 侧，-1 表示在 high 侧。
+## 供 SeamlessRoomParallax 做背景边缘渐隐（side 决定衰减方向）。
+func seams_for_room(id: StringName) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for e in seams():
+		var side := 0.0
+		if e["low_id"] == id:
+			side = 1.0
+		elif e["high_id"] == id:
+			side = -1.0
+		else:
+			continue
+		var item: Dictionary = e.duplicate()
+		item["room_side"] = side
+		out.append(item)
+	return out
+
+
+## 该房间相关的边 + 对应 seam 配置（仅 enabled），FADE 模式注入用。
+## 把 width / core / feather 一并带出去，房间侧不需要再认识 config。
+func seam_fades_for_room(id: StringName) -> Array[Dictionary]:
+	var by_key := {}
+	if config != null:
+		for s in config.seam_configs():
+			by_key[s.key()] = s
+	var out: Array[Dictionary] = []
+	for e in seams_for_room(id):
+		var s: SeamlessRoomSeam = by_key.get(e["key"], null)
+		if s == null or not s.enabled:
+			continue
+		var item: Dictionary = e.duplicate()
+		item["width_ratio"] = s.width_ratio
+		item["width_max"] = s.width_max
+		item["core"] = s.core
+		item["feather"] = s.feather_min if e["room_side"] > 0.0 else s.feather_max
+		out.append(item)
+	return out
+
+
 ## 纯几何换算：房间局部坐标 → 世界坐标。不移动任何节点。
 func to_world(id: StringName, local_pos: Vector2) -> Vector2:
 	return world_rect(id).position + local_pos

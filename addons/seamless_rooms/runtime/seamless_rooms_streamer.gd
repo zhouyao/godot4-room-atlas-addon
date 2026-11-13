@@ -323,8 +323,17 @@ func _mount_now(id: StringName) -> void:
 	if room is Node2D:
 		(room as Node2D).position = world_rect(id).position
 	# 可选钩子：房间内容自己决定要不要用这些几何信息，插件不强制。
+	# FADE 模式额外注入与该房间相关的共享边；OVERLAY 时保持旧的 3 参数调用，
+	# 自定义房间子类的 configure 即使不接受第 4 参数也不会被破坏。
 	if room.has_method("configure"):
-		room.call("configure", id, layout.placement(id), layout.cell_size())
+		var fades: Array = []
+		if layout.config != null \
+				and layout.config.seam_mode == SeamlessRoomConfig.SEAM_MODE_FADE:
+			fades = layout.seam_fades_for_room(id)
+		if fades.is_empty():
+			room.call("configure", id, layout.placement(id), layout.cell_size())
+		else:
+			room.call("configure", id, layout.placement(id), layout.cell_size(), fades)
 	add_child(room)
 	_mounted[id] = room
 	room_mounted.emit(id)

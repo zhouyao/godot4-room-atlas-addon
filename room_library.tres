@@ -15,11 +15,11 @@ script = ExtResource("1_lib")
 scenes = [ExtResource("2_r1"), ExtResource("2_r2"), ExtResource("2_r3"), ExtResource("2_r4"), ExtResource("2_r5"), ExtResource("2_r6"), ExtResource("2_r7"), ExtResource("2_r8")]
 sizes = {
 "res://example/rooms/r1.tscn": Vector2i(3000, 1080),
-"res://example/rooms/r2.tscn": Vector2i(3000, 1080),
+"res://example/rooms/r2.tscn": Vector2i(7000, 1080),
 "res://example/rooms/r3.tscn": Vector2i(2400, 1080),
 "res://example/rooms/r4.tscn": Vector2i(2400, 1080),
 "res://example/rooms/r5.tscn": Vector2i(2400, 2160),
 "res://example/rooms/r6.tscn": Vector2i(5400, 1080),
-"res://example/rooms/r7.tscn": Vector2i(4000, 1080),
-"res://example/rooms/r8.tscn": Vector2i(1920, 2160)
+"res://example/rooms/r7.tscn": Vector2i(7000, 1080),
+"res://example/rooms/r8.tscn": Vector2i(1920, 3220)
 }

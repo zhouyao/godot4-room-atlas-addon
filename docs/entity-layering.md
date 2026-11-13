@@ -1,6 +1,6 @@
 # 实体分层与房间怪物
 
-> 相关文档：[根 README](../README.md) · [插件 README](../addons/seamless_rooms/README.md) · [视差约定](parallax-convention.md)
+> 相关文档：[根 README](../README.md) · [插件 README](../addons/seamless_rooms/README.md) · [视差约定](parallax-convention.md) · [接缝过渡](seam-blending.md)
 
 本文约定房间里“谁归谁管、谁画在谁前面、谁和谁碰撞”。核心原则：
 
@@ -12,6 +12,8 @@
 
 | `z_index` | 层 | 内容 |
 |---|---|---|
+| -121 ~ -102 | 背景美术（示例） | `BgParallax` 内各 band 的 `Sprite2D`；具体值由房间摆放决定 |
+| **-101** | **接缝遮罩（Overlay）** | **`Main/SeamBlend` 生成的 `Veil_*` ColorRect** |
 | -100 | 调试 / 背景 | `WorldGrid` 与 `BgParallax`（同 z 时按树顺序，背景后画覆盖网格） |
 | -99 ~ -1 | 世界后景 | 地面、水、墙、影子、贴地装饰 |
 | 0 ~ 9 | 静态物件 | 默认 props；永远在角色后 |
@@ -19,6 +21,8 @@
 | 11 ~ 99 | 固定前景 | 永远盖住角色的静态物 |
 | 100+ | 前景视差 | `FgParallax`；遮片层用 `scroll_scale = (1, 1)` |
 | `CanvasLayer.layer` | UI | HUD、小地图、血条 |
+
+`-121 ~ -102` 与 `-101` 是示例房间的实测值：背景 Sprite 在 `BgParallax`（`z = -100`）下再叠加自己的 `z_index`，遮罩取 `-101` 才能压住背景、又保留 `WorldGrid` 的 `-100`。组件默认 `z_band = -101`，换成别的房间时仍应按同样的层次关系覆写。
 
 `z_index` 只影响绘制，不影响输入和物理；`CanvasLayer` 是独立画布，和 `z_index` 不是一套系统。
 
@@ -45,7 +49,8 @@ streamer 的休眠 / 卸载行为：
 ```text
 Main (Node2D)
 ├─ WorldGrid                 z = -100
-├─ SeamlessRoomStreamer
+├─ SeamBlend                 SeamlessRoomSeamBlend；生成遮罩 z = -101
+├─ SeamlessRoomStreamer      ← main.gd 运行时创建
 ├─ Actors (Node2D)           z = 10, y_sort_enabled = true
 │  ├─ Player
 │  ├─ Player2
@@ -54,13 +59,15 @@ Main (Node2D)
 │  ├─ r1_ChestSpawn_01
 │  ├─ r1_PickupSpawn_01
 │  └─ r1_drop_0              ← 怪物死亡掉落
-├─ RoomEntityDirector (Node)
+├─ RoomEntityDirector (Node) ← main.gd 运行时创建
 ├─ Overlays (Node2D)         z = 15
 ├─ Camera2D
 ├─ CanvasLayer              layer = 1   # debug_overlay（房内/房外标记）
 ├─ CameraDebugPanel         CanvasLayer # 调试面板（Tab 显隐）
 └─ MinimapLayer             layer = 2   # Minimap
 ```
+
+`SeamBlend` 只在 `seam_mode = Overlay` 时生成遮罩；`Fade` 下组件自动跳过，改由房间自己的视差组件处理。
 
 ```text
 RoomTemplate (SeamlessRoom2D，由 r1–r8 继承；只含空层)
@@ -89,6 +96,17 @@ r1 自建（不属于模板）
 层结构（含同名同路径的 `World/Spawns` `Node2D` 分组）来自 `example/rooms/room_template.tscn`，准入标准见 [视差约定 §5](parallax-convention.md)：模板只放结构性契约节点，不放内容分类分组。`Water / Terrain / Obstacles / Props` 是 `r1` 的构图分组，由 r1 在自己的派生场景里新增，节点路径与改造前一致。模板不放出生点或任何房间内容，出生点由各房间在继承的 `World/Spawns` 下自行新增（目前只有 `r1` 放了 4 个）。因此 `RoomEntityDirector` 的 `get_node_or_null("World/Spawns")` 对 8 间房都成立。
 
 `World` 下的分组节点必须是 `Node2D`。Godot 的 transform / modulate / visibility 只向**直接** `CanvasItem` 子节点传播；中间夹普通 `Node` 会切断链路，`Marker2D.global_position` 和物理体都会算错。
+
+### 接缝过渡的归属
+
+| 模式 | 节点归属 | 生命周期 |
+|---|---|---|
+| Overlay（默认） | `Main/SeamBlend` 生成的 `Veil_*` ColorRect | 常驻 `Main`，房间休眠 / 卸载不影响；r1/r2 都卸载后会留下孤立暗带 |
+| Fade | 房间自己的 `BgParallax` 背景 band 上的 `ShaderMaterial` | 随房间实例休眠 / 卸载一起消失，无残留 |
+
+- 两种实现都只做显示：不加碰撞、不接输入（`mouse_filter = IGNORE`），不参与 y-sort。
+- **不要把遮罩放进房间场景**：房间休眠会 `visible = false`，遮罩跟着消失，接缝只剩半边；Overlay 必须挂在 `Main` 或独立显示层。
+- Fade 只处理有效 `z <= 0` 的背景 band；`Backdrop/Darkness` 保持实心底色，`FgParallax` 前景不参与。完整规则见 [接缝过渡](seam-blending.md)。
 
 ## 4. y-sort 规则
 
@@ -184,6 +202,9 @@ r1 自建（不属于模板）
 - 如果改回“房间里直接摆怪 + reparent”，要额外处理：休眠信号在 `_set_collision()` 之后才发，回收前要手动关碰撞；怪死亡直接 `queue_free()` 会导致休眠唤醒后不回来。
 - `Actors` 下不要放 `Enemies` / `Pickups` 中间容器；用 group / metadata / director 内部字典归类。
 - 世界分组节点不要用普通 `Node`，否则 CanvasItem 变换链断开。
+- 接缝遮罩不要放进房间：房间休眠会隐藏它，接缝只剩半边；Overlay 挂在 `Main/SeamBlend`，Fade 交给房间自己的背景 band。
+- 改房间内容导致背景 Sprite 的 z 越过遮罩的 `-101` 时，遮罩会被压住；改完 z 后确认遮罩仍压在背景之上、`WorldGrid` 之下。
+- Fade 只淡背景 band，不会淡化 `Backdrop/Darkness` 与 `FgParallax`；如果接缝两侧仍有前景硬切，属于前景层内容，不在 Fade 的承诺范围内。
 
 ## 12. 自检
 
@@ -202,4 +223,6 @@ r1 自建（不属于模板）
 3. 走远让 r1 休眠，再回来 → 史莱姆重新生成；
 4. 宝箱打开后走远再回来 → 保持打开；
 5. 怪物死亡掉落 → 玩家走过去自动拾取；
-6. 连续进出房间 `Actors` 子节点数量不持续增长。
+6. 连续进出房间 `Actors` 子节点数量不持续增长；
+7. 从 r1 走到 r2：接缝遮罩在正确位置，改 `seam_mode` 为 `Fade` 后遮罩节点消失、背景 band 出现渐隐，切回 `Overlay` 后恢复；
+8. 让 r1/r2 都休眠：Overlay 遮罩仍留在 `Main`（预期），Fade 的材质随房间一起隐藏。

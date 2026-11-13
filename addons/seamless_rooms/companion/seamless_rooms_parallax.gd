@@ -32,6 +32,9 @@ extends Control
 ## 批量推送，不需要认识房间实例。
 const GROUP := &"seamless_rooms_parallax"
 
+## FADE 模式：背景 band 的共享边渐隐 shader。
+const SEAM_FADE_SHADER := preload("res://addons/seamless_rooms/companion/seamless_rooms_seam_fade.gdshader")
+
 const REFERENCE_ROOM_CENTER := 0
 const REFERENCE_CUSTOM := 1
 
@@ -82,6 +85,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_to_group(GROUP)
 	_setup_rect()
+	_apply_room_seams()
 	if Engine.is_editor_hint():
 		set_process(true)
 		print("[Seamless Rooms] parallax editor ready: ", get_path())
@@ -242,3 +246,87 @@ func _setup_rect() -> void:
 			_reference_point = rect.position + reference_local
 		_:
 			_reference_point = rect.get_center()
+
+
+# ---------------------------------------------------------------- 接缝渐隐（FADE）
+
+## 父房间在 FADE 模式下注入的共享边；OVERLAY / 空数据时不做任何事。
+## 只处理背景 band（有效 z <= 0），FgParallax 的前景层不参与。
+func _apply_room_seams() -> void:
+	var room := get_parent()
+	if not (room is SeamlessRoom2D):
+		return
+	var edges: Array = (room as SeamlessRoom2D).seam_edges
+	if edges.is_empty() or not _has_background_layers(self):
+		return
+	var usable: Array[Dictionary] = []
+	for e in edges:
+		if e is Dictionary:
+			usable.append(e)
+	if usable.is_empty():
+		return
+	if usable.size() > 2:
+		push_warning(SeamlessRoomI18n.tf(
+				"Seam fade: room %s has more than 2 shared edges; only the first 2 are applied.",
+				[String((room as SeamlessRoom2D).room_id)]))
+		usable.resize(2)
+
+	var mat := ShaderMaterial.new()
+	mat.shader = SEAM_FADE_SHADER
+	mat.set_shader_parameter(&"seam_count", usable.size())
+	for i in range(usable.size()):
+		var e: Dictionary = usable[i]
+		var suffix := "a" if i == 0 else "b"
+		var w: float = float(e["span"]) * float(e.get("width_ratio", 0.15))
+		var wmax: float = float(e.get("width_max", 0.0))
+		if wmax > 0.0:
+			w = minf(w, wmax)
+		mat.set_shader_parameter(StringName("seam_" + suffix),
+				Vector4(float(e["at"]), float(e["axis"]), w, float(e["room_side"])))
+		mat.set_shader_parameter(StringName("core_" + suffix), float(e.get("core", 0.12)))
+		mat.set_shader_parameter(StringName("feather_" + suffix), float(e.get("feather", 1.0)))
+	_apply_fade_recursive(self, mat)
+
+
+func _has_background_layers(node: Node) -> bool:
+	for child in node.get_children():
+		if child is SeamlessRoomParallaxLayer:
+			if _effective_z(child as CanvasItem) <= 0:
+				return true
+		elif _has_background_layers(child):
+			return true
+	return false
+
+
+func _apply_fade_recursive(node: Node, mat: ShaderMaterial) -> void:
+	for child in node.get_children():
+		if child is SeamlessRoomParallaxLayer:
+			var layer := child as SeamlessRoomParallaxLayer
+			if _effective_z(layer) > 0:
+				continue
+			layer.material = mat
+			_use_parent_material_recursive(layer)
+		else:
+			_apply_fade_recursive(child, mat)
+
+
+func _use_parent_material_recursive(node: Node) -> void:
+	for child in node.get_children():
+		if child is CanvasItem:
+			var item := child as CanvasItem
+			# 已有独立材质的子节点保持原样，避免覆盖作者的自定义效果。
+			if item.material == null:
+				item.use_parent_material = true
+		_use_parent_material_recursive(child)
+
+
+## 与 SeamlessRoomParallaxLayer 的告警逻辑一致：容器 z + 祖先 z 累加。
+func _effective_z(item: CanvasItem) -> int:
+	var z := item.z_index
+	var ancestor := item.get_parent()
+	while ancestor is CanvasItem:
+		z += (ancestor as CanvasItem).z_index
+		if not (ancestor as CanvasItem).z_as_relative:
+			break
+		ancestor = ancestor.get_parent()
+	return z

@@ -44,6 +44,21 @@ const ZH := {
 	"%s (%s) cells.size must be positive": "%s (%s) 的 cells.size 必须为正",
 	"Room cells overlap: %s and %s": "房间格区间重叠：%s 与 %s",
 
+	# seamless_rooms_validator.gd / seamless_rooms_seam.gd（接缝过渡）
+	"seams[%d] is not a SeamlessRoomSeam": "seams[%d] 不是 SeamlessRoomSeam",
+	"%s has missing or identical room ids": "%s 的房间 id 为空或两端相同",
+	"%s has an invalid axis": "%s 的 axis 非法",
+	"%s has invalid width/core/feather parameters": "%s 的宽度 / core / 羽化参数非法",
+	"Duplicate seam key: %s": "接缝键重复：%s",
+	"%s references a room that is not on the map": "%s 引用了不在地图上的房间",
+	"%s no longer matches a shared edge (rooms moved or resized)":
+			"%s 已不对应任何共享边（房间被移动或改过尺寸）",
+	"%s shared edge has zero span": "%s 的共享边退化为零长度",
+	"%s material_override has no shader; default shader will be used":
+			"%s 的 material_override 没有 shader，将回退默认 shader",
+	"%s material_override does not use blend_premul_alpha; corner blending will differ":
+			"%s 的 material_override 未使用 blend_premul_alpha，拐角叠加效果会不一致",
+
 	# seamless_rooms_scene_list.gd
 	"Not loaded (%d)": "未载入 (%d)",
 	"Loaded (%d)": "已载入 (%d)",
@@ -167,6 +182,23 @@ const ZH := {
 	"Center Only": "仅居中",
 	" (disabled)": "（已关闭）",
 	"Camera %s  %d × %d px%s": "相机 %s  %d × %d px%s",
+
+	# 接缝画布（P2）：world_canvas / grid_canvas
+	"Seam Mode": "接缝模式",
+	"Seam Properties": "接缝属性",
+	"Select a shared edge on the canvas": "在画布上点选一条共享边",
+	"Enable Transition": "启用过渡",
+	"Remove Seam Config": "移除过渡配置",
+	"Change seam blend": "修改接缝过渡参数",
+	"Enable seam transition": "启用接缝过渡",
+	"Remove seam transition": "移除接缝过渡",
+	"Seam: %s · span %d px": "接缝：%s · 长度 %d px",
+	"Invalid seam (rooms moved or resized)": "接缝已失效（房间被移动或改过尺寸）",
+	"No shared edges": "当前地图没有共享边",
+	"Seam mode: click a shared edge to configure · drag empty space to pan · wheel to zoom":
+			"接缝模式：点选共享边进行配置 · 空白处拖动平移 · 滚轮缩放",
+	"Seam fade: room %s has more than 2 shared edges; only the first 2 are applied.":
+			"接缝渐隐：房间 %s 有超过 2 条共享边，只应用前 2 条。",
 }
 
 static var _cached_locale := ""
