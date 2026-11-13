@@ -38,7 +38,6 @@
 [ext_resource type="Texture2D" uid="uid://bkywuhi0gpxrv" path="res://example/assets/sprites/moss_hole/environment/mosshole_wall_1.png" id="mh50"]
 [ext_resource type="Texture2D" uid="uid://c1s20l8d4wgyw" path="res://example/assets/sprites/moss_hole/platform/mosshole_floor_0.png" id="mh51"]
 [ext_resource type="Texture2D" uid="uid://dfn1xr43ot53e" path="res://example/assets/sprites/moss_hole/environment/lake_water.png" id="mh52"]
-[ext_resource type="Texture2D" uid="uid://7oflqc5aw77a" path="res://example/assets/sprites/moss_hole/environment/lake_light.png" id="mh53"]
 [ext_resource type="Texture2D" uid="uid://r3walxmg7sac" path="res://example/assets/sprites/moss_hole/environment/fung_big_roof_0000_a.png" id="mh54"]
 [ext_resource type="Texture2D" uid="uid://kuix1ed7d0se" path="res://example/assets/sprites/moss_hole/platform/fung_plat_float_06.png" id="mh55"]
 [ext_resource type="Texture2D" uid="uid://cet5wdjwe6gnp" path="res://example/assets/sprites/moss_hole/platform/fung_plat_float_07.png" id="mh56"]
@@ -58,10 +57,14 @@
 room_id = &"r2"
 room_title = "R2"
 room_size = Vector2i(7000, 1080)
+show_editor_bounds = false
 
 [node name="BgParallax" parent="." index="0" unique_id=1289870353]
+clip_contents = false
 offset_right = 7000.0
 fallback_size = Vector2(7000, 1080)
+clip_to_room = false
+editor_preview = false
 
 [node name="Darkness" type="ColorRect" parent="BgParallax/Backdrop" parent_id_path=PackedInt32Array(1245738637) index="0" unique_id=2000000001]
 z_index = -100
@@ -88,33 +91,35 @@ texture = ExtResource("mh16")
 
 [node name="Bg_017" type="Sprite2D" parent="BgParallax/Far2" parent_id_path=PackedInt32Array(385278532) index="0" unique_id=2000000004]
 z_index = -5
-position = Vector2(3113.712, 536.19055)
+position = Vector2(2653, 392)
+scale = Vector2(1.1609442, 1.2805643)
 texture = ExtResource("mh25")
 
 [node name="Bg_067" type="Sprite2D" parent="BgParallax/Far2" parent_id_path=PackedInt32Array(385278532) index="1" unique_id=2000000005]
 z_index = -7
-position = Vector2(2747.815, 841.6576)
+position = Vector2(2739, 899)
 scale = Vector2(-1, 1)
 texture = ExtResource("mh31")
 
 [node name="Bg_003" type="Sprite2D" parent="BgParallax/Mid" parent_id_path=PackedInt32Array(1203179596) index="0" unique_id=2000000006]
 z_index = -3
-position = Vector2(6115.4185, 502.76538)
+position = Vector2(6229, 503)
 texture = ExtResource("mh17")
 
 [node name="Bg_004" type="Sprite2D" parent="BgParallax/Mid" parent_id_path=PackedInt32Array(1203179596) index="1" unique_id=2000000007]
 z_index = -4
-position = Vector2(5701.4185, 629.7654)
+position = Vector2(5758, 645)
 texture = ExtResource("mh18")
 
 [node name="Bg_005" type="Sprite2D" parent="BgParallax/Mid" parent_id_path=PackedInt32Array(1203179596) index="2" unique_id=2000000008]
 z_index = -4
-position = Vector2(4969.943, 886.27344)
+position = Vector2(4723, 986.00006)
+scale = Vector2(1.2949309, 1.2509434)
 texture = ExtResource("mh18")
 
 [node name="Bg_006" type="Sprite2D" parent="BgParallax/Mid" parent_id_path=PackedInt32Array(1203179596) index="3" unique_id=2000000009]
 z_index = -4
-position = Vector2(4347.943, 854.27344)
+position = Vector2(4254, 1001)
 texture = ExtResource("mh19")
 
 [node name="Bg_007" type="Sprite2D" parent="BgParallax/Mid" parent_id_path=PackedInt32Array(1203179596) index="4" unique_id=2000000010]
@@ -124,17 +129,17 @@ texture = ExtResource("mh20")
 
 [node name="Bg_012" type="Sprite2D" parent="BgParallax/Mid" parent_id_path=PackedInt32Array(1203179596) index="5" unique_id=2000000011]
 z_index = -3
-position = Vector2(1340.406, 799.1513)
+position = Vector2(1377.3251, 775.04)
 texture = ExtResource("mh20")
 
 [node name="Bg_013" type="Sprite2D" parent="BgParallax/Mid" parent_id_path=PackedInt32Array(1203179596) index="6" unique_id=2000000012]
 z_index = -4
-position = Vector2(1484.3789, 548.227)
+position = Vector2(1360.3251, 570.04)
 texture = ExtResource("mh23")
 
 [node name="Bg_014" type="Sprite2D" parent="BgParallax/Mid" parent_id_path=PackedInt32Array(1203179596) index="7" unique_id=2000000013]
 z_index = -5
-position = Vector2(1505.7692, 362.2963)
+position = Vector2(1424.3251, 347.03995)
 texture = ExtResource("mh18")
 
 [node name="Bg_015" type="Sprite2D" parent="BgParallax/Mid" parent_id_path=PackedInt32Array(1203179596) index="8" unique_id=2000000014]
@@ -149,101 +154,98 @@ texture = ExtResource("mh24")
 
 [node name="Bg_065" type="Sprite2D" parent="BgParallax/Mid" parent_id_path=PackedInt32Array(1203179596) index="10" unique_id=2000000016]
 z_index = -2
-position = Vector2(2502.2676, 884.6712)
+position = Vector2(2499, 885)
 texture = ExtResource("mh31")
 
 [node name="Bg_008" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="0" unique_id=2000000017]
 z_index = -2
-position = Vector2(5404.7617, 978.0952)
+position = Vector2(5331.881, 964.5476)
+scale = Vector2(1.8097876, 1.1505289)
 texture = ExtResource("mh21")
 
 [node name="Bg_009" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="1" unique_id=2000000018]
 z_index = -2
-position = Vector2(5500, 963.8095)
+position = Vector2(5613.5, 979)
+scale = Vector2(2.2611105, 1.5294118)
 texture = ExtResource("mh22")
 
 [node name="Bg_010" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="2" unique_id=2000000019]
 z_index = -2
-position = Vector2(4738.095, 1168.5714)
+position = Vector2(3881, 643)
 texture = ExtResource("mh22")
 
 [node name="Bg_011" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="3" unique_id=2000000020]
 z_index = -2
-position = Vector2(3785.7144, 1225.7144)
+position = Vector2(3985, 842)
 texture = ExtResource("mh21")
 
 [node name="Bg_066" type="Sprite2D" parent="BgParallax/Near" parent_id_path=PackedInt32Array(561785814) index="4" unique_id=2000000021]
 z_index = -2
-position = Vector2(2547.619, 859.0476)
+position = Vector2(2891, 873)
 texture = ExtResource("mh32")
 
 [node name="Decor" type="Node2D" parent="World" parent_id_path=PackedInt32Array(1624328844) index="2" unique_id=2000000104]
 
 [node name="Platform_20_Visual" type="Sprite2D" parent="World/Decor" index="0" unique_id=2000000109]
-position = Vector2(1500, 600)
+position = Vector2(1530, 482)
 texture = ExtResource("mh58")
 
 [node name="Platform_21_Visual" type="Sprite2D" parent="World/Decor" index="1" unique_id=2000000110]
-position = Vector2(1850, 389)
+position = Vector2(1926, 450)
 texture = ExtResource("mh56")
 
 [node name="Platform_22_Visual" type="Sprite2D" parent="World/Decor" index="2" unique_id=2000000111]
-position = Vector2(1500, 200)
+position = Vector2(1376, 218)
 texture = ExtResource("mh57")
 
 [node name="Bg_015" type="Sprite2D" parent="World/Decor" index="3" unique_id=2000000126]
 modulate = Color(1, 1, 1, 0.823529)
 z_index = 2
-position = Vector2(1880.4999, 1179.5)
+position = Vector2(2129, 1006)
 scale = Vector2(8.953126, 1.39)
 texture = ExtResource("mh52")
 
 [node name="Bg_016" type="Sprite2D" parent="World/Decor" index="4" unique_id=2000000127]
 modulate = Color(1, 1, 1, 0.823529)
 z_index = 5
-position = Vector2(1726.9999, 1115.5)
+position = Vector2(2195.9998, 1016)
 scale = Vector2(10.010416, 1.29)
 texture = ExtResource("mh52")
 
 [node name="Bg_017" type="Sprite2D" parent="World/Decor" index="5" unique_id=2000000128]
 z_index = 1
-position = Vector2(1700.25, 1207)
+position = Vector2(2132, 996)
 scale = Vector2(9.127603, 1.7199997)
 texture = ExtResource("mh52")
 
-[node name="Bg_018" type="Sprite2D" parent="World/Decor" index="6" unique_id=2000000129]
-z_index = 2
-position = Vector2(1800, 950)
-texture = ExtResource("mh53")
-
-[node name="Bg_019" type="Sprite2D" parent="World/Decor" index="7" unique_id=2000000130]
+[node name="Bg_019" type="Sprite2D" parent="World/Decor" index="6" unique_id=2000000130]
 z_index = 4
 position = Vector2(6316.0054, 245.8542)
 texture = ExtResource("mh24")
 
-[node name="Bg_020" type="Sprite2D" parent="World/Decor" index="8" unique_id=2000000131]
+[node name="Bg_020" type="Sprite2D" parent="World/Decor" index="7" unique_id=2000000131]
 z_index = 3
 position = Vector2(5511.0054, 171.8542)
 texture = ExtResource("mh54")
 
-[node name="Bg_021" type="Sprite2D" parent="World/Decor" index="9" unique_id=2000000132]
+[node name="Bg_021" type="Sprite2D" parent="World/Decor" index="8" unique_id=2000000132]
 z_index = 3
 position = Vector2(4614.0054, 181.8542)
 texture = ExtResource("mh54")
 
-[node name="Bg_022" type="Sprite2D" parent="World/Decor" index="10" unique_id=2000000133]
+[node name="Bg_022" type="Sprite2D" parent="World/Decor" index="9" unique_id=2000000133]
 z_index = 3
 position = Vector2(3580.0054, 192.8542)
 texture = ExtResource("mh54")
 
-[node name="Road" type="Node2D" parent="World/Decor" index="11" unique_id=1977890840]
+[node name="Road" type="Node2D" parent="World/Decor" index="10" unique_id=1977890840]
 
 [node name="Platform_18_Visual" type="Sprite2D" parent="World/Decor/Road" index="0" unique_id=2000000107]
-position = Vector2(2185, 1010)
+position = Vector2(2495, 746)
 texture = ExtResource("mh56")
 
 [node name="Platform_19_Visual" type="Sprite2D" parent="World/Decor/Road" index="1" unique_id=2000000108]
-position = Vector2(1885, 985)
+position = Vector2(2122, 737)
 texture = ExtResource("mh57")
 
 [node name="Bg_002" type="Sprite2D" parent="World/Decor/Road" index="2" unique_id=2000000113]
@@ -291,7 +293,7 @@ texture = ExtResource("mh48")
 
 [node name="Bg_010" type="Sprite2D" parent="World/Decor/Road" index="10" unique_id=2000000121]
 z_index = 3
-position = Vector2(2865, 910)
+position = Vector2(2961, 941)
 rotation = 3.1415925
 scale = Vector2(1, -1)
 texture = ExtResource("mh50")
@@ -317,7 +319,7 @@ texture = ExtResource("mh21")
 
 [node name="Bg_014" type="Sprite2D" parent="World/Decor/Road" index="14" unique_id=2000000125]
 z_index = 2
-position = Vector2(2375, 1220)
+position = Vector2(2902, 986)
 rotation = 3.1415925
 scale = Vector2(1, -1)
 texture = ExtResource("mh48")
@@ -432,87 +434,90 @@ texture = ExtResource("mh59")
 
 [node name="MossFloorVisual_18" type="Sprite2D" parent="World/Decor/Road" index="34" unique_id=2000000151]
 z_index = 4
-position = Vector2(1937, 561)
+position = Vector2(3103, 891)
 texture = ExtResource("mh51")
 
-[node name="BoneVisual_01" type="Sprite2D" parent="World/Decor" index="12" unique_id=2000000152]
+[node name="BoneVisual_01" type="Sprite2D" parent="World/Decor" index="11" unique_id=2000000152]
 z_index = 8
-position = Vector2(1600, 850)
+position = Vector2(1615.5, 717)
 texture = ExtResource("mh61")
 
-[node name="BoneVisual_02" type="Sprite2D" parent="World/Decor" index="13" unique_id=2000000153]
+[node name="BoneVisual_02" type="Sprite2D" parent="World/Decor" index="12" unique_id=2000000153]
 z_index = 7
-position = Vector2(1450, 955)
+position = Vector2(1465.5, 822)
 texture = ExtResource("mh62")
 
-[node name="BoneVisual_03" type="Sprite2D" parent="World/Decor" index="14" unique_id=2000000154]
+[node name="BoneVisual_03" type="Sprite2D" parent="World/Decor" index="13" unique_id=2000000154]
 z_index = 6
-position = Vector2(1300, 990)
+position = Vector2(1315.5, 857)
 texture = ExtResource("mh63")
 
-[node name="BoneVisual_04" type="Sprite2D" parent="World/Decor" index="15" unique_id=2000000155]
+[node name="BoneVisual_04" type="Sprite2D" parent="World/Decor" index="14" unique_id=2000000155]
 z_index = 5
-position = Vector2(1150, 1010)
+position = Vector2(1165.5, 877)
 texture = ExtResource("mh64")
 
-[node name="BoneVisual_05" type="Sprite2D" parent="World/Decor" index="16" unique_id=2000000156]
+[node name="BoneVisual_05" type="Sprite2D" parent="World/Decor" index="15" unique_id=2000000156]
 z_index = -2
-position = Vector2(1500, 950)
+position = Vector2(1515.5, 817)
 texture = ExtResource("mh65")
 
-[node name="BoneVisual_06" type="Sprite2D" parent="World/Decor" index="17" unique_id=2000000157]
+[node name="BoneVisual_06" type="Sprite2D" parent="World/Decor" index="16" unique_id=2000000157]
 z_index = -2
-position = Vector2(1350, 970)
+position = Vector2(1365.5, 837)
 texture = ExtResource("mh66")
 
-[node name="BoneVisual_07" type="Sprite2D" parent="World/Decor" index="18" unique_id=2000000158]
+[node name="BoneVisual_07" type="Sprite2D" parent="World/Decor" index="17" unique_id=2000000158]
 z_index = -2
-position = Vector2(1200, 1000)
+position = Vector2(1215.5, 867)
 texture = ExtResource("mh67")
 
-[node name="BoneVisual_09" type="Sprite2D" parent="World/Decor" index="19" unique_id=2000000159]
+[node name="BoneVisual_09" type="Sprite2D" parent="World/Decor" index="18" unique_id=2000000159]
 z_index = 7
-position = Vector2(729, 937)
+position = Vector2(744.5, 804)
 texture = ExtResource("mh62")
 
-[node name="BoneVisual_10" type="Sprite2D" parent="World/Decor" index="20" unique_id=2000000160]
+[node name="BoneVisual_10" type="Sprite2D" parent="World/Decor" index="19" unique_id=2000000160]
 z_index = 6
-position = Vector2(870, 973)
+position = Vector2(885.5, 840)
 texture = ExtResource("mh63")
 
-[node name="BoneVisual_11" type="Sprite2D" parent="World/Decor" index="21" unique_id=2000000161]
+[node name="BoneVisual_11" type="Sprite2D" parent="World/Decor" index="20" unique_id=2000000161]
 z_index = 7
-position = Vector2(596, 937)
+position = Vector2(611.5, 804)
 texture = ExtResource("mh62")
 
-[node name="BoneVisual_12" type="Sprite2D" parent="World/Decor" index="22" unique_id=2000000162]
+[node name="BoneVisual_12" type="Sprite2D" parent="World/Decor" index="21" unique_id=2000000162]
 z_index = 6
-position = Vector2(462, 973)
+position = Vector2(477.5, 840)
 texture = ExtResource("mh63")
 
-[node name="BoneVisual_13" type="Sprite2D" parent="World/Decor" index="23" unique_id=2000000163]
+[node name="BoneVisual_13" type="Sprite2D" parent="World/Decor" index="22" unique_id=2000000163]
 z_index = 6
-position = Vector2(82, 981)
+position = Vector2(97.5, 848)
 texture = ExtResource("mh63")
 
-[node name="BoneVisual_14" type="Sprite2D" parent="World/Decor" index="24" unique_id=2000000164]
+[node name="BoneVisual_14" type="Sprite2D" parent="World/Decor" index="23" unique_id=2000000164]
 z_index = 7
-position = Vector2(203, 949)
+position = Vector2(218.5, 816)
 texture = ExtResource("mh62")
 
-[node name="BoneVisual_15" type="Sprite2D" parent="World/Decor" index="25" unique_id=2000000165]
+[node name="BoneVisual_15" type="Sprite2D" parent="World/Decor" index="24" unique_id=2000000165]
 z_index = 6
-position = Vector2(325, 977)
+position = Vector2(340.5, 844)
 texture = ExtResource("mh63")
 
 [node name="FgParallax" parent="." index="2" unique_id=1845135029]
+clip_contents = false
 offset_right = 7000.0
 fallback_size = Vector2(7000, 1080)
+clip_to_room = false
+editor_preview = false
 
 [node name="Bg_018" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="0" unique_id=2000000022]
 z_index = 6
-position = Vector2(6444.997, 777.21375)
-scale = Vector2(-1, 1)
+position = Vector2(6475.2715, 793.8647)
+scale = Vector2(-1.3363824, 1.1850104)
 texture = ExtResource("mh21")
 
 [node name="Bg_019" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="1" unique_id=2000000023]
@@ -527,160 +532,168 @@ texture = ExtResource("mh21")
 
 [node name="Bg_021" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="3" unique_id=2000000025]
 z_index = 6
-position = Vector2(6293.997, 768.21375)
+position = Vector2(6242.4985, 789.1069)
+scale = Vector2(1.5722072, 1.2321459)
 texture = ExtResource("mh21")
 
 [node name="Bg_022" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="4" unique_id=2000000026]
 z_index = 7
-position = Vector2(5817.4517, 978.21375)
+position = Vector2(5580.3696, 990.6182)
 texture = ExtResource("mh22")
 
 [node name="Bg_023" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="5" unique_id=2000000027]
 z_index = 7
-position = Vector2(5956.4517, 982.21375)
-scale = Vector2(-1, 1)
+position = Vector2(5851.4014, 1035.386)
+scale = Vector2(-1.4996501, 1.3418643)
 texture = ExtResource("mh21")
 
 [node name="Bg_024" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="6" unique_id=2000000028]
 z_index = 8
-position = Vector2(5148.5, 1196.25)
+position = Vector2(4953.173, 1118.4205)
 texture = ExtResource("mh22")
 
 [node name="Bg_025" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="7" unique_id=2000000029]
 z_index = 9
-position = Vector2(5048.75, 1269.75)
+position = Vector2(3534, 882)
 texture = ExtResource("mh22")
 
 [node name="Bg_032" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="8" unique_id=2000000030]
 z_index = 7
-position = Vector2(6931.997, 755.21375)
+position = Vector2(6856, 767)
+scale = Vector2(1, 1.0299141)
 texture = ExtResource("mh26")
 
 [node name="Bg_033" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="9" unique_id=2000000031]
 z_index = 6
-position = Vector2(7070.997, 761.21375)
+position = Vector2(7041, 743)
 texture = ExtResource("mh27")
 
 [node name="Bg_039" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="10" unique_id=2000000032]
 z_index = 5
-position = Vector2(4392.5, 1285.5)
+position = Vector2(3991, 604)
 texture = ExtResource("mh26")
 
 [node name="Bg_040" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="11" unique_id=2000000033]
 z_index = 5
-position = Vector2(4550, 1311.75)
+position = Vector2(3778, 701)
 texture = ExtResource("mh27")
 
 [node name="Bg_041" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="12" unique_id=2000000034]
 z_index = 7
-position = Vector2(4681.25, 1311.75)
+position = Vector2(4033, 687)
 scale = Vector2(1.2, 1)
 texture = ExtResource("mh27")
 
 [node name="Bg_042" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="13" unique_id=2000000035]
 z_index = 5
-position = Vector2(4812.5, 1324.35)
+position = Vector2(5371, 1107)
 texture = ExtResource("mh26")
 
 [node name="Bg_043" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="14" unique_id=2000000036]
 z_index = 10
-position = Vector2(4917.5, 1311.75)
+position = Vector2(3346, 900)
 texture = ExtResource("mh26")
 
 [node name="Bg_044" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="15" unique_id=2000000037]
 z_index = 6
-position = Vector2(4051.25, 1191)
+position = Vector2(4219, 764)
+scale = Vector2(1.1666666, 1.1411765)
 texture = ExtResource("mh22")
 
 [node name="Bg_045" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="16" unique_id=2000000038]
 z_index = 5
-position = Vector2(5223.085, 972.75916)
+position = Vector2(5144.324, 997.52765)
 texture = ExtResource("mh21")
 
 [node name="Bg_046" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="17" unique_id=2000000039]
 z_index = 6
-position = Vector2(4271.75, 1196.25)
-scale = Vector2(-1, 1)
+position = Vector2(4376.7256, 770)
+scale = Vector2(-1.3363824, 1)
 texture = ExtResource("mh22")
 
 [node name="Bg_050" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="18" unique_id=2000000040]
 z_index = 7
-position = Vector2(3741.5, 1259.25)
+position = Vector2(3503.7058, 843.5958)
 rotation = -0.523599
+scale = Vector2(1.1596205, 1.2281033)
 texture = ExtResource("mh21")
 
 [node name="Bg_051" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="19" unique_id=2000000041]
 z_index = 7
-position = Vector2(3500, 1086)
+position = Vector2(3369.5, 856.5)
+scale = Vector2(1.5833341, 1.4166669)
 texture = ExtResource("mh21")
 
 [node name="Bg_052" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="20" unique_id=2000000042]
 z_index = 8
-position = Vector2(3395, 1107)
+position = Vector2(3394.8225, 1016.9369)
 texture = ExtResource("mh22")
 
 [node name="Bg_053" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="21" unique_id=2000000043]
 z_index = 7
-position = Vector2(3311, 1075.5)
+position = Vector2(3505, 983)
+scale = Vector2(1.905554, 1.388889)
 texture = ExtResource("mh21")
 
 [node name="Bg_058" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="22" unique_id=2000000044]
 z_index = 7
-position = Vector2(2975, 802.5)
+position = Vector2(3635.0732, 820.615)
+scale = Vector2(1.0658542, 1.1487219)
 texture = ExtResource("mh21")
 
 [node name="Bg_059" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="23" unique_id=2000000045]
 z_index = 7
-position = Vector2(3069.5, 781.5)
+position = Vector2(3786.8462, 807.9117)
 texture = ExtResource("mh22")
 
 [node name="Bg_069" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="24" unique_id=2000000046]
 z_index = 7
-position = Vector2(2628.5, 1054.5)
+position = Vector2(4513, 817)
 texture = ExtResource("mh22")
 
 [node name="Bg_070" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="25" unique_id=2000000047]
 z_index = 7
-position = Vector2(2502.5, 1049.25)
+position = Vector2(3259.7732, 1042.7858)
 texture = ExtResource("mh21")
 
 [node name="Bg_071" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="26" unique_id=2000000048]
 z_index = 7
-position = Vector2(2371.25, 1060.8)
+position = Vector2(3080, 1034)
+scale = Vector2(1.6888889, 1.4555554)
 texture = ExtResource("mh21")
 
 [node name="Bg_081" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="27" unique_id=2000000049]
 z_index = 7
-position = Vector2(1085, 1002)
+position = Vector2(1130, 780.99994)
 rotation = -0.785398
 texture = ExtResource("mh21")
 
 [node name="Bg_082" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="28" unique_id=2000000050]
 z_index = 8
-position = Vector2(1032.5, 918)
+position = Vector2(814.00006, 780)
 rotation = -0.261799
 texture = ExtResource("mh27")
 
 [node name="Bg_083" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="29" unique_id=2000000051]
 z_index = 8
-position = Vector2(927.5, 897)
+position = Vector2(985, 806)
 texture = ExtResource("mh26")
 
 [node name="Bg_087" type="Sprite2D" parent="FgParallax/Foreground" parent_id_path=PackedInt32Array(251785931) index="30" unique_id=2000000052]
 z_index = 8
-position = Vector2(854, 771)
+position = Vector2(949.00006, 771.00006)
 rotation = -1.047198
 texture = ExtResource("mh27")
 
 [node name="Bg_026" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="0" unique_id=2000000053]
 z_index = 9
-position = Vector2(5346.6875, 1201.5)
+position = Vector2(5570, 1087)
 scale = Vector2(-1.1, 1.1)
 texture = ExtResource("mh26")
 
 [node name="Bg_027" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="1" unique_id=2000000054]
 z_index = 10
-position = Vector2(5264, 1267.65)
+position = Vector2(4941, 1140)
 texture = ExtResource("mh27")
 
 [node name="Bg_028" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="2" unique_id=2000000055]
@@ -690,34 +703,37 @@ texture = ExtResource("mh28")
 
 [node name="Bg_029" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="3" unique_id=2000000056]
 z_index = 11
-position = Vector2(6220.419, 1165.1176)
+position = Vector2(6731.0005, 1010)
+scale = Vector2(18.051283, 9.163636)
 texture = ExtResource("mh28")
 
 [node name="Bg_030" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="4" unique_id=2000000057]
 z_index = 7
-position = Vector2(6074.444, 1050.2821)
+position = Vector2(5755, 1085.5)
+scale = Vector2(1.4947383, 1.5)
 texture = ExtResource("mh27")
 
 [node name="Bg_031" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="5" unique_id=2000000058]
 z_index = 7
-position = Vector2(5984.255, 945.27734)
-scale = Vector2(-1, 1)
+position = Vector2(5424, 1144)
+scale = Vector2(-1.8719624, 1.7796372)
 texture = ExtResource("mh27")
 
 [node name="Bg_034" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="6" unique_id=2000000059]
 z_index = 8
-position = Vector2(6296.444, 1020.2821)
-scale = Vector2(-1, 1)
+position = Vector2(6153, 938.00006)
+scale = Vector2(-1.2989566, 1.4455078)
 texture = ExtResource("mh27")
 
 [node name="Bg_035" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="7" unique_id=2000000060]
 z_index = 7
-position = Vector2(6722.992, 1006.6415)
+position = Vector2(6273, 788)
 texture = ExtResource("mh26")
 
 [node name="Bg_036" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="8" unique_id=2000000061]
 z_index = 8
-position = Vector2(6203.444, 1028.2821)
+position = Vector2(6282, 893.00006)
+scale = Vector2(1.5263158, 1.38125)
 texture = ExtResource("mh26")
 
 [node name="Bg_037" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="9" unique_id=2000000062]
@@ -727,17 +743,19 @@ texture = ExtResource("mh28")
 
 [node name="Bg_038" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="10" unique_id=2000000063]
 z_index = 11
-position = Vector2(5583.725, 1385.0663)
+position = Vector2(4404.5, 980.74994)
+scale = Vector2(0.987473, 0.71976763)
 texture = ExtResource("mh29")
 
 [node name="Bg_047" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="11" unique_id=2000000064]
 z_index = 8
-position = Vector2(4161.5, 1256.625)
+position = Vector2(4150.4395, 908.6903)
 texture = ExtResource("mh26")
 
 [node name="Bg_048" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="12" unique_id=2000000065]
 z_index = 11
-position = Vector2(4136.694, 1477.6761)
+position = Vector2(3985, 919.00006)
+scale = Vector2(1.110647, 0.96046513)
 texture = ExtResource("mh29")
 
 [node name="Bg_049" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="13" unique_id=2000000066]
@@ -747,12 +765,13 @@ texture = ExtResource("mh28")
 
 [node name="Bg_054" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="14" unique_id=2000000067]
 z_index = 11
-position = Vector2(3636.71, 1284.1875)
+position = Vector2(3777, 1083)
+scale = Vector2(1.6195642, 1.3874344)
 texture = ExtResource("mh30")
 
 [node name="Bg_055" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="15" unique_id=2000000068]
 z_index = 11
-position = Vector2(3527.5625, 1201.5)
+position = Vector2(3528, 1037)
 texture = ExtResource("mh28")
 
 [node name="Bg_056" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="16" unique_id=2000000069]
@@ -769,98 +788,103 @@ texture = ExtResource("mh28")
 
 [node name="Bg_060" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="18" unique_id=2000000071]
 z_index = 9
-position = Vector2(2838.5, 898.3125)
+position = Vector2(3198, 968)
 texture = ExtResource("mh26")
 
 [node name="Bg_061" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="19" unique_id=2000000072]
 z_index = 9
-position = Vector2(3020.4126, 865.2375)
+position = Vector2(3427.3198, 1138)
 texture = ExtResource("mh26")
 
 [node name="Bg_062" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="20" unique_id=2000000073]
 z_index = 9
-position = Vector2(3169.25, 903.825)
+position = Vector2(4158, 808.00024)
 rotation = -0.436332
+scale = Vector2(0.9999987, 1)
 texture = ExtResource("mh27")
 
 [node name="Bg_063" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="21" unique_id=2000000074]
 z_index = 9
-position = Vector2(3224.375, 1025.1)
+position = Vector2(4255, 848)
 rotation = -0.785398
 texture = ExtResource("mh27")
 
 [node name="Bg_064" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="22" unique_id=2000000075]
 z_index = 11
-position = Vector2(3003.875, 1047.15)
+position = Vector2(4864.625, 1058)
+scale = Vector2(1.0172231, 0.9162791)
 texture = ExtResource("mh29")
 
 [node name="Bg_068" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="23" unique_id=2000000076]
 z_index = 9
-position = Vector2(2744.7876, 1025.1)
+position = Vector2(3777.4678, 854.81067)
 texture = ExtResource("mh26")
 
 [node name="Bg_072" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="24" unique_id=2000000077]
 z_index = 11
-position = Vector2(2728.25, 1080.225)
+position = Vector2(1760, 1027)
 texture = ExtResource("mh28")
 
 [node name="Bg_073" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="25" unique_id=2000000078]
 z_index = 11
-position = Vector2(2562.875, 1091.25)
+position = Vector2(2637, 1011)
 texture = ExtResource("mh28")
 
 [node name="Bg_074" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="26" unique_id=2000000079]
 z_index = 11
-position = Vector2(2397.5, 1102.275)
+position = Vector2(2398, 1041)
 texture = ExtResource("mh28")
 
 [node name="Bg_075" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="27" unique_id=2000000080]
 z_index = 11
-position = Vector2(2287.25, 1135.35)
+position = Vector2(3019.3198, 1247)
 texture = ExtResource("mh28")
 
 [node name="Bg_076" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="28" unique_id=2000000081]
 z_index = 11
-position = Vector2(2618, 1256.625)
+position = Vector2(3220.75, 1132.25)
+scale = Vector2(0.8981763, 2.0877657)
 texture = ExtResource("mh33")
 
 [node name="Bg_077" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="29" unique_id=2000000082]
 z_index = 10
-position = Vector2(3073.3325, 1229.0625)
-scale = Vector2(1.1644909, 1.2758621)
+position = Vector2(3553.9998, 1096.75)
+scale = Vector2(0.44647563, 0.9086207)
 texture = ExtResource("mh34")
 
 [node name="Bg_078" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="30" unique_id=2000000083]
 z_index = 11
-position = Vector2(755.3261, 1240.6388)
-scale = Vector2(1.6250002, 1.6373622)
+position = Vector2(586, 1018)
+scale = Vector2(1.6524123, 1.9578751)
 texture = ExtResource("mh35")
 
 [node name="Bg_079" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="31" unique_id=2000000084]
 z_index = 11
-position = Vector2(479.15, 52.695)
+position = Vector2(2281.891, 143.82364)
 texture = ExtResource("mh36")
 
 [node name="Bg_080" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="32" unique_id=2000000085]
 z_index = 11
-position = Vector2(756.98, 5.2875)
+position = Vector2(2567.8914, 117.82363)
 scale = Vector2(1.1452328, 1.7095237)
 texture = ExtResource("mh37")
 
 [node name="Bg_084" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="33" unique_id=2000000086]
 z_index = 11
-position = Vector2(688.625, 892.8)
+position = Vector2(3862, 702.99994)
+scale = Vector2(2.0897436, 2.5545433)
 texture = ExtResource("mh28")
 
 [node name="Bg_085" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="34" unique_id=2000000087]
 z_index = 11
-position = Vector2(688.625, 749.475)
+position = Vector2(933.59607, 992.302)
 rotation = -1.308997
+scale = Vector2(2.7437012, 3.1346548)
 texture = ExtResource("mh28")
 
 [node name="Bg_086" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="35" unique_id=2000000088]
 z_index = 11
-position = Vector2(732.725, 650.25)
+position = Vector2(1995, 968)
 rotation = -2.792527
 texture = ExtResource("mh28")
 
@@ -871,80 +895,82 @@ texture = ExtResource("mh33")
 
 [node name="Bg_089" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="37" unique_id=2000000090]
 z_index = 11
-position = Vector2(6840.9424, 464.66815)
+position = Vector2(6885.26, 455.45163)
 scale = Vector2(1, 1.4070247)
 texture = ExtResource("mh38")
 
 [node name="Bg_090" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="38" unique_id=2000000091]
 z_index = 11
-position = Vector2(6942.9424, 389.66815)
+position = Vector2(6987.26, 380.45163)
 scale = Vector2(1, 1.469697)
 texture = ExtResource("mh39")
 
 [node name="Bg_091" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="39" unique_id=2000000092]
 z_index = 11
-position = Vector2(6733.1826, 119.571304)
+position = Vector2(6777.5, 110.35477)
 texture = ExtResource("mh40")
 
 [node name="Bg_092" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="40" unique_id=2000000093]
 z_index = 11
-position = Vector2(3789.4063, 412.6612)
+position = Vector2(3708.9653, 43.061707)
 texture = ExtResource("mh40")
 
 [node name="Bg_095" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="41" unique_id=2000000094]
 z_index = 11
-position = Vector2(6349.255, 974.27734)
+position = Vector2(5686, 970)
 texture = ExtResource("mh41")
 
 [node name="Bg_096" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="42" unique_id=2000000095]
 z_index = 11
-position = Vector2(4541.8623, 1246.1512)
+position = Vector2(4352, 745)
 texture = ExtResource("mh43")
 
 [node name="Bg_097" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="43" unique_id=2000000096]
 z_index = 11
-position = Vector2(3615.7625, 1107.2362)
+position = Vector2(5293, 1001)
+scale = Vector2(1.5884956, 1.427928)
 texture = ExtResource("mh44")
 
 [node name="Bg_099" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="44" unique_id=2000000097]
 z_index = 11
-position = Vector2(2383.554, 1172.8094)
+position = Vector2(3160, 749.99994)
 rotation = -0.261799
 scale = Vector2(1.9600067, 2.019514)
 texture = ExtResource("mh46")
 
 [node name="Bg_102" type="Sprite2D" parent="FgParallax/FG2" parent_id_path=PackedInt32Array(693908343) index="45" unique_id=2000000098]
 z_index = 11
-position = Vector2(779.5812, 852.5588)
+position = Vector2(853.2981, 811.4518)
 rotation = 0.523599
 scale = Vector2(-1, 1)
 texture = ExtResource("mh43")
 
 [node name="Bg_093" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="0" unique_id=2000000099]
 z_index = 12
-position = Vector2(7029.425, 958.79565)
+position = Vector2(7085, 727)
 scale = Vector2(-1, 1)
 texture = ExtResource("mh41")
 
 [node name="Bg_094" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="1" unique_id=2000000100]
 z_index = 12
-position = Vector2(6780.425, 972.79565)
+position = Vector2(6856, 721.00006)
+scale = Vector2(1, 1.018797)
 texture = ExtResource("mh42")
 
 [node name="Bg_098" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="2" unique_id=2000000101]
 z_index = 11
-position = Vector2(2639.7256, 1130.4323)
+position = Vector2(3601.9998, 788.0001)
 scale = Vector2(1.9559586, 1.7165242)
 texture = ExtResource("mh45")
 
 [node name="Bg_100" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="3" unique_id=2000000102]
 z_index = 11
-position = Vector2(1710.7, 1254.0002)
+position = Vector2(2291, 984)
 scale = Vector2(-1.0786166, 1.006181)
 texture = ExtResource("mh45")
 
 [node name="Bg_101" type="Sprite2D" parent="FgParallax/FG3" parent_id_path=PackedInt32Array(945516656) index="4" unique_id=2000000103]
 z_index = 11
-position = Vector2(951.6912, 1305.769)
+position = Vector2(1905, 990)
 scale = Vector2(1.3660713, 1.0745095)
 texture = ExtResource("mh46")
